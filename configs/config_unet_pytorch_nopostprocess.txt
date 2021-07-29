@@ -1,0 +1,39 @@
+infer_config {
+  unique_id: 1
+  gpu_ids: [0]
+  max_batch_size: 4
+  backend {
+    trt_is {
+      model_name: "monai_unet_pytorch"
+      version: -1
+      model_repo {
+        root: "../models/"
+        strict_model_config: true
+      }
+    }
+  }
+  preprocess {
+    network_format: IMAGE_FORMAT_RGB
+    tensor_order: TENSOR_ORDER_LINEAR
+    maintain_aspect_ratio: 0
+    frame_scaling_hw: FRAME_SCALING_HW_DEFAULT
+    frame_scaling_filter: 1
+    normalize {
+      scale_factor: 0.00392156
+      channel_offsets: [0, 0, 0]
+    }
+  }
+  postprocess {
+    other{}
+  }
+  extra {
+    copy_input_to_host_buffers: false
+  }
+}
+input_control {
+  process_mode: PROCESS_MODE_FULL_FRAME
+  interval: 0
+}
+output_control {
+  output_tensor_meta: true
+}
