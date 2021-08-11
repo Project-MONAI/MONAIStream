@@ -48,12 +48,13 @@ fps_streams = {}
 VIDEO_WIDTH = 1264
 VIDEO_HEIGHT = 1024
 
-MUXER_BATCH_TIMEOUT_USEC = 4000000
+# 1 / frames_per_second * 10^6
+MUXER_BATCH_TIMEOUT_USEC = 16666
 
 GST_CAPS_FEATURES_NVMM = "memory:NVMM"
 
 
-def pgie_src_pad_buffer_probe(pad, info, u_data):
+def q_src_pad_buffer_probe(pad, info, u_data):
 
     gst_buffer = info.get_buffer()
     if not gst_buffer:
@@ -79,7 +80,7 @@ def pgie_src_pad_buffer_probe(pad, info, u_data):
         l_user = frame_meta.frame_user_meta_list
         while l_user is not None:
             if debug_mode:
-                print("There is user meta data at pgie at frame {}".format(frame_number))
+                print("There is user meta data at queue2 at frame {}".format(frame_number))
             try:
                 # Note that l_user.data needs a cast to pyds.NvDsUserMeta
                 # The casting also keeps ownership of the underlying memory
@@ -136,13 +137,6 @@ def pgie_src_pad_buffer_probe(pad, info, u_data):
             # Create cupy array to access the seg mask data. This array is in GPU buffer
             seg_mask_gpu = cupy.ndarray(shape=(VIDEO_HEIGHT, VIDEO_WIDTH), dtype=ctypes.c_float, memptr=seg_memptr)
 
-            mode = cupy.cuda.cudnn.CUDNN_ACTIVATION_SIGMOID
-            # seg_mask_activated is of range [0,1]
-            seg_mask_activated = cupy.cudnn.activation_forward(seg_mask_gpu, mode)
-
-            # threshold the mask values at 0.5
-            seg_mask_thres = cupy.array(seg_mask_activated > 0.5, dtype=cupy.uint8) * 255
-
             # debug only
             if debug_mode:
                 # Use cp.asnumpy to move array into CPU buffer to perform cv2 operations
@@ -159,8 +153,12 @@ def pgie_src_pad_buffer_probe(pad, info, u_data):
 
             stream = cupy.cuda.stream.Stream()
             stream.use()
-            # modify only the red channel to show mask, blending with 0.5:0.5
-            n_frame_gpu[:, :, 0] = 0.5 * n_frame_gpu[:, :, 0] + 0.5 * seg_mask_thres
+            # seg_mask_activated is of range [0,1]
+            seg_mask_activated = cupy.cudnn.activation_forward(
+                                    seg_mask_gpu,
+                                    cupy.cuda.cudnn.CUDNN_ACTIVATION_SIGMOID)
+            # modify only the red channel to show mask
+            n_frame_gpu[:, :, 0] = cupy.multiply(1.0 - seg_mask_activated, n_frame_gpu[:, :, 0])
             stream.synchronize()
 
             try:
@@ -205,7 +203,9 @@ def decodebin_child_added(child_proxy, Object, name, user_data):
         print("Decodebin child added:", name, "\n")
     if name.find("decodebin") != -1:
         Object.connect("child-added", decodebin_child_added, user_data)
-
+    if name.find("nvv4l2decoder") != -1:
+        Object.set_property("num-extra-surfaces", 4)
+        Object.set_property('cudadec-memtype', 0)
 
 def create_source_bin(index, uri):
     if debug_mode:
@@ -313,18 +313,16 @@ def main(args):
         if not srcpad:
             sys.stderr.write("Unable to create src pad bin \n")
         srcpad.link(sinkpad)
-    if debug_mode:
-        print("Creating Pgie \n ")
-    pgie = Gst.ElementFactory.make("nvinferserver", "primary-inference")
-    if not pgie:
-        sys.stderr.write(" Unable to create pgie \n")
+
     # Add nvvidconv1 and filter1 to convert the frames to RGBA
     # which is easier to work with in Python.
+
     if debug_mode:
         print("Creating nvvidconv1 \n ")
     nvvidconv1 = Gst.ElementFactory.make("nvvideoconvert", "convertor1")
     if not nvvidconv1:
         sys.stderr.write(" Unable to create nvvidconv1 \n")
+
     if debug_mode:
         print("Creating filter1 \n ")
     caps1 = Gst.Caps.from_string("video/x-raw(memory:NVMM), format=RGBA")
@@ -332,27 +330,33 @@ def main(args):
     if not filter1:
         sys.stderr.write(" Unable to get the caps filter1 \n")
     filter1.set_property("caps", caps1)
-    if debug_mode:
-        print("Creating tiler \n ")
-    tiler = Gst.ElementFactory.make("nvmultistreamtiler", "nvtiler")
-    if not tiler:
-        sys.stderr.write(" Unable to create tiler \n")
-    if debug_mode:
-        print("Creating nvvidconv \n ")
-    nvvidconv = Gst.ElementFactory.make("nvvideoconvert", "convertor")
-    if not nvvidconv:
-        sys.stderr.write(" Unable to create nvvidconv \n")
-    if debug_mode:
-        print("Creating nvosd \n ")
-    nvosd = Gst.ElementFactory.make("nvdsosd", "onscreendisplay")
-    if not nvosd:
-        sys.stderr.write(" Unable to create nvosd \n")
     if (is_aarch64()):
         if debug_mode:
             print("Creating transform \n ")
         transform = Gst.ElementFactory.make("nvegltransform", "nvegl-transform")
         if not transform:
             sys.stderr.write(" Unable to create transform \n")
+
+    # Running pgie on separate thread to not block buffers on main thread
+    if debug_mode:
+        print("Creating queue1 \n ")
+    queue1 = Gst.ElementFactory.make("queue", "queue1")
+    if not queue1:
+        sys.stderr.write(" Unable to create queue1 \n")
+
+    if debug_mode:
+        print("Creating Pgie \n ")
+    pgie = Gst.ElementFactory.make("nvinferserver", "primary-inference")
+    if not pgie:
+        sys.stderr.write(" Unable to create pgie \n")
+
+    # Running CuPy post processing on separate thread to not block buffers
+    # on main thread
+    if debug_mode:
+        print("Creating queue2 \n ")
+    queue2 = Gst.ElementFactory.make("queue", "queue2")
+    if not queue2:
+        sys.stderr.write(" Unable to create queue2 \n")
 
     if debug_mode:
         print("Creating EGLSink \n")
@@ -368,47 +372,45 @@ def main(args):
     streammux.set_property('width', VIDEO_WIDTH)
     streammux.set_property('height', VIDEO_HEIGHT)
     streammux.set_property('batch-size', number_sources)
-    streammux.set_property('batched-push-timeout', 4000000)
+    streammux.set_property('buffer-pool-size', 4)
+    streammux.set_property('batched-push-timeout', MUXER_BATCH_TIMEOUT_USEC)
+    streammux.set_property('nvbuf-memory-type', 2)
+
+    nvvidconv1.set_property('nvbuf-memory-type', 2)
+
     pgie.set_property("config-file-path", "configs/config_unet_pytorch_nopostprocess.txt")
     pgie_batch_size = pgie.get_property("batch-size")
     if (pgie_batch_size != number_sources):
         print("WARNING: Overriding infer-config batch-size", pgie_batch_size, " with number of sources ",
               number_sources, " \n")
         pgie.set_property("batch-size", number_sources)
-    tiler_rows = int(math.sqrt(number_sources))
-    tiler_columns = int(math.ceil((1.0 * number_sources) / tiler_rows))
-    tiler.set_property("rows", tiler_rows)
-    tiler.set_property("columns", tiler_columns)
-    tiler.set_property("width", VIDEO_WIDTH)
-    tiler.set_property("height", VIDEO_HEIGHT)
 
-    sink.set_property("sync", 1)
+    sink.set_property("sync", 0)
+    sink.set_property("qos", 0)
 
     if debug_mode:
         print("Adding elements to Pipeline \n")
-    pipeline.add(pgie)
-    pipeline.add(tiler)
-    pipeline.add(nvvidconv)
-    pipeline.add(filter1)
     pipeline.add(nvvidconv1)
-    pipeline.add(nvosd)
+    pipeline.add(filter1)
+    pipeline.add(queue1)
+    pipeline.add(pgie)
     if is_aarch64():
         pipeline.add(transform)
+    pipeline.add(queue2)
     pipeline.add(sink)
 
     if debug_mode:
         print("Linking elements in the Pipeline \n")
     streammux.link(nvvidconv1)
     nvvidconv1.link(filter1)
-    filter1.link(pgie)
-    pgie.link(tiler)
-    tiler.link(nvosd)
-    # nvvidconv.link(nvosd)
+    filter1.link(queue1)
+    queue1.link(pgie)
+    pgie.link(queue2)
     if is_aarch64():
-        nvosd.link(transform)
+        queue2.link(transform)
         transform.link(sink)
     else:
-        nvosd.link(sink)
+        queue2.link(sink)
 
     # create an event loop and feed gstreamer bus mesages to it
     loop = GObject.MainLoop()
@@ -417,11 +419,11 @@ def main(args):
     bus.connect("message", bus_call, loop)
 
     # Add a probe on the primary-infer source pad to get inference output tensors
-    pgiesrcpad = pgie.get_static_pad("src")
-    if not pgiesrcpad:
-        sys.stderr.write(" Unable to get src pad of primary infer \n")
+    q_src_pad = queue2.get_static_pad("src")
+    if not q_src_pad:
+        sys.stderr.write(" Unable to get src pad of queue2 \n")
     else:
-        pgiesrcpad.add_probe(Gst.PadProbeType.BUFFER, pgie_src_pad_buffer_probe, 0)
+        q_src_pad.add_probe(Gst.PadProbeType.BUFFER, q_src_pad_buffer_probe, 0)
 
     # List the sources
     if debug_mode:
