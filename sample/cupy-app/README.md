@@ -24,7 +24,7 @@ Follow the steps in this README to run the python app [`deepstream_cupy_monai_un
 ### Start the DS Triton x86 container:
     
     $ xhost +
-    $ docker run --gpus all -it --rm -v /tmp/.X11-unix:/tmp/.X11-unix -v /opt/nvidia/deepstream/deepstream-5.1/sources/deepstream_python_apps/:/opt/nvidia/deepstream/deepstream/sources/python -v /opt/nvidia/deepstream/deepstream-5.1/samples/trtis_model_repo:/opt/nvidia/deepstream/deepstream/samples/trtis_model_repo -e DISPLAY=$DISPLAY -w /opt/nvidia/deepstream/deepstream-5.1  nvcr.io/nvidia/deepstream:5.1-21.02-triton
+    $ docker run --gpus all -it --rm --shm-size=1g --ulimit memlock=-1 --ulimit stack=67108864 -v /tmp/.X11-unix:/tmp/.X11-unix -v /opt/nvidia/deepstream/deepstream-5.1/sources/deepstream_python_apps/:/opt/nvidia/deepstream/deepstream/sources/python -v /opt/nvidia/deepstream/deepstream-5.1/samples/trtis_model_repo:/opt/nvidia/deepstream/deepstream/samples/trtis_model_repo -e DISPLAY=$DISPLAY -w /opt/nvidia/deepstream/deepstream-5.1  nvcr.io/nvidia/deepstream:5.1-21.02-triton
 
 
 ### Inside the container, install packages required by samples:
