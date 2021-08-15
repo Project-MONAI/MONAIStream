@@ -1,2 +1,2 @@
-from .fake import FakeSinkComponent
+from .fake import FakeSink
 from .nveglglessink import NVEglGlesSink
