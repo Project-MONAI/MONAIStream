@@ -1,0 +1,23 @@
+{
+    "python.linting.flake8Enabled": true,
+    "python.linting.enabled": true,
+    "python.formatting.provider": "autopep8",
+    "python.formatting.autopep8Path": "/usr/local/bin/autopep8",
+    "editor.formatOnSave": false,
+    "[python]": {
+        "editor.formatOnSave": true,
+    },
+    "python.formatting.autopep8Args": [
+        "--max-line-length", "120", 
+        "--experimental",
+        "--ignore", "E402",
+    ],
+    "python.linting.flake8Args": [
+        "--max-line-length=120",
+        "--ignore=E402",
+    ],
+    "python.analysis.extraPaths": [
+        "./monai"
+    ],
+    "python.linting.banditEnabled": false,
+}
