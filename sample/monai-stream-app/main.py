@@ -24,7 +24,7 @@ if __name__ == "__main__":
     inferServer = NVInferServer(config=inferServerConfig)
 
     source_bin = NVAggregatedSourcesBin([
-        URISource(uri="file:///app/sample/input/d1_im.mp4"),
+        URISource(uri="file:///app/videos/d1_im.mp4"),
     ])
     stream_mux = NVStreamMux(
         num_sources=1,

@@ -17,7 +17,7 @@
         "--ignore=E402",
     ],
     "python.analysis.extraPaths": [
-        "./monai"
+        "./src/monai"
     ],
     "python.linting.banditEnabled": false,
 }
