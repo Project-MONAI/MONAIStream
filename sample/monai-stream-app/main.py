@@ -1,5 +1,3 @@
-import os
-
 # from monai.transforms.compose import Compose
 # from monai.transforms.intensity.array import NormalizeIntensity
 from stream.compose import StreamCompose
