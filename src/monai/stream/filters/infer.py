@@ -18,7 +18,7 @@ class TritonModelRepo(BaseModel):
 
 
 class TrtISParams(BaseModel):
-    model_name: str
+    model_name: str = ""
     version: int = -1
     model_repo: TritonModelRepo
 
@@ -327,7 +327,7 @@ async_mode: {{ async_mode|string|lower }}
             "max_batch_size": 4,
             "backend": {
                 "trt_is": {
-                    "model_name": "monai_pytorch_unet",
+                    "model_name": "",
                     "version": -1,
                     "model_repo": {
                         "root": ".",
