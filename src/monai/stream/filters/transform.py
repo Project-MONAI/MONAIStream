@@ -20,6 +20,7 @@ class TransformChainComponent(StreamFilterComponent):
             raise BinCreationError(f"Unable to create {self.__class__.__name__} {self.get_name()}")
 
         self._ucbt = ucbt
+        self._ucbt.set_property("usercallback", self._user_callback)
 
     def get_name(self):
         return f"{self._name}-usercallbacktransform"
