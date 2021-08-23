@@ -39,7 +39,7 @@ class UserCallbackTransform(GstBase.BaseTransform):
             "UserCallback",
             "User-specificed Callback Function",
             DEFAULT_CALLBACK,
-            GObject.ParamFlag.READWRITE,
+            GObject.ParamFlags.READWRITE,
         ),
         "width": (
             GObject.TYPE_INT,
@@ -48,7 +48,7 @@ class UserCallbackTransform(GstBase.BaseTransform):
             0,
             GLib.MAXINT,
             DEFAULT_WIDTH,
-            GObject.ParamFlag.READWRITE,
+            GObject.ParamFlags.READWRITE,
         ),
         "height": (
             GObject.TYPE_INT,
@@ -57,7 +57,7 @@ class UserCallbackTransform(GstBase.BaseTransform):
             0,
             GLib.MAXINT,
             DEFAULT_HEIGHT,
-            GObject.ParamFlag.READWRITE,
+            GObject.ParamFlags.READWRITE,
         ),
     }
 
@@ -159,7 +159,7 @@ class UserCallbackTransform(GstBase.BaseTransform):
                             output_meta = pyds.get_nvds_LayerInfo(tensor_meta, output_idx)
                             output_unownedmem = cupy.cuda.UnownedMemory(
                                 ctypes.pythonapi.PyCapsule_GetPointer(output_meta.buffer, None),
-                                ctypes.sizeof(ctypes.c_float) * VIDEO_WIDTH * VIDEO_HEIGHT, owner)
+                                ctypes.sizeof(ctypes.c_float) * self.width * self.height, owner)
 
                             output_memptr = cupy.cuda.MemoryPointer(output_unownedmem, 0)
                             output_cupy = cupy.ndarray(shape=(), dtype=ctypes.c_float, memptr=output_memptr)
