@@ -17,13 +17,7 @@ DEFAULT_WIDTH = 1264
 DEFAULT_HEIGHT = 1080
 
 
-def DEFAULT_CALLBACK(x):
-    return x
-
-
-FORMATS = "{RGBx,BGRx,xRGB,xBGR,RGBA,BGRA,ARGB,ABGR,RGB,BGR,GRAY8}"
-FIXED_CAPS = Gst.Caps.from_string(
-    f'video/x-raw,format={FORMATS}')
+FIXED_CAPS = Gst.Caps.from_string('video/x-raw')
 
 
 class UserCallbackTransform(GstBase.BaseTransform):
@@ -36,9 +30,8 @@ class UserCallbackTransform(GstBase.BaseTransform):
     __gproperties__ = {
         "usercallback": (
             GObject.TYPE_PYOBJECT,  # a `Callable` to be specific
-            "UserCallback",
+            "User Callback Function",
             "User-specificed Callback Function",
-            DEFAULT_CALLBACK,
             GObject.ParamFlags.READWRITE,
         ),
         "width": (
@@ -75,7 +68,7 @@ class UserCallbackTransform(GstBase.BaseTransform):
 
         self.width = DEFAULT_WIDTH
         self.height = DEFAULT_HEIGHT
-        self.usercallback = DEFAULT_CALLBACK
+        self.usercallback = None
 
     def do_get_property(self, prop):
         if prop.name == 'width':
@@ -98,99 +91,100 @@ class UserCallbackTransform(GstBase.BaseTransform):
             raise AttributeError(f"Unknown property {prop.name}")
 
     def do_transform_ip(self, inbuf: Gst.Buffer):
-        try:
-            with inbuf.map(Gst.MapFlags.READ | Gst.MapFlags.WRITE) as info:
+        if self.usercallback:
+            try:
+                with inbuf.map(Gst.MapFlags.READ | Gst.MapFlags.WRITE) as info:
 
-                batch_meta = pyds.gst_buffer_get_nvds_batch_meta(hash(info))
-                frame_list = batch_meta.frame_meta_list
+                    batch_meta = pyds.gst_buffer_get_nvds_batch_meta(hash(info))
+                    frame_list = batch_meta.frame_meta_list
 
-                while frame_list is not None:
-                    try:
-                        frame_meta = pyds.NvDsFrameMeta.cast(frame_list.data)
-                    except StopIteration:
-                        break
-
-                    # frame_number = frame_meta.frame_num
-                    user_metadata_list = frame_meta.frame_user_meta_list
-
-                    while user_metadata_list is not None:
+                    while frame_list is not None:
                         try:
-                            user_metadata = pyds.NvDsUserMeta.cast(user_metadata_list.data)
+                            frame_meta = pyds.NvDsFrameMeta.cast(frame_list.data)
                         except StopIteration:
                             break
 
-                        # TODO: consider generalizing this to perhaps something beyond nvinfer outputs
-                        if user_metadata.base_meta.meta_type != pyds.NvDsMetaType.NVDSINFER_TENSOR_OUTPUT_META:
-                            continue
+                        # frame_number = frame_meta.frame_num
+                        user_metadata_list = frame_meta.frame_user_meta_list
 
-                        tensor_meta = pyds.NvDsInferTensorMeta.cast(user_metadata.user_meta_data)
-                        owner = None
+                        while user_metadata_list is not None:
+                            try:
+                                user_metadata = pyds.NvDsUserMeta.cast(user_metadata_list.data)
+                            except StopIteration:
+                                break
 
-                        orig_data_type, orig_shape, orig_strides, orig_ptr, orig_size = pyds.get_nvds_buf_surface_gpu(
-                            hash(info),
-                            frame_meta.batch_id,
-                        )
-                        ctypes.pythonapi.PyCapsule_GetPointer.restype = ctypes.c_void_p
-                        ctypes.pythonapi.PyCapsule_GetPointer.argtypes = [ctypes.py_object, ctypes.c_char_p]
-                        unownedmem = cupy.cuda.UnownedMemory(
-                            ctypes.pythonapi.PyCapsule_GetPointer(orig_ptr, None),
-                            orig_size,
-                            owner,
-                        )
-                        orig_memptr = cupy.cuda.MemoryPointer(unownedmem, 0)
-                        orig_image_cupy = cupy.ndarray(
-                            shape=orig_shape,
-                            dtype=orig_data_type,
-                            memptr=orig_memptr,
-                            strides=orig_strides,
-                            order='C',
-                        )
-                        unownedmem = cupy.cuda.UnownedMemory(
-                            ctypes.pythonapi.PyCapsule_GetPointer(orig_ptr, None),
-                            orig_size,
-                            owner,
-                        )
+                            # TODO: consider generalizing this to perhaps something beyond nvinfer outputs
+                            if user_metadata.base_meta.meta_type != pyds.NvDsMetaType.NVDSINFER_TENSOR_OUTPUT_META:
+                                continue
 
-                        orig_image_torch = torch.utils.dlpack.from_dlpack(orig_image_cupy.toDlpack())
+                            tensor_meta = pyds.NvDsInferTensorMeta.cast(user_metadata.user_meta_data)
+                            owner = None
 
-                        output_torch_list = []
-                        for output_idx in range(tensor_meta.num_output_layers):
+                            orig_data_type, orig_shape, orig_strides, orig_ptr, orig_size = \
+                                pyds.get_nvds_buf_surface_gpu(hash(info), frame_meta.batch_id, )
+                            ctypes.pythonapi.PyCapsule_GetPointer.restype = ctypes.c_void_p
+                            ctypes.pythonapi.PyCapsule_GetPointer.argtypes = [ctypes.py_object, ctypes.c_char_p]
+                            unownedmem = cupy.cuda.UnownedMemory(
+                                ctypes.pythonapi.PyCapsule_GetPointer(orig_ptr, None),
+                                orig_size,
+                                owner,
+                            )
+                            orig_memptr = cupy.cuda.MemoryPointer(unownedmem, 0)
+                            orig_image_cupy = cupy.ndarray(
+                                shape=orig_shape,
+                                dtype=orig_data_type,
+                                memptr=orig_memptr,
+                                strides=orig_strides,
+                                order='C',
+                            )
+                            unownedmem = cupy.cuda.UnownedMemory(
+                                ctypes.pythonapi.PyCapsule_GetPointer(orig_ptr, None),
+                                orig_size,
+                                owner,
+                            )
 
-                            output_meta = pyds.get_nvds_LayerInfo(tensor_meta, output_idx)
-                            output_unownedmem = cupy.cuda.UnownedMemory(
-                                ctypes.pythonapi.PyCapsule_GetPointer(output_meta.buffer, None),
-                                ctypes.sizeof(ctypes.c_float) * self.width * self.height, owner)
+                            orig_image_torch = torch.utils.dlpack.from_dlpack(orig_image_cupy.toDlpack())
 
-                            output_memptr = cupy.cuda.MemoryPointer(output_unownedmem, 0)
-                            output_cupy = cupy.ndarray(shape=(), dtype=ctypes.c_float, memptr=output_memptr)
+                            output_torch_list = []
+                            for output_idx in range(tensor_meta.num_output_layers):
 
-                            output_torch = torch.utils.dlpack.from_dlpack(output_cupy.toDlpack())
+                                output_meta = pyds.get_nvds_LayerInfo(tensor_meta, output_idx)
+                                output_unownedmem = cupy.cuda.UnownedMemory(
+                                    ctypes.pythonapi.PyCapsule_GetPointer(output_meta.buffer, None),
+                                    ctypes.sizeof(ctypes.c_float) * self.width * self.height, owner)
 
-                            output_torch_list.append(output_torch)
+                                output_memptr = cupy.cuda.MemoryPointer(output_unownedmem, 0)
+                                output_cupy = cupy.ndarray(shape=(), dtype=ctypes.c_float, memptr=output_memptr)
 
-                        stream = cupy.cuda.stream.Stream()
-                        stream.use()
+                                output_torch = torch.utils.dlpack.from_dlpack(output_cupy.toDlpack())
 
-                        # TODO: generalize this to return values
-                        #       here it is assumed that user data manipulation happens in place
-                        self._user_callback(orig_image_torch, *output_torch_list)
+                                output_torch_list.append(output_torch)
 
-                        stream.synchronize()
+                            stream = cupy.cuda.stream.Stream()
+                            stream.use()
+
+                            # TODO: generalize this to return values
+                            #       here it is assumed that user data manipulation happens in place
+                            self._user_callback(orig_image_torch, *output_torch_list)
+
+                            stream.synchronize()
+
+                            try:
+                                user_metadata_list = user_metadata_list.next
+                            except StopIteration:
+                                break
 
                         try:
-                            user_metadata_list = user_metadata_list.next
+                            frame_list = frame_list.next
                         except StopIteration:
                             break
 
-                    try:
-                        frame_list = frame_list.next
-                    except StopIteration:
-                        break
-
-                return Gst.FlowReturn.OK
-        except Gst.MapError as e:
-            Gst.error("Mapping error: %s" % e)
-            return Gst.FlowReturn.ERROR
+                    return Gst.FlowReturn.OK
+            except Gst.MapError as e:
+                Gst.error("Mapping error: %s" % e)
+                return Gst.FlowReturn.ERROR
+        else:
+            return Gst.FlowReturn.OK
 
 
 GObject.type_register(UserCallbackTransform)
