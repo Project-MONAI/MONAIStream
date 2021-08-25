@@ -51,7 +51,11 @@ class StreamCompose(object):
                     if not srcpad:
                         raise StreamComposeCreationError("Unable to create src pad bin")
 
-                    srcpad.link(sinkpad)
+                    link_failed = srcpad.link(sinkpad)
+                    if link_failed:
+                        logger.error(f"Linking of {component.get_name()} and "
+                                     f"{components[component_idx - 1].get_name()} failed: {link_failed.value}")
+                        exit(1)
 
             elif isinstance(component, InferenceFilterComponent):
 
@@ -59,7 +63,11 @@ class StreamCompose(object):
 
         # link the components in the chain
         for idx in range(first_filter_index, len(components) - 1):
-            components[idx].get_gst_element().link(components[idx + 1].get_gst_element())
+            link_succeeded = components[idx].get_gst_element().link(components[idx + 1].get_gst_element())
+            if not link_succeeded:
+                logger.error(f"Linking of {components[idx].get_name()} and "
+                             f"{components[idx + 1].get_name()} failed: {link_succeeded}")
+                exit(1)
 
     @staticmethod
     def bus_call(bus, message, loop):
