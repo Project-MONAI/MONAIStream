@@ -16,14 +16,9 @@ from gi.repository import GObject, Gst, GstBase
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-IN_CAPS = Gst.Caps(Gst.Structure('video/x-raw',
-                                 width=Gst.IntRange(range(320, 7680)),
-                                 height=Gst.IntRange(range(240, 4320))))
-
-# Output caps
-OUT_CAPS = Gst.Caps(Gst.Structure('video/x-raw',
-                                  width=Gst.IntRange(range(320, 7680)),
-                                  height=Gst.IntRange(range(240, 4320))))
+NVMM_FORMAT = 'video/x-raw(memory:NVMM),width=[320,7680],height=[240,4320]'
+IN_CAPS = Gst.Caps.from_string(NVMM_FORMAT)
+OUT_CAPS = Gst.Caps.from_string(NVMM_FORMAT)
 
 
 def get_buffer_as_tensor(inbuf_info: Gst.MapInfo, batch_id) -> torch.Tensor:
