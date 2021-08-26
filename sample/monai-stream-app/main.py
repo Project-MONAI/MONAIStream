@@ -11,17 +11,18 @@ from stream.sources import NVAggregatedSourcesBin, URISource
 if __name__ == "__main__":
 
     def my_callback(x: torch.Tensor):
-        print(x.size())
+        return torch.inverse(x)
+        print(x)
 
     pre_transforms = TransformChainComponent(
-        my_callback,
+        transform_chain=my_callback,
     )
 
-    inferServerConfig = NVInferServer.generate_default_config()
-    inferServerConfig.infer_config.backend.trt_is.model_repo.root = "/app/models"
-    inferServerConfig.infer_config.backend.trt_is.model_name = "monai_unet_pytorch"
-    inferServerConfig.infer_config.backend.trt_is.version = "-1"
-    inferServerConfig.infer_config.backend.trt_is.model_repo.log_level = 0
+    # inferServerConfig = NVInferServer.generate_default_config()
+    # inferServerConfig.infer_config.backend.trt_is.model_repo.root = "/app/models"
+    # inferServerConfig.infer_config.backend.trt_is.model_name = "monai_unet_trt"
+    # inferServerConfig.infer_config.backend.trt_is.version = "-1"
+    # inferServerConfig.infer_config.backend.trt_is.model_repo.log_level = 0
 
     chain = StreamCompose([
         NVAggregatedSourcesBin([
@@ -34,10 +35,10 @@ if __name__ == "__main__":
         ),
         NVVideoConvert(),
         NVRGBAFilter(),
-        # pre_transforms,
-        NVInferServer(
-            config=inferServerConfig,
-        ),
+        pre_transforms,
+        # NVInferServer(
+        #     config=inferServerConfig,
+        # ),
         NVEglGlesSink(
             sync=True,
         ),
