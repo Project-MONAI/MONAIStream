@@ -21,8 +21,7 @@ IN_CAPS = Gst.Caps.from_string(NVMM_FORMAT)
 OUT_CAPS = Gst.Caps.from_string(NVMM_FORMAT)
 
 
-def get_buffer_as_tensor(inbuf_info: Gst.MapInfo, batch_id) -> torch.Tensor:
-
+def get_buffer_as_cupy_matrix(inbuf_info: Gst.MapInfo, batch_id) -> cupy.ndarray:
     owner = None
 
     data_type, shape, strides, data_ptr, size = pyds.get_nvds_buf_surface_gpu(hash(inbuf_info), batch_id, )
@@ -41,19 +40,22 @@ def get_buffer_as_tensor(inbuf_info: Gst.MapInfo, batch_id) -> torch.Tensor:
         strides=strides,
         order='C',
     )
-    unownedmem = cupy.cuda.UnownedMemory(
-        ctypes.pythonapi.PyCapsule_GetPointer(data_ptr, None),
-        size,
-        owner,
-    )
+    return cupy_array
 
+
+def get_buffer_as_tensor(inbuf_info: Gst.MapInfo, batch_id) -> torch.Tensor:
+
+    cupy_array = get_buffer_as_cupy_matrix(inbuf_info, batch_id)
     torch_tensor = torch.utils.dlpack.from_dlpack(cupy_array.toDlpack())
 
     return torch_tensor
 
 
-def copy_tensor_to_buffer(in_tensor: torch.Tensor, buf: Gst.MapInfo):
-    pass
+def copy_tensor_to_buffer(in_tensor: torch.Tensor, outbuf_info: Gst.MapInfo):
+    # TODO: check if zero is the correct index for every output
+    outbuf_array = get_buffer_as_cupy_matrix(outbuf_info, 0)
+
+    outbuf_array[:] = cupy.fromDlpack(torch.utils.dlpack.to_dlpack(in_tensor))
 
 
 class UserCallbackTransform(GstBase.BaseTransform):
@@ -61,8 +63,8 @@ class UserCallbackTransform(GstBase.BaseTransform):
     __gstmetadata__ = (
         'UserCallbackTransform',
         'Filter',
-        'MONAI User-defined callback function to use as transform',
-        'Alvin Ihsani <aihsani and nvidia dot com>'
+        'MONAI User-defined callback function to use as transform. Usage: gst-launch-1.0 uridecodebin uri=file:///app/videos/d1_im.mp4 ! nvvideoconvert ! "video/x-raw(memory:NVMM),format=RGBA" ! usercallbacktransform ! nveglglessink sync=True',
+        'Alvin Ihsani <aihsani at nvidia dot com>'
     )
 
     __gproperties__ = {
@@ -86,15 +88,20 @@ class UserCallbackTransform(GstBase.BaseTransform):
     def __init__(self) -> None:
         super(UserCallbackTransform, self).__init__()
         self._usercallback = None
+        self._in_width = 320
+        self._in_height = 240
+        self._out_width = 320
+        self._out_height = 240
 
-    def do_get_property(self, prop):
+    def do_get_property(self, prop: GObject.GParamSpec):
         if prop.name == "usercallback":
             return self._usercallback
         else:
             raise AttributeError(f"Unknown property {prop.name}")
 
-    def do_set_property(self, prop, value):
+    def do_set_property(self, prop: GObject.GParamSpec, value):
         if prop.name == "usercallback":
+            logger.info(f"Setting {prop} to {value}")
             self._usercallback = value
         else:
             raise AttributeError(f"Unknown property {prop.name}")
@@ -105,19 +112,26 @@ class UserCallbackTransform(GstBase.BaseTransform):
         if filter:
             xfm_caps = xfm_caps.intersect(filter)
 
+        logger.info(f"do_transform_caps: {xfm_caps}")
+
         return xfm_caps
 
     def do_set_caps(self, incaps: Gst.Caps, outcaps: Gst.Caps) -> bool:
 
-        in_width, in_height = [incaps.get_structure(0).get_value(v) for v in ['width', 'height']]
-        out_width, out_height = [outcaps.get_structure(0).get_value(v) for v in ['width', 'height']]
+        self._in_width, self._in_height = [incaps.get_structure(0).get_value(v) for v in ['width', 'height']]
+        self._out_width, self._out_height = [outcaps.get_structure(0).get_value(v) for v in ['width', 'height']]
 
-        if in_height == out_height and in_width == out_width:
-            self.set_passthrough(True)
+        logger.info(f"do_set_caps: ({self._in_width},{self._in_height}) -> ({self._out_width},{self._out_height})")
+
+        # if self._in_height == self._out_height and self._in_width == self._out_width:
+        #     self.set_passthrough(True)
 
         return True
 
     def do_transform(self, inbuf: Gst.Buffer, outbuf: Gst.Buffer) -> Gst.FlowReturn:
+
+        logger.info("Invoking: do_transform")
+
         if self._usercallback:
             try:
                 # convert the incoming frames to tensors and process through user callback
@@ -137,7 +151,9 @@ class UserCallbackTransform(GstBase.BaseTransform):
                     logger.info(f"Processing frame: {frame_number}")
 
                     inbuf_torch = get_buffer_as_tensor(inbuf_info, frame_meta.batch_id)
+
                     user_output = self._user_callback(inbuf_torch)
+
                     copy_tensor_to_buffer(user_output, outbuf_info)
 
                     try:
