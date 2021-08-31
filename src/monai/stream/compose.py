@@ -7,7 +7,7 @@ from stream.errors import StreamComposeCreationError
 from stream.filters.nvstreammux import NVStreamMux
 from stream.interface import (AggregatedSourcesComponent,
                               InferenceFilterComponent, MultiplexerComponent,
-                              StreamComponent)
+                              StreamComponent, StreamFilterComponent)
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +30,10 @@ class StreamCompose(object):
             if isinstance(component, AggregatedSourcesComponent):
                 source_bin = component
 
-            elif isinstance(component, MultiplexerComponent):
+            elif (
+                isinstance(components[component_idx - 1], AggregatedSourcesComponent) and
+                isinstance(component, StreamFilterComponent)
+            ):
 
                 first_filter_index = component_idx
 
@@ -42,9 +45,13 @@ class StreamCompose(object):
                 for src_idx in range(components[component_idx - 1].get_num_sources()):
 
                     # get a sinkpad for each source in the stream multiplexer
-                    sinkpad = component.get_gst_element().get_request_pad(f"sink_{src_idx}")
-                    if not sinkpad:
-                        raise StreamComposeCreationError("Unable to create sink pad bin")
+                    sinkpad = None
+                    if isinstance(component, MultiplexerComponent):
+                        sinkpad = component.get_gst_element().get_request_pad(f"sink_{src_idx}")
+                    else:
+                        sinkpad = component.get_gst_element().get_static_pad("sink")
+                        if not sinkpad:
+                            raise StreamComposeCreationError("Unable to create sink pad bin")
 
                     # get the source pad from the upstream component
                     srcpad = components[component_idx - 1].get_gst_element().get_static_pad("src")

@@ -15,7 +15,7 @@ class NVRGBAFilter(StreamFilterComponent):
 
     def initialize(self):
 
-        rgba_caps = Gst.Caps.from_string("video/x-raw(memory:NVMM), format=RGBA")
+        rgba_caps = Gst.Caps.from_string("video/x-raw(memory:NVMM),format=RGBA")
         filter = Gst.ElementFactory.make("capsfilter", f"{self._name}-filter")
         if not filter:
             raise BinCreationError(f"Unable to get the caps for {self.__class__._name} {self.get_name()}")

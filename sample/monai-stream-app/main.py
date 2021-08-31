@@ -11,8 +11,8 @@ from stream.sources import NVAggregatedSourcesBin, URISource
 if __name__ == "__main__":
 
     def my_callback(x: torch.Tensor):
-        return torch.inverse(x)
         print(x)
+        return torch.inverse(x)
 
     pre_transforms = TransformChainComponent(
         transform_chain=my_callback,
