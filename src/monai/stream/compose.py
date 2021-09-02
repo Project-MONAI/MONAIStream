@@ -78,17 +78,16 @@ class StreamCompose(object):
                 exit(1)
 
     def bus_call(self, bus, message, loop):
-        t = message.type
-        if t == Gst.MessageType.EOS:
+        if message.type == Gst.MessageType.EOS:
             logger.info("[INFO] End of stream")
             loop.quit()
-        elif t == Gst.MessageType.INFO:
+        elif message.type == Gst.MessageType.INFO:
             info, debug = message.parse_info()
             logger.info("[INFO] {}: {}".format(info, debug))
-        elif t == Gst.MessageType.WARNING:
+        elif message.type == Gst.MessageType.WARNING:
             err, debug = message.parse_warning()
             logger.warn("[WARN] {}: {}".format(err, debug))
-        elif t == Gst.MessageType.ERROR:
+        elif message.type == Gst.MessageType.ERROR:
             err, debug = message.parse_error()
             logger.error("[EROR] {}: {}".format(err, debug))
             loop.quit()
