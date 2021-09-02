@@ -5,6 +5,7 @@ import cupy
 import gi
 import pyds
 import torch
+from torch.utils.dlpack import from_dlpack, to_dlpack
 
 gi.require_version('Gst', '1.0')
 gi.require_version('GstBase', '1.0')
@@ -27,6 +28,7 @@ def get_buffer_as_cupy_matrix(inbuf: Gst.Buffer, batch_id) -> cupy.ndarray:
     owner = None
 
     data_type, shape, strides, data_ptr, size = pyds.get_nvds_buf_surface_gpu(hash(inbuf), batch_id, )
+    logger.debug(f"Type: {data_type}, Shape: {shape}, Strides: {strides}, Size: {size}")
     ctypes.pythonapi.PyCapsule_GetPointer.restype = ctypes.c_void_p
     ctypes.pythonapi.PyCapsule_GetPointer.argtypes = [ctypes.py_object, ctypes.c_char_p]
     unownedmem = cupy.cuda.UnownedMemory(
@@ -45,19 +47,20 @@ def get_buffer_as_cupy_matrix(inbuf: Gst.Buffer, batch_id) -> cupy.ndarray:
     return cupy_array
 
 
-def get_buffer_as_tensor(inbuf: Gst.Buffer, batch_id) -> torch.Tensor:
+def get_buffer_as_tensor(inbuf: Gst.Buffer, batch_id: int) -> torch.Tensor:
 
     cupy_array = get_buffer_as_cupy_matrix(inbuf, batch_id)
-    torch_tensor = torch.utils.dlpack.from_dlpack(cupy_array.toDlpack())
+    torch_tensor = from_dlpack(cupy_array.toDlpack())
 
     return torch_tensor
 
 
-def copy_tensor_to_buffer(in_tensor: torch.Tensor, outbuf: Gst.Buffer):
-    # TODO: check if zero is the correct index for every output
-    outbuf_array = get_buffer_as_cupy_matrix(outbuf, 0)
+def copy_tensor_to_buffer(in_tensor: torch.Tensor, outbuf: Gst.Buffer, batch_id: int):
+    # TODO: fix this thorws SIGSEGV
+    outbuf_array = get_buffer_as_cupy_matrix(outbuf, batch_id)
 
-    outbuf_array[:] = cupy.fromDlpack(torch.utils.dlpack.to_dlpack(in_tensor))
+    # TODO: take care of resizing to output buffer shape or throwing a validation error
+    outbuf_array[:] = cupy.fromDlpack(to_dlpack(in_tensor))
 
 
 class UserCallbackTransform(GstBase.BaseTransform):
@@ -171,12 +174,14 @@ class UserCallbackTransform(GstBase.BaseTransform):
                 logger.info(f"Processing frame: {frame_number}")
 
                 inbuf_torch = get_buffer_as_tensor(inbuf, frame_meta.batch_id)
-                logger.debug(f"Converted buffer to tensor: {inbuf_torch}")
+                logger.debug(
+                    f"Converted buffer to tensor: Shape {inbuf_torch.size()}, Type: {inbuf_torch.type()}, Device: {inbuf_torch.device.type}")
 
-                user_output = self._user_callback(inbuf_torch)
-                logger.debug(f"Callback output: {user_output}")
+                user_output = self._callback(inbuf_torch)
+                logger.debug(
+                    f"Callback output: Shape {user_output.size()}, Type: {user_output.type()}, Device: {user_output.device.type}")
 
-                copy_tensor_to_buffer(user_output, outbuf)
+                copy_tensor_to_buffer(user_output, outbuf, frame_meta.batch_id)
                 logger.debug("Copied user output to output buffer")
 
                 try:
