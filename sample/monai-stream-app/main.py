@@ -8,6 +8,7 @@ from stream.filters.transform import TransformChainComponent
 from stream.sinks import NVEglGlesSink
 from stream.sources import NVAggregatedSourcesBin, URISource
 
+
 if __name__ == "__main__":
 
     def my_callback(x: torch.Tensor):

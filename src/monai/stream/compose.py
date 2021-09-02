@@ -71,13 +71,13 @@ class StreamCompose(object):
         # link the components in the chain
         for idx in range(first_filter_index, len(components) - 1):
             link_succeeded = components[idx].get_gst_element().link(components[idx + 1].get_gst_element())
+
             if not link_succeeded:
                 logger.error(f"Linking of {components[idx].get_name()} and "
                              f"{components[idx + 1].get_name()} failed: {link_succeeded}")
                 exit(1)
 
-    @staticmethod
-    def bus_call(bus, message, loop):
+    def bus_call(self, bus, message, loop):
         t = message.type
         if t == Gst.MessageType.EOS:
             logger.info("[INFO] End of stream")
@@ -92,19 +92,37 @@ class StreamCompose(object):
             err, debug = message.parse_error()
             logger.error("[EROR] {}: {}".format(err, debug))
             loop.quit()
+        elif message.type == Gst.MessageType.STATE_CHANGED:
+            old, new, pending = message.parse_state_changed()
+            logger.debug('State changed from %s to %s (pending=%s)',
+                         old.value_name, new.value_name, pending.value_name)
+            Gst.debug_bin_to_dot_file(
+                self._pipeline,
+                Gst.DebugGraphDetails.ALL,
+                f"{self._pipeline.name}-{old.value_name}-{new.value_name}"
+            )
+        elif message.type == Gst.MessageType.STREAM_STATUS:
+            type_, owner = message.parse_stream_status()
+            logger.debug('Stream status changed to %s (owner=%s)',
+                         type_.value_name, owner.name)
+            Gst.debug_bin_to_dot_file(
+                self._pipeline,
+                Gst.DebugGraphDetails.ALL,
+                f"{self._pipeline.name}-{type_.value_name}"
+            )
+        elif message.type == Gst.MessageType.DURATION_CHANGED:
+            logger.debug('Duration changed')
         return True
 
-    def __call__(self, bus_call: Callable = None) -> None:
+    def __call__(self) -> None:
         loop = GObject.MainLoop()
         bus = self._pipeline.get_bus()
         bus.add_signal_watch()
 
-        if bus_call is None:
-            bus_call = StreamCompose.bus_call
-
-        bus.connect("message", bus_call, loop)
+        bus.connect("message", self.bus_call, loop)
 
         self._pipeline.set_state(Gst.State.PLAYING)
+
         try:
             loop.run()
         except Exception:
