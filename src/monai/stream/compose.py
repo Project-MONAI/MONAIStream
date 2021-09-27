@@ -2,6 +2,7 @@ import logging
 from typing import Callable, Sequence
 
 from gi.repository import GObject, Gst
+from numpy import isin
 
 from stream.errors import StreamComposeCreationError
 from stream.filters.nvstreammux import NVStreamMux
@@ -25,7 +26,13 @@ class StreamCompose(object):
         source_bin = None
         for component_idx, component in enumerate(components):
             component.initialize()
-            self._pipeline.add(component.get_gst_element())
+
+            # some elements return tuples (e.g. `NVVideoConvert`)
+            if isinstance(component.get_gst_element(), tuple):
+                for elem in component.get_gst_element():
+                    self._pipeline.add(elem)
+            else:
+                self._pipeline.add(component.get_gst_element())
 
             if isinstance(component, AggregatedSourcesComponent):
                 source_bin = component
@@ -70,7 +77,18 @@ class StreamCompose(object):
 
         # link the components in the chain
         for idx in range(first_filter_index, len(components) - 1):
-            link_succeeded = components[idx].get_gst_element().link(components[idx + 1].get_gst_element())
+
+            if isinstance(components[idx].get_gst_element(), tuple):
+                connect_component_prev = components[idx].get_gst_element()[-1]
+            else:
+                connect_component_prev = components[idx].get_gst_element()
+
+            if isinstance(components[idx + 1].get_gst_element(), tuple):
+                connect_component_next = components[idx].get_gst_element()[0]
+            else:
+                connect_component_next = components[idx].get_gst_element()
+
+            link_succeeded = connect_component_prev.link(connect_component_next)
 
             if not link_succeeded:
                 logger.error(f"Linking of {components[idx].get_name()} and "
