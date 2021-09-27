@@ -1,5 +1,6 @@
 from abc import ABCMeta, abstractmethod
-from typing import Any, Callable
+from typing import Any, Callable, Tuple, Union
+from gi.repository import Gst
 
 
 class StreamComponent(metaclass=ABCMeta):
@@ -13,7 +14,7 @@ class StreamComponent(metaclass=ABCMeta):
         raise NotImplementedError(f"Subclass {self.__class__.__name__} must implement `initialize`")
 
     @abstractmethod
-    def get_gst_element(self):
+    def get_gst_element(self) -> Union[Gst.Element, Tuple[Gst.Element]]:
         raise NotImplementedError(f"Subclass {self.__class__.__name__} must implement `initialize`")
 
 
