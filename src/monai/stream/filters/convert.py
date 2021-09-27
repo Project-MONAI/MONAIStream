@@ -73,6 +73,3 @@ class NVVideoConvert(StreamFilterComponent):
 
     def get_gst_element(self):
         return (self._nvvidconv, self._filter)
-
-    def get_gst_filter(self):
-        return self._filter
