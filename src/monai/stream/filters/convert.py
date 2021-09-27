@@ -10,9 +10,9 @@ from stream.interface import StreamFilterComponent
 logger = logging.getLogger(__name__)
 
 
-class FilterCapabilities(BaseModel):
+class FilterProperties(BaseModel):
     memory: Literal["(memory:NVMM)", "-yuv", "(ANY)"] = "(memory:NVMM)"
-    format: Optional[Literal["RGBA", "ARGB", "RGB", "BGR"]]
+    format: Optional[Literal["RGBA", "ARGB", "RGB", "BGR"]] = "RGBA"
     width: Optional[conint(ge=2, le=15360)]
     height: Optional[conint(ge=2, le=15360)]
     channels: Optional[conint(ge=1, le=1023)]
@@ -41,12 +41,12 @@ class FilterCapabilities(BaseModel):
 
 class NVVideoConvert(StreamFilterComponent):
 
-    def __init__(self, caps: FilterCapabilities, name: str = None) -> None:
+    def __init__(self, filter: FilterProperties, name: str = None) -> None:
         if not name:
             name = str(uuid4().hex)
 
         self._name = name
-        self.caps = caps
+        self._filter = filter
 
     def initialize(self):
         nvvidconv = Gst.ElementFactory.make("nvvideoconvert", self.get_name())
@@ -55,7 +55,7 @@ class NVVideoConvert(StreamFilterComponent):
 
         self._nvvidconv = nvvidconv
 
-        caps = Gst.Caps.from_string(self.caps.to_str())
+        caps = Gst.Caps.from_string(self._filter.to_str())
         filter = Gst.ElementFactory.make("capsfilter", f"{self._name}-filter")
         if not filter:
             raise BinCreationError(f"Unable to get the caps for {self.__class__._name} {self.get_name()}")

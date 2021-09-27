@@ -2,8 +2,10 @@ import torch
 # from monai.transforms.compose import Compose
 # from monai.transforms.intensity.array import NormalizeIntensity
 from stream.compose import StreamCompose
-from stream.filters import (NVInferServer, NVRGBAFilter, NVStreamMux,
-                            NVVideoConvert)
+from stream.filters import (NVInferServer,
+                            NVStreamMux,
+                            NVVideoConvert,
+                            FilterProperties)
 from stream.filters.transform import TransformChainComponent
 from stream.sinks import NVEglGlesSink
 from stream.sources import NVAggregatedSourcesBin, URISource
@@ -34,8 +36,13 @@ if __name__ == "__main__":
             width=1260,
             height=1024,
         ),
-        NVVideoConvert(),
-        NVRGBAFilter(),
+        NVVideoConvert(
+            FilterProperties(
+                format="RGBA",
+                width=1264,
+                height=1024,
+            )
+        ),
         pre_transforms,
         # NVInferServer(
         #     config=inferServerConfig,
