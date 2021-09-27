@@ -13,6 +13,10 @@ from torch.utils.dlpack import from_dlpack, to_dlpack
 logger = logging.getLogger(__name__)
 
 
+DEFAULT_WIDTH = 320
+DEFAULT_HEIGHT = 240
+
+
 class TransformChainComponent(StreamFilterComponent):
 
     def __init__(self, transform_chain: Callable, name: str = None) -> None:
@@ -49,6 +53,19 @@ class TransformChainComponent(StreamFilterComponent):
 
         batch_meta = pyds.gst_buffer_get_nvds_batch_meta(hash(inbuf))
         frame_list = batch_meta.frame_meta_list
+
+        caps = pad.get_current_caps()
+        if not caps:
+            caps = pad.get_allowed_caps()
+
+        caps_struct = caps.get_structure(0)
+        success, image_width = caps_struct.get_int('width')
+        if not success:
+            image_width = DEFAULT_WIDTH
+
+        success, image_height = caps_struct.get_int('height')
+        if not success:
+            image_height = DEFAULT_HEIGHT
 
         while frame_list is not None:
 
@@ -99,12 +116,12 @@ class TransformChainComponent(StreamFilterComponent):
                     layer = pyds.get_nvds_LayerInfo(user_meta_data, layer_idx)
                     udata_unownedmem = cupy.cuda.UnownedMemory(
                         ctypes.pythonapi.PyCapsule_GetPointer(layer.buffer, None),
-                        ctypes.sizeof(ctypes.c_float) * VIDEO_WIDTH * VIDEO_HEIGHT,
+                        ctypes.sizeof(ctypes.c_float) * image_width * image_height,
                         owner
                     )
                     udata_memptr = cupy.cuda.MemoryPointer(udata_unownedmem, 0)
                     udata_memptr_cupy = cupy.ndarray(
-                        shape=(VIDEO_HEIGHT, VIDEO_WIDTH),
+                        shape=(image_height, image_width),
                         dtype=ctypes.c_float,
                         memptr=udata_memptr
                     )
