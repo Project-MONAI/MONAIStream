@@ -84,9 +84,9 @@ class StreamCompose(object):
                 connect_component_prev = components[idx].get_gst_element()
 
             if isinstance(components[idx + 1].get_gst_element(), tuple):
-                connect_component_next = components[idx].get_gst_element()[0]
+                connect_component_next = components[idx + 1].get_gst_element()[0]
             else:
-                connect_component_next = components[idx].get_gst_element()
+                connect_component_next = components[idx + 1].get_gst_element()
 
             link_succeeded = connect_component_prev.link(connect_component_next)
 

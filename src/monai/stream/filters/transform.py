@@ -31,7 +31,7 @@ class TransformChainComponent(StreamFilterComponent):
             raise BinCreationError(f"Unable to create {self.__class__.__name__} {self.get_name()}")
 
         self._ucbt = ucbt
-        transform_srcpad = self._ucbt.queue2.get_static_pad("src")
+        transform_srcpad = self._ucbt.get_static_pad("src")
         if not transform_srcpad:
             logger.error(f"Unable to obtain a source pad for element {self.__class__.__name__} {self.get_name()}")
             exit(1)
