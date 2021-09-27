@@ -17,7 +17,7 @@ if __name__ == "__main__":
         logging.info(f"Original data: {orig.size()}")
         for d in data:
             logging.info(f"Additional data: {d.size()}")
-        return torch.inverse(orig)
+        return 255 - orig
 
     pre_transforms = TransformChainComponent(
         transform_chain=my_callback,

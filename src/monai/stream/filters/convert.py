@@ -64,10 +64,6 @@ class NVVideoConvert(StreamFilterComponent):
 
         self._filter = filter
 
-        is_linked = self._nvvidconv.link(self._filter)
-        if not is_linked:
-            logger.error("Failed to set filter properties")
-            exit(1)
 
     def get_name(self):
         return f"{self._name}-nvvideoconvert"

@@ -78,8 +78,11 @@ class StreamCompose(object):
         # link the components in the chain
         for idx in range(first_filter_index, len(components) - 1):
 
+            elems = ()
+
             if isinstance(components[idx].get_gst_element(), tuple):
-                connect_component_prev = components[idx].get_gst_element()[-1]
+                elems = components[idx].get_gst_element()
+                connect_component_prev = elems[-1]
             else:
                 connect_component_prev = components[idx].get_gst_element()
 
@@ -88,11 +91,18 @@ class StreamCompose(object):
             else:
                 connect_component_next = components[idx + 1].get_gst_element()
 
+            # link subelements of element (e.g. converters and capsfilters in NVVideoConvert components)
+            for subidx in range(len(elems) - 1):
+                link_succeeded = elems[subidx].link(elems[subidx + 1])
+                if not link_succeeded:
+                    logger.error(f"Creation of {components[idx].get_name()} failed")
+                    exit(1)
+
             link_succeeded = connect_component_prev.link(connect_component_next)
 
             if not link_succeeded:
                 logger.error(f"Linking of {components[idx].get_name()} and "
-                             f"{components[idx + 1].get_name()} failed: {link_succeeded}")
+                             f"{components[idx + 1].get_name()} failed")
                 exit(1)
 
     def bus_call(self, bus, message, loop):

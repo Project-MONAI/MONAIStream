@@ -94,6 +94,7 @@ class TransformChainComponent(StreamFilterComponent):
             )
             input_torch_tensor = from_dlpack(input_cupy_array.toDlpack())
 
+            user_data_tensor_layers = []
             while frame_meta.frame_user_meta_list is not None:
 
                 try:
@@ -108,8 +109,6 @@ class TransformChainComponent(StreamFilterComponent):
                     continue
 
                 user_meta_data = pyds.NvDsInferTensorMeta.cast(user_meta.user_meta_data)
-
-                user_data_tensor_layers = []
 
                 for layer_idx in range(user_meta_data.num_output_layers):
 
