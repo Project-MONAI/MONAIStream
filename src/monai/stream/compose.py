@@ -2,12 +2,13 @@ import logging
 from typing import Callable, Sequence
 
 from gi.repository import GObject, Gst
+from numpy import isin
 
 from stream.errors import StreamComposeCreationError
 from stream.filters.nvstreammux import NVStreamMux
 from stream.interface import (AggregatedSourcesComponent,
                               InferenceFilterComponent, MultiplexerComponent,
-                              StreamComponent)
+                              StreamComponent, StreamFilterComponent)
 
 logger = logging.getLogger(__name__)
 
@@ -25,12 +26,21 @@ class StreamCompose(object):
         source_bin = None
         for component_idx, component in enumerate(components):
             component.initialize()
-            self._pipeline.add(component.get_gst_element())
+
+            # some elements return tuples (e.g. `NVVideoConvert`)
+            if isinstance(component.get_gst_element(), tuple):
+                for elem in component.get_gst_element():
+                    self._pipeline.add(elem)
+            else:
+                self._pipeline.add(component.get_gst_element())
 
             if isinstance(component, AggregatedSourcesComponent):
                 source_bin = component
 
-            elif isinstance(component, MultiplexerComponent):
+            elif (
+                isinstance(components[component_idx - 1], AggregatedSourcesComponent) and
+                isinstance(component, StreamFilterComponent)
+            ):
 
                 first_filter_index = component_idx
 
@@ -42,16 +52,24 @@ class StreamCompose(object):
                 for src_idx in range(components[component_idx - 1].get_num_sources()):
 
                     # get a sinkpad for each source in the stream multiplexer
-                    sinkpad = component.get_gst_element().get_request_pad(f"sink_{src_idx}")
-                    if not sinkpad:
-                        raise StreamComposeCreationError("Unable to create sink pad bin")
+                    sinkpad = None
+                    if isinstance(component, MultiplexerComponent):
+                        sinkpad = component.get_gst_element().get_request_pad(f"sink_{src_idx}")
+                    else:
+                        sinkpad = component.get_gst_element().get_static_pad("sink")
+                        if not sinkpad:
+                            raise StreamComposeCreationError("Unable to create sink pad bin")
 
                     # get the source pad from the upstream component
                     srcpad = components[component_idx - 1].get_gst_element().get_static_pad("src")
                     if not srcpad:
                         raise StreamComposeCreationError("Unable to create src pad bin")
 
-                    srcpad.link(sinkpad)
+                    link_failed = srcpad.link(sinkpad)
+                    if link_failed:
+                        logger.error(f"Linking of {component.get_name()} and "
+                                     f"{components[component_idx - 1].get_name()} failed: {link_failed.value}")
+                        exit(1)
 
             elif isinstance(component, InferenceFilterComponent):
 
@@ -59,37 +77,69 @@ class StreamCompose(object):
 
         # link the components in the chain
         for idx in range(first_filter_index, len(components) - 1):
-            components[idx].get_gst_element().link(components[idx + 1].get_gst_element())
 
-    @staticmethod
-    def bus_call(bus, message, loop):
-        t = message.type
-        if t == Gst.MessageType.EOS:
+            if isinstance(components[idx].get_gst_element(), tuple):
+                connect_component_prev = components[idx].get_gst_element()[-1]
+            else:
+                connect_component_prev = components[idx].get_gst_element()
+
+            if isinstance(components[idx + 1].get_gst_element(), tuple):
+                connect_component_next = components[idx].get_gst_element()[0]
+            else:
+                connect_component_next = components[idx].get_gst_element()
+
+            link_succeeded = connect_component_prev.link(connect_component_next)
+
+            if not link_succeeded:
+                logger.error(f"Linking of {components[idx].get_name()} and "
+                             f"{components[idx + 1].get_name()} failed: {link_succeeded}")
+                exit(1)
+
+    def bus_call(self, bus, message, loop):
+        if message.type == Gst.MessageType.EOS:
             logger.info("[INFO] End of stream")
             loop.quit()
-        elif t == Gst.MessageType.INFO:
+        elif message.type == Gst.MessageType.INFO:
             info, debug = message.parse_info()
             logger.info("[INFO] {}: {}".format(info, debug))
-        elif t == Gst.MessageType.WARNING:
+        elif message.type == Gst.MessageType.WARNING:
             err, debug = message.parse_warning()
             logger.warn("[WARN] {}: {}".format(err, debug))
-        elif t == Gst.MessageType.ERROR:
+        elif message.type == Gst.MessageType.ERROR:
             err, debug = message.parse_error()
             logger.error("[EROR] {}: {}".format(err, debug))
             loop.quit()
+        elif message.type == Gst.MessageType.STATE_CHANGED:
+            old, new, pending = message.parse_state_changed()
+            logger.debug('State changed from %s to %s (pending=%s)',
+                         old.value_name, new.value_name, pending.value_name)
+            Gst.debug_bin_to_dot_file(
+                self._pipeline,
+                Gst.DebugGraphDetails.ALL,
+                f"{self._pipeline.name}-{old.value_name}-{new.value_name}"
+            )
+        elif message.type == Gst.MessageType.STREAM_STATUS:
+            type_, owner = message.parse_stream_status()
+            logger.debug('Stream status changed to %s (owner=%s)',
+                         type_.value_name, owner.name)
+            Gst.debug_bin_to_dot_file(
+                self._pipeline,
+                Gst.DebugGraphDetails.ALL,
+                f"{self._pipeline.name}-{type_.value_name}"
+            )
+        elif message.type == Gst.MessageType.DURATION_CHANGED:
+            logger.debug('Duration changed')
         return True
 
-    def __call__(self, bus_call: Callable = None) -> None:
+    def __call__(self) -> None:
         loop = GObject.MainLoop()
         bus = self._pipeline.get_bus()
         bus.add_signal_watch()
 
-        if bus_call is None:
-            bus_call = StreamCompose.bus_call
-
-        bus.connect("message", bus_call, loop)
+        bus.connect("message", self.bus_call, loop)
 
         self._pipeline.set_state(Gst.State.PLAYING)
+
         try:
             loop.run()
         except Exception:

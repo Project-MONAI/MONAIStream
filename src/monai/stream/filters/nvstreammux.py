@@ -12,7 +12,7 @@ class NVStreamMux(MultiplexerComponent):
         num_sources: int,
         width: int,
         height: int,
-        batched_push_timeout: int = 4000000,
+        batched_push_timeout: int = None,
         name: str = None
     ) -> None:
         if not name:
@@ -33,7 +33,8 @@ class NVStreamMux(MultiplexerComponent):
         self._streammux.set_property('batch-size', self._num_sources)
         self._streammux.set_property('width', self._width)
         self._streammux.set_property('height', self._height)
-        self._streammux.set_property('batched-push-timeout', self._batched_push_timeout)
+        if self._batched_push_timeout:
+            self._streammux.set_property('batched-push-timeout', self._batched_push_timeout)
 
     def get_name(self):
         return f"{self._name}-nvvideoconvert"

@@ -5,6 +5,19 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Run DeepStream Endoscopy Demo",
+            "type": "python",
+            "request": "launch",
+            "program": "deepstream_cupy_monai_unet.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}/sample/cupy-app",
+            "args": [ "file:///app/videos/d1_im.mp4", "debug" ],
+            "env": {
+                "GST_DEBUG": "3",
+                "GST_DEBUG_DUMP_DOT_DIR": "/app/sample/cupy-app",
+            }
+        },
+        {
             "name": "Run MONAI Stream SDK Application",
             "type": "python",
             "request": "launch",
@@ -13,6 +26,9 @@
             "cwd": "${workspaceFolder}/sample/monai-stream-app",
             "env": {
                 "PYTHONPATH": "${workspaceFolder}/src/monai",
+                "GST_DEBUG": "3",
+                "GST_DEBUG_DUMP_DOT_DIR": "/app/sample/monai-stream-app",
+                "PATH": "$PATH:/opt/nvidia/deepstream/deepstream/lib"
             }
         }
     ]

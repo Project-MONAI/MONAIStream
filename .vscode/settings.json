@@ -17,7 +17,8 @@
         "--ignore=E402",
     ],
     "python.analysis.extraPaths": [
-        "./src/monai"
+        "./src/monai",
+        "/opt/nvidia/deepstream/deepstream/lib",
     ],
     "python.linting.banditEnabled": false,
 }

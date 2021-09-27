@@ -34,6 +34,9 @@ def _new_pad_handler(decodebin, decoder_src_pad, data):
 def _child_added_handler(child_proxy, obj, name, user_data):
     if name.find("decodebin") != -1:
         obj.connect("child-added", _child_added_handler, user_data)
+    elif name.find("nvv4l2decoder") != -1:
+        obj.set_property("num-extra-surfaces", 4)
+        obj.set_property('cudadec-memtype', 0)
 
 
 class NVAggregatedSourcesBin(AggregatedSourcesComponent):
