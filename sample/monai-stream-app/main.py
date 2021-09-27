@@ -1,21 +1,23 @@
+import logging
+from typing import List
+
 import torch
 # from monai.transforms.compose import Compose
 # from monai.transforms.intensity.array import NormalizeIntensity
 from stream.compose import StreamCompose
-from stream.filters import (NVInferServer,
-                            NVStreamMux,
-                            NVVideoConvert,
-                            FilterProperties)
+from stream.filters import (FilterProperties, NVInferServer, NVStreamMux,
+                            NVVideoConvert)
 from stream.filters.transform import TransformChainComponent
 from stream.sinks import NVEglGlesSink
 from stream.sources import NVAggregatedSourcesBin, URISource
 
-
 if __name__ == "__main__":
 
-    def my_callback(x: torch.Tensor):
-        print(x)
-        return torch.inverse(x)
+    def my_callback(orig: torch.Tensor, data: List[torch.Tensor]):
+        logging.info(f"Original data: {orig.size()}")
+        for d in data:
+            logging.info(f"Additional data: {d.size()}")
+        return torch.inverse(orig)
 
     pre_transforms = TransformChainComponent(
         transform_chain=my_callback,
