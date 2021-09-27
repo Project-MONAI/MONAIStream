@@ -44,7 +44,7 @@ class TransformChainComponent(StreamFilterComponent):
     def get_gst_element(self):
         return self._ucbt
 
-    def probe_callback(self, pad: Gst.PadProbeType, info: Gst.PadProbeCallback, user_data: object):
+    def probe_callback(self, pad: Gst.Pad, info: Gst.PadProbeInfo, user_data: object):
 
         inbuf = info.get_buffer()
         if not inbuf:
