@@ -134,6 +134,6 @@ class TransformChainComponent(StreamFilterComponent):
 
             user_output_cupy = cupy.fromDlpack(to_dlpack(user_output_tensor))
 
-            cupy.copyto(user_output_cupy, input_cupy_array)
+            cupy.copyto(input_cupy_array, user_output_cupy)
 
             stream.synchronize()
