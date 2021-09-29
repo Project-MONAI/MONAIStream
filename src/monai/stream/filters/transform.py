@@ -31,12 +31,12 @@ class TransformChainComponent(StreamFilterComponent):
             raise BinCreationError(f"Unable to create {self.__class__.__name__} {self.get_name()}")
 
         self._ucbt = ucbt
-        transform_srcpad = self._ucbt.get_static_pad("src")
-        if not transform_srcpad:
-            logger.error(f"Unable to obtain a source pad for element {self.__class__.__name__} {self.get_name()}")
+        transform_sinkpad = self._ucbt.get_static_pad("sink")
+        if not transform_sinkpad:
+            logger.error(f"Unable to obtain a sink pad for element {self.__class__.__name__} {self.get_name()}")
             exit(1)
 
-        transform_srcpad.add_probe(Gst.PadProbeType.BUFFER, self.probe_callback, 0)
+        transform_sinkpad.add_probe(Gst.PadProbeType.BUFFER, self.probe_callback, 0)
 
     def get_name(self):
         return f"{self._name}-usercallbacktransform"
