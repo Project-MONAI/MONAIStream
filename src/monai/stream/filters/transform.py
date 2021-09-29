@@ -137,3 +137,5 @@ class TransformChainComponent(StreamFilterComponent):
             cupy.copyto(input_cupy_array, user_output_cupy)
 
             stream.synchronize()
+
+            return Gst.PadProbeReturn.OK
