@@ -26,7 +26,7 @@ class TransformChainComponent(StreamFilterComponent):
         self._name = name
 
     def initialize(self):
-        ucbt = Gst.ElementFactory.make("queue", self.get_name())
+        ucbt = Gst.ElementFactory.make("identity", self.get_name())
         if not ucbt:
             raise BinCreationError(f"Unable to create {self.__class__.__name__} {self.get_name()}")
 
