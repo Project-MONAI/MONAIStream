@@ -126,7 +126,7 @@ class TransformChainComponent(StreamFilterComponent):
                         memptr=udata_memptr
                     )
 
-                    user_data_tensor_layers.append(cupy.fromDlpack(to_dlpack(udata_memptr_cupy)))
+                    user_data_tensor_layers.append(from_dlpack(udata_memptr_cupy.toDlpack()))
 
             stream = cupy.cuda.stream.Stream()
             stream.use()
