@@ -1,7 +1,5 @@
 from monai.transforms.compose import Compose
-from monai.transforms.intensity.dictionary import NormalizeIntensityd
-from monai.transforms import CastToTyped
-from monai.inferers.inferer import SimpleInferer
+from monai.transforms import Lambdad, Activationsd, AsDiscreted
 from stream.compose import StreamCompose
 from stream.filters import (
     FilterProperties,
@@ -12,7 +10,8 @@ from stream.filters import (
 from stream.filters.transform import TransformChainComponent
 from stream.sinks import NVEglGlesSink
 from stream.sources import NVAggregatedSourcesBin, URISource
-import numpy as np
+
+import logging
 
 if __name__ == "__main__":
 
@@ -23,32 +22,21 @@ if __name__ == "__main__":
     inferServerConfig.infer_config.backend.trt_is.model_repo.log_level = 3
 
     chain = StreamCompose([
-        NVAggregatedSourcesBin([
-            URISource(uri="file:///app/videos/d1_im.mp4"),
-        ]),
-        NVStreamMux(
-            num_sources=1,
-            width=1260,
-            height=1024,
-        ),
-        NVVideoConvert(
-            FilterProperties(
-                format="RGBA",
-                width=1264,
-                height=1024,
-            )
-        ),
-        NVInferServer(
-            config=inferServerConfig,
-        ),
+        NVAggregatedSourcesBin([URISource(uri="file:///app/videos/d1_im.mp4"), ]),
+        NVStreamMux(num_sources=1, width=1260, height=1024,),
+        NVVideoConvert(FilterProperties(format="RGBA", width=1264, height=1024,)),
+        NVInferServer(config=inferServerConfig,),
         TransformChainComponent(
             input_labels=['original_image', 'seg_output'],
             transform_chain=Compose([
-                NormalizeIntensityd(keys=['seg_output'], subtrahend=0, divisor=1),
+                Activationsd(keys=['seg_output'], sigmoid=True),
+                AsDiscreted(keys=['seg_output']),
+                Lambdad(
+                    keys=['original_image', 'seg_output'],
+                    func=lambda x, y: logging.error(f"original {x.size()}, segmentation {y.size()}")
+                ),
             ]),
         ),
-        NVEglGlesSink(
-            sync=True,
-        ),
+        NVEglGlesSink(sync=True,),
     ])
     chain()
