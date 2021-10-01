@@ -18,9 +18,9 @@ if __name__ == "__main__":
 
     inferServerConfig = NVInferServer.generate_default_config()
     inferServerConfig.infer_config.backend.trt_is.model_repo.root = "/app/models"
-    inferServerConfig.infer_config.backend.trt_is.model_name = "monai_unet_onnx"
+    inferServerConfig.infer_config.backend.trt_is.model_name = "monai_unet_trt"
     inferServerConfig.infer_config.backend.trt_is.version = "-1"
-    inferServerConfig.infer_config.backend.trt_is.model_repo.log_level = 0
+    inferServerConfig.infer_config.backend.trt_is.model_repo.log_level = 3
 
     chain = StreamCompose([
         NVAggregatedSourcesBin([
@@ -38,17 +38,15 @@ if __name__ == "__main__":
                 height=1024,
             )
         ),
+        NVInferServer(
+            config=inferServerConfig,
+        ),
         TransformChainComponent(
-            input_labels=['original_image'],
+            input_labels=['original_image', 'seg_output'],
             transform_chain=Compose([
-                CastToTyped(keys=['original_image'], dtype=np.float32),
-                NormalizeIntensityd(keys=['original_image'], subtrahend=0, divisor=4),
-                CastToTyped(keys=['original_image'], dtype=np.uint8),
+                NormalizeIntensityd(keys=['seg_output'], subtrahend=0, divisor=1),
             ]),
         ),
-        # NVInferServer(
-        #     config=inferServerConfig,
-        # ),
         NVEglGlesSink(
             sync=True,
         ),

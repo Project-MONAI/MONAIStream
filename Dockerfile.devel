@@ -30,6 +30,9 @@ RUN python -m pip install -r requirements-dev.txt && \
 
 WORKDIR /app
 
+# disable PyTorch backend
+RUN mv /opt/tritonserver/backends/pytorch /opt/tritonserver/backends/pytorch_bck
+
 ENV GST_PLUGIN_PATH=/app/plugins/gst
 ENV PATH=$PATH:/opt/nvidia/deepstream/deepstream-6.0/lib
 
