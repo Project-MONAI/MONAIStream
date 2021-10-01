@@ -1,5 +1,7 @@
 from monai.transforms.compose import Compose
 from monai.transforms import Lambdad, Activationsd, AsDiscreted
+from monai.transforms.intensity.dictionary import ScaleIntensityd
+from monai.transforms.utility.dictionary import AddChanneld, AsChannelLastd, CastToTyped, RepeatChanneld
 from stream.compose import StreamCompose
 from stream.filters import (
     FilterProperties,
@@ -11,7 +13,10 @@ from stream.filters.transform import TransformChainComponent
 from stream.sinks import NVEglGlesSink
 from stream.sources import NVAggregatedSourcesBin, URISource
 
+import numpy as np
 import logging
+
+logging.basicConfig(level=logging.DEBUG)
 
 if __name__ == "__main__":
 
@@ -19,7 +24,7 @@ if __name__ == "__main__":
     inferServerConfig.infer_config.backend.trt_is.model_repo.root = "/app/models"
     inferServerConfig.infer_config.backend.trt_is.model_name = "monai_unet_trt"
     inferServerConfig.infer_config.backend.trt_is.version = "-1"
-    inferServerConfig.infer_config.backend.trt_is.model_repo.log_level = 3
+    inferServerConfig.infer_config.backend.trt_is.model_repo.log_level = 0
 
     chain = StreamCompose([
         NVAggregatedSourcesBin([URISource(uri="file:///app/videos/d1_im.mp4"), ]),
@@ -28,15 +33,17 @@ if __name__ == "__main__":
         NVInferServer(config=inferServerConfig,),
         TransformChainComponent(
             input_labels=['original_image', 'seg_output'],
+            output_label='seg_output',
             transform_chain=Compose([
                 Activationsd(keys=['seg_output'], sigmoid=True),
                 AsDiscreted(keys=['seg_output']),
-                Lambdad(
-                    keys=['original_image', 'seg_output'],
-                    func=lambda x, y: logging.error(f"original {x.size()}, segmentation {y.size()}")
-                ),
+                AddChanneld(keys=['seg_output']),
+                RepeatChanneld(keys=['seg_output'], repeats=4),
+                AsChannelLastd(keys=['seg_output']),
+                ScaleIntensityd(keys=['seg_output'], minv=0, maxv=255),
+                CastToTyped(keys='seg_output', dtype=np.uint8),
             ]),
         ),
-        NVEglGlesSink(sync=True,),
+        NVEglGlesSink(sync=True),
     ])
     chain()
