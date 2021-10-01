@@ -19,15 +19,22 @@ DEFAULT_HEIGHT = 240
 
 class TransformChainComponent(StreamFilterComponent):
 
-    def __init__(self, transform_chain: Callable, input_labels: List[str] = [], name: str = None) -> None:
+    def __init__(
+        self,
+        transform_chain: Callable,
+        input_labels: List[str] = [],
+        output_label: str = "",
+        name: str = None
+    ) -> None:
         self._user_callback = transform_chain
         if not name:
             name = str(uuid4().hex)
         self._name = name
         self._input_labels = input_labels
+        self._output_label = output_label
 
     def initialize(self):
-        ucbt = Gst.ElementFactory.make("identity", self.get_name())
+        ucbt = Gst.ElementFactory.make("queue", self.get_name())
         if not ucbt:
             raise BinCreationError(f"Unable to create {self.__class__.__name__} {self.get_name()}")
 
@@ -49,7 +56,7 @@ class TransformChainComponent(StreamFilterComponent):
 
         inbuf = info.get_buffer()
         if not inbuf:
-            print("Unable to get GstBuffer ")
+            logger.error("Unable to get GstBuffer ")
             return
 
         batch_meta = pyds.gst_buffer_get_nvds_batch_meta(hash(inbuf))
@@ -96,7 +103,8 @@ class TransformChainComponent(StreamFilterComponent):
             input_torch_tensor = from_dlpack(input_cupy_array.toDlpack())
 
             user_data_tensor_layers = []
-            while frame_meta.frame_user_meta_list is not None:
+            user_meta_list = frame_meta.frame_user_meta_list
+            while user_meta_list is not None:
 
                 try:
                     user_meta = pyds.NvDsUserMeta.cast(frame_meta.frame_user_meta_list.data)
@@ -110,6 +118,8 @@ class TransformChainComponent(StreamFilterComponent):
                     continue
 
                 user_meta_data = pyds.NvDsInferTensorMeta.cast(user_meta.user_meta_data)
+
+                logger.debug(f"# output layers: {user_meta_data.num_output_layers}")
 
                 for layer_idx in range(user_meta_data.num_output_layers):
 
@@ -127,6 +137,10 @@ class TransformChainComponent(StreamFilterComponent):
                     )
 
                     user_data_tensor_layers.append(from_dlpack(udata_memptr_cupy.toDlpack()))
+                    # logger.debug(f"Adding user data, size: {user_data_tensor_layers[-1].size()}")
+                    # logger.debug(f"Size of user data: {len(user_data_tensor_layers)}")
+
+                break
 
             stream = cupy.cuda.stream.Stream()
             stream.use()
@@ -138,7 +152,10 @@ class TransformChainComponent(StreamFilterComponent):
             else:
                 user_input_data = [input_torch_tensor, *user_data_tensor_layers]
 
-            user_output_tensor = list(self._user_callback(user_input_data).values())[0]
+            if not self._output_label:
+                user_output_tensor = list(self._user_callback(user_input_data).values())[0]
+            else:
+                user_output_tensor = self._user_callback(user_input_data)[self._output_label]
 
             user_output_cupy = cupy.fromDlpack(to_dlpack(user_output_tensor))
 
