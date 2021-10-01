@@ -1,6 +1,6 @@
 import ctypes
 import logging
-from typing import Callable
+from typing import Callable, List
 from uuid import uuid4
 
 import cupy
@@ -19,11 +19,12 @@ DEFAULT_HEIGHT = 240
 
 class TransformChainComponent(StreamFilterComponent):
 
-    def __init__(self, transform_chain: Callable, name: str = None) -> None:
+    def __init__(self, transform_chain: Callable, input_labels: List[str] = [], name: str = None) -> None:
         self._user_callback = transform_chain
         if not name:
             name = str(uuid4().hex)
         self._name = name
+        self._input_labels = input_labels
 
     def initialize(self):
         ucbt = Gst.ElementFactory.make("identity", self.get_name())
@@ -130,7 +131,14 @@ class TransformChainComponent(StreamFilterComponent):
             stream = cupy.cuda.stream.Stream()
             stream.use()
 
-            user_output_tensor = self._user_callback(input_torch_tensor, user_data_tensor_layers)
+            if self._input_labels:
+                user_input_data = {label: data
+                                   for label, data
+                                   in zip(self._input_labels, [input_torch_tensor, *user_data_tensor_layers])}
+            else:
+                user_input_data = [input_torch_tensor, *user_data_tensor_layers]
+
+            user_output_tensor = list(self._user_callback(user_input_data).values())[0]
 
             user_output_cupy = cupy.fromDlpack(to_dlpack(user_output_tensor))
 

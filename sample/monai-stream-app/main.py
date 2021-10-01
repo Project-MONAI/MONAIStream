@@ -1,33 +1,26 @@
-import logging
-from typing import List
-
-import torch
-# from monai.transforms.compose import Compose
-# from monai.transforms.intensity.array import NormalizeIntensity
+from monai.transforms.compose import Compose
+from monai.transforms.intensity.dictionary import NormalizeIntensityd
+from monai.transforms import CastToTyped
+from monai.inferers.inferer import SimpleInferer
 from stream.compose import StreamCompose
-from stream.filters import (FilterProperties, NVInferServer, NVStreamMux,
-                            NVVideoConvert)
+from stream.filters import (
+    FilterProperties,
+    NVInferServer,
+    NVStreamMux,
+    NVVideoConvert
+)
 from stream.filters.transform import TransformChainComponent
 from stream.sinks import NVEglGlesSink
 from stream.sources import NVAggregatedSourcesBin, URISource
+import numpy as np
 
 if __name__ == "__main__":
 
-    def my_callback(orig: torch.Tensor, data: List[torch.Tensor]):
-        logging.info(f"Original data: {orig.size()}")
-        for d in data:
-            logging.info(f"Additional data: {d.size()}")
-        return 255 - orig
-
-    pre_transforms = TransformChainComponent(
-        transform_chain=my_callback,
-    )
-
-    # inferServerConfig = NVInferServer.generate_default_config()
-    # inferServerConfig.infer_config.backend.trt_is.model_repo.root = "/app/models"
-    # inferServerConfig.infer_config.backend.trt_is.model_name = "monai_unet_trt"
-    # inferServerConfig.infer_config.backend.trt_is.version = "-1"
-    # inferServerConfig.infer_config.backend.trt_is.model_repo.log_level = 0
+    inferServerConfig = NVInferServer.generate_default_config()
+    inferServerConfig.infer_config.backend.trt_is.model_repo.root = "/app/models"
+    inferServerConfig.infer_config.backend.trt_is.model_name = "monai_unet_onnx"
+    inferServerConfig.infer_config.backend.trt_is.version = "-1"
+    inferServerConfig.infer_config.backend.trt_is.model_repo.log_level = 0
 
     chain = StreamCompose([
         NVAggregatedSourcesBin([
@@ -45,7 +38,14 @@ if __name__ == "__main__":
                 height=1024,
             )
         ),
-        pre_transforms,
+        TransformChainComponent(
+            input_labels=['original_image'],
+            transform_chain=Compose([
+                CastToTyped(keys=['original_image'], dtype=np.float32),
+                NormalizeIntensityd(keys=['original_image'], subtrahend=0, divisor=4),
+                CastToTyped(keys=['original_image'], dtype=np.uint8),
+            ]),
+        ),
         # NVInferServer(
         #     config=inferServerConfig,
         # ),
