@@ -13,10 +13,17 @@ from stream.filters.transform import TransformChainComponent
 from stream.sinks import NVEglGlesSink
 from stream.sources import NVAggregatedSourcesBin, URISource
 
+import torch
 import numpy as np
 import logging
 
 logging.basicConfig(level=logging.DEBUG)
+
+
+def color_blender(img: torch.Tensor):
+    img[..., 1] = img[..., 4] + img[..., 1] * (1 - img[..., 4])
+    return img[..., :4]
+
 
 if __name__ == "__main__":
 
@@ -39,17 +46,15 @@ if __name__ == "__main__":
                 Activationsd(keys=['seg_output'], sigmoid=True),
                 AsDiscreted(keys=['seg_output']),
                 AddChanneld(keys=['seg_output']),
-                RepeatChanneld(keys=['seg_output'], repeats=4),
                 AsChannelLastd(keys=['seg_output']),
-                # ScaleIntensityd(keys=['seg_output'], minv=0, maxv=256),
-                CastToTyped(keys='seg_output', dtype=np.uint8),
-                # merge segmenation and original image into one
+                # merge segmentation and original image into one for viewing
                 ConcatItemsd(keys=['original_image', 'seg_output'], name='seg_overlay', dim=2),
-                Lambdad(
-                    keys=['seg_overlay'],
-                    func=lambda x: (x[..., :4] * x[..., 4:] + (x[..., :4] * (1 - x[..., 4:]) // 2))[..., :4],
-                ),
+                Lambdad(keys=['seg_overlay'], func=color_blender),
                 CastToTyped(keys='seg_overlay', dtype=np.uint8),
+                # to view segmentation map alone
+                RepeatChanneld(keys=['seg_output'], repeats=4),
+                ScaleIntensityd(keys=['seg_output'], minv=0, maxv=256),
+                CastToTyped(keys='seg_output', dtype=np.uint8),
             ]),
         ),
         NVEglGlesSink(sync=True),
