@@ -2,16 +2,16 @@ from monai.transforms.compose import Compose
 from monai.transforms import Lambdad, Activationsd, AsDiscreted
 from monai.transforms.intensity.dictionary import ScaleIntensityd
 from monai.transforms.utility.dictionary import AddChanneld, AsChannelLastd, CastToTyped, ConcatItemsd, RepeatChanneld
-from stream.compose import StreamCompose
-from stream.filters import (
+from monaistream.compose import StreamCompose
+from monaistream.filters import (
     FilterProperties,
     NVInferServer,
     NVStreamMux,
     NVVideoConvert
 )
-from stream.filters.transform import TransformChainComponent
-from stream.sinks import NVEglGlesSink
-from stream.sources import NVAggregatedSourcesBin, URISource
+from monaistream.filters.transform import TransformChainComponent
+from monaistream.sinks import NVEglGlesSink
+from monaistream.sources import NVAggregatedSourcesBin, URISource
 
 import torch
 import numpy as np

@@ -3,6 +3,7 @@ pep8-naming
 pycodestyle
 pyflakes
 black
+flake8
 isort
 pytype>=2020.6.1; platform_system != "Windows"
 types-pkg_resources
