@@ -9,3 +9,6 @@ from gi.repository import GObject, Gst
 
 Gst.init(None)
 GObject.threads_init()
+
+from . import _version
+__version__ = _version.get_versions()['version']
