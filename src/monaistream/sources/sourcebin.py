@@ -18,7 +18,7 @@ def _new_pad_handler(decodebin, decoder_src_pad, data):
 
     # Need to check if the pad created by the decodebin is for video and not
     # audio.
-    if (gstname.find("video") != -1):
+    if gstname.find("video") != -1:
         # Link the decodebin pad only if decodebin has picked nvidia
         # decoder plugin nvdec_*. We do this by checking if the pad caps contain
         # NVMM memory features.
@@ -36,16 +36,11 @@ def _child_added_handler(child_proxy, obj, name, user_data):
         obj.connect("child-added", _child_added_handler, user_data)
     elif name.find("nvv4l2decoder") != -1:
         obj.set_property("num-extra-surfaces", 4)
-        obj.set_property('cudadec-memtype', 0)
+        obj.set_property("cudadec-memtype", 0)
 
 
 class NVAggregatedSourcesBin(AggregatedSourcesComponent):
-
-    def __init__(
-        self,
-        sources: List[StreamSourceComponent],
-        name: str = None
-    ) -> None:
+    def __init__(self, sources: List[StreamSourceComponent], name: str = None) -> None:
 
         if not name:
             name = str(uuid4().hex)
@@ -59,8 +54,7 @@ class NVAggregatedSourcesBin(AggregatedSourcesComponent):
         gst_bin = Gst.Bin.new(self.get_name())
         if not gst_bin:
             raise BinCreationError(
-                f"Unable to create generic source bin {self.__class__.__name__} "
-                f"with name {self.get_name()}"
+                f"Unable to create generic source bin {self.__class__.__name__} " f"with name {self.get_name()}"
             )
 
         for source in self._sources:

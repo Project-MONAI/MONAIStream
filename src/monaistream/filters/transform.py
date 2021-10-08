@@ -18,13 +18,8 @@ DEFAULT_HEIGHT = 240
 
 
 class TransformChainComponent(StreamFilterComponent):
-
     def __init__(
-        self,
-        transform_chain: Callable,
-        input_labels: List[str] = [],
-        output_label: str = "",
-        name: str = None
+        self, transform_chain: Callable, input_labels: List[str] = [], output_label: str = "", name: str = None
     ) -> None:
         self._user_callback = transform_chain
         if not name:
@@ -67,11 +62,11 @@ class TransformChainComponent(StreamFilterComponent):
             caps = pad.get_allowed_caps()
 
         caps_struct = caps.get_structure(0)
-        success, image_width = caps_struct.get_int('width')
+        success, image_width = caps_struct.get_int("width")
         if not success:
             image_width = DEFAULT_WIDTH
 
-        success, image_height = caps_struct.get_int('height')
+        success, image_height = caps_struct.get_int("height")
         if not success:
             image_height = DEFAULT_HEIGHT
 
@@ -98,7 +93,7 @@ class TransformChainComponent(StreamFilterComponent):
                 dtype=data_type,
                 memptr=memptr,
                 strides=strides,
-                order='C',
+                order="C",
             )
             input_torch_tensor = from_dlpack(input_cupy_array.toDlpack())
 
@@ -111,10 +106,7 @@ class TransformChainComponent(StreamFilterComponent):
                 except StopIteration:
                     break
 
-                if (
-                    user_meta.base_meta.meta_type
-                    != pyds.NvDsMetaType.NVDSINFER_TENSOR_OUTPUT_META
-                ):
+                if user_meta.base_meta.meta_type != pyds.NvDsMetaType.NVDSINFER_TENSOR_OUTPUT_META:
                     continue
 
                 user_meta_data = pyds.NvDsInferTensorMeta.cast(user_meta.user_meta_data)
@@ -127,13 +119,11 @@ class TransformChainComponent(StreamFilterComponent):
                     udata_unownedmem = cupy.cuda.UnownedMemory(
                         ctypes.pythonapi.PyCapsule_GetPointer(layer.buffer, None),
                         ctypes.sizeof(ctypes.c_float) * image_width * image_height,
-                        owner
+                        owner,
                     )
                     udata_memptr = cupy.cuda.MemoryPointer(udata_unownedmem, 0)
                     udata_memptr_cupy = cupy.ndarray(
-                        shape=(image_height, image_width),
-                        dtype=ctypes.c_float,
-                        memptr=udata_memptr
+                        shape=(image_height, image_width), dtype=ctypes.c_float, memptr=udata_memptr
                     )
 
                     user_data_tensor_layers.append(from_dlpack(udata_memptr_cupy.toDlpack()))
@@ -146,9 +136,10 @@ class TransformChainComponent(StreamFilterComponent):
             stream.use()
 
             if self._input_labels:
-                user_input_data = {label: data
-                                   for label, data
-                                   in zip(self._input_labels, [input_torch_tensor, *user_data_tensor_layers])}
+                user_input_data = {
+                    label: data
+                    for label, data in zip(self._input_labels, [input_torch_tensor, *user_data_tensor_layers])
+                }
             else:
                 user_input_data = [input_torch_tensor, *user_data_tensor_layers]
 

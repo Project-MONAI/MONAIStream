@@ -9,7 +9,6 @@ logger = logging.getLogger(__name__)
 
 
 class URISource(StreamSourceComponent):
-
     def __init__(self, uri: str, name: str = None) -> None:
 
         if not name:
@@ -25,7 +24,8 @@ class URISource(StreamSourceComponent):
         uri_decode_bin = Gst.ElementFactory.make("uridecodebin", uri_decode_bin_name)
         if not uri_decode_bin:
             raise BinCreationError(
-                f"Unable to create source {self.__class__.__name__} with name {uri_decode_bin} for URI {self._uri}")
+                f"Unable to create source {self.__class__.__name__} with name {uri_decode_bin} for URI {self._uri}"
+            )
 
         uri_decode_bin.set_property("uri", self._uri)
 

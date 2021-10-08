@@ -6,7 +6,6 @@ from stream.interface import StreamSinkComponent
 
 
 class NVEglGlesSink(StreamSinkComponent):
-
     def __init__(self, name: str = None, sync: bool = False) -> None:
         if not name:
             name = str(uuid4().hex)
@@ -14,7 +13,7 @@ class NVEglGlesSink(StreamSinkComponent):
         self._sync = sync
 
     def initialize(self):
-        eglsink = Gst.ElementFactory.make('nveglglessink', self.get_name())
+        eglsink = Gst.ElementFactory.make("nveglglessink", self.get_name())
         if not eglsink:
             raise BinCreationError(f"Unable to create {self.__class__.__name__} {self.get_name()}")
 

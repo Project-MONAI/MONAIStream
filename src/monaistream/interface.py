@@ -4,7 +4,6 @@ from gi.repository import Gst
 
 
 class StreamComponent(metaclass=ABCMeta):
-
     @abstractmethod
     def get_name(self):
         raise NotImplementedError(f"Subclass {self.__class__.__name__} must implement `get_name`")
@@ -19,14 +18,12 @@ class StreamComponent(metaclass=ABCMeta):
 
 
 class StreamSourceComponent(StreamComponent):
-
     @abstractmethod
     def is_live(self):
         raise NotImplementedError(f"Subclass {self.__class__.__name__} must implement `is_live`")
 
 
 class AggregatedSourcesComponent(StreamSourceComponent):
-
     @abstractmethod
     def get_num_sources(self):
         pass
@@ -38,7 +35,6 @@ class StreamFilterComponent(StreamComponent):
 
 
 class InferenceFilterComponent(StreamFilterComponent):
-
     def get_config(self) -> Any:
         raise NotImplementedError(f"Subclass {self.__class__.__name__} must implement `get_config`")
 
@@ -51,6 +47,5 @@ class MultiplexerComponent(StreamFilterComponent):
 
 
 class StreamSinkComponent(StreamComponent):
-
     def register_probe(self, callback: Callable[[Any, Any], None]):
         self._probe_callback = callback

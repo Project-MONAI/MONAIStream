@@ -15,11 +15,9 @@ from torch.utils.dlpack import from_dlpack, to_dlpack
 class NVInferenceMetaToTensor(StreamSinkComponent):
     # TODO: can this be made more configurable so we can get the data from any previous StreamComponent?
 
-    def __init__(self,
-                 shape: List[int],
-                 element_type: Any = ctypes.c_float,
-                 synchronize: bool = True,
-                 name: str = None) -> None:
+    def __init__(
+        self, shape: List[int], element_type: Any = ctypes.c_float, synchronize: bool = True, name: str = None
+    ) -> None:
         if not name:
             name = str(uuid4().hex)
         self._name = name
@@ -69,10 +67,7 @@ class NVInferenceMetaToTensor(StreamSinkComponent):
                 except StopIteration:
                     break
 
-                if (
-                    user_meta.base_meta.meta_type
-                    != pyds.NvDsMetaType.NVDSINFER_TENSOR_OUTPUT_META
-                ):
+                if user_meta.base_meta.meta_type != pyds.NvDsMetaType.NVDSINFER_TENSOR_OUTPUT_META:
                     continue
 
                 # get the outputs of the inference
@@ -83,15 +78,18 @@ class NVInferenceMetaToTensor(StreamSinkComponent):
                 # convert to CuPy
                 owner = None
                 data_type, shape, strides, dataptr, size = pyds.get_nvds_buf_surface_gpu(
-                    hash(gst_buffer), frame_meta.batch_id)
+                    hash(gst_buffer), frame_meta.batch_id
+                )
                 ctypes.pythonapi.PyCapsule_GetPointer.restype = ctypes.c_void_p
                 ctypes.pythonapi.PyCapsule_GetPointer.argtypes = [ctypes.py_object, ctypes.c_char_p]
                 unownedmem = cupy.cuda.UnownedMemory(ctypes.pythonapi.PyCapsule_GetPointer(dataptr, None), size, owner)
                 memptr = cupy.cuda.MemoryPointer(unownedmem, 0)
-                original_frame = cupy.ndarray(shape=shape, dtype=data_type, memptr=memptr, strides=strides, order='C')
+                original_frame = cupy.ndarray(shape=shape, dtype=data_type, memptr=memptr, strides=strides, order="C")
                 result_unownedmem = cupy.cuda.UnownedMemory(
                     ctypes.pythonapi.PyCapsule_GetPointer(output_layer.buffer, None),
-                    ctypes.sizeof(self._element_type) * reduce(lambda x, y: x * y, self._shape), owner)
+                    ctypes.sizeof(self._element_type) * reduce(lambda x, y: x * y, self._shape),
+                    owner,
+                )
                 result_memptr = cupy.cuda.MemoryPointer(result_unownedmem, 0)
                 result_cupy = cupy.ndarray(shape=tuple(self._shape), dtype=ctypes.c_float, memptr=result_memptr)
                 result_tensor = from_dlpack(toDlpack(result_cupy))
@@ -102,8 +100,9 @@ class NVInferenceMetaToTensor(StreamSinkComponent):
                 results_tensor = self._probe_callback(original_frame, result_tensor)
                 results_cupy = fromDlpack(to_dlpack(results_tensor))
 
-                original_frame = cupy.ndarray(shape=results_tensor.size(), dtype=data_type,
-                                              memptr=results_cupy.data, strides=strides, order='C')
+                original_frame = cupy.ndarray(
+                    shape=results_tensor.size(), dtype=data_type, memptr=results_cupy.data, strides=strides, order="C"
+                )
 
                 stream.synchronize()
 

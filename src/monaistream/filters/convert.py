@@ -40,7 +40,6 @@ class FilterProperties(BaseModel):
 
 
 class NVVideoConvert(StreamFilterComponent):
-
     def __init__(self, filter: FilterProperties, name: str = None) -> None:
         if not name:
             name = str(uuid4().hex)
@@ -63,7 +62,6 @@ class NVVideoConvert(StreamFilterComponent):
         filter.set_property("caps", caps)
 
         self._filter = filter
-
 
     def get_name(self):
         return f"{self._name}-nvvideoconvert"
