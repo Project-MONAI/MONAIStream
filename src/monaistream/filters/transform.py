@@ -6,8 +6,8 @@ from uuid import uuid4
 import cupy
 import pyds
 from gi.repository import Gst
-from stream.errors import BinCreationError
-from stream.interface import StreamFilterComponent
+from monaistream.errors import BinCreationError
+from monaistream.interface import StreamFilterComponent
 from torch.utils.dlpack import from_dlpack, to_dlpack
 
 logger = logging.getLogger(__name__)

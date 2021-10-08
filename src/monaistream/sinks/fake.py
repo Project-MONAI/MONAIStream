@@ -1,8 +1,8 @@
 from uuid import uuid4
 
 from gi.repository import Gst
-from stream.interface import StreamSinkComponent
-from stream.errors import BinCreationError
+from monaistream.interface import StreamSinkComponent
+from monaistream.errors import BinCreationError
 
 
 class FakeSink(StreamSinkComponent):

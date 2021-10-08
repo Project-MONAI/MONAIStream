@@ -2,8 +2,8 @@ import logging
 from uuid import uuid4
 
 from gi.repository import Gst
-from stream.errors import BinCreationError
-from stream.interface import StreamSourceComponent
+from monaistream.errors import BinCreationError
+from monaistream.interface import StreamSourceComponent
 
 logger = logging.getLogger(__name__)
 

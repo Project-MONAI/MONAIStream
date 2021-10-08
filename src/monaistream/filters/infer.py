@@ -6,8 +6,8 @@ from uuid import uuid4
 from gi.repository import Gst
 from jinja2 import Template
 from pydantic import BaseModel
-from stream.errors import BinCreationError
-from stream.interface import InferenceFilterComponent
+from monaistream.errors import BinCreationError
+from monaistream.interface import InferenceFilterComponent
 
 
 class TritonModelRepo(BaseModel):

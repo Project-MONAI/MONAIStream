@@ -7,8 +7,8 @@ import cupy
 import pyds
 from cupy.core.dlpack import fromDlpack, toDlpack
 from gi.repository import Gst
-from stream.errors import BinCreationError, StreamProbeRuntimeError
-from stream.interface import StreamSinkComponent
+from monaistream.errors import BinCreationError, StreamProbeRuntimeError
+from monaistream.interface import StreamSinkComponent
 from torch.utils.dlpack import from_dlpack, to_dlpack
 
 

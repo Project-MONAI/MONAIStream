@@ -3,8 +3,8 @@ from typing import List
 from uuid import uuid4
 
 from gi.repository import Gst
-from stream.errors import BinCreationError
-from stream.interface import AggregatedSourcesComponent, StreamSourceComponent
+from monaistream.errors import BinCreationError
+from monaistream.interface import AggregatedSourcesComponent, StreamSourceComponent
 
 logger = logging.getLogger(__name__)
 

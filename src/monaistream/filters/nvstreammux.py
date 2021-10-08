@@ -1,8 +1,8 @@
 from uuid import uuid4
 
 from gi.repository import Gst
-from stream.errors import BinCreationError
-from stream.interface import MultiplexerComponent
+from monaistream.errors import BinCreationError
+from monaistream.interface import MultiplexerComponent
 
 
 class NVStreamMux(MultiplexerComponent):
