@@ -4,11 +4,12 @@ from typing import Callable, List
 from uuid import uuid4
 
 import cupy
-import pyds
 from gi.repository import Gst
+from torch.utils.dlpack import from_dlpack, to_dlpack
+
+import pyds
 from monaistream.errors import BinCreationError
 from monaistream.interface import StreamFilterComponent
-from torch.utils.dlpack import from_dlpack, to_dlpack
 
 logger = logging.getLogger(__name__)
 

@@ -4,12 +4,13 @@ from typing import Any, List
 from uuid import uuid4
 
 import cupy
-import pyds
 from cupy.core.dlpack import fromDlpack, toDlpack
 from gi.repository import Gst
+from torch.utils.dlpack import from_dlpack, to_dlpack
+
+import pyds
 from monaistream.errors import BinCreationError, StreamProbeRuntimeError
 from monaistream.interface import StreamSinkComponent
-from torch.utils.dlpack import from_dlpack, to_dlpack
 
 
 class NVInferenceMetaToTensor(StreamSinkComponent):

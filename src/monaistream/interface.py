@@ -1,5 +1,6 @@
 from abc import ABCMeta, abstractmethod
 from typing import Any, Callable, Tuple, Union
+
 from gi.repository import Gst
 
 

@@ -2,6 +2,7 @@ import logging
 from uuid import uuid4
 
 from gi.repository import Gst
+
 from monaistream.errors import BinCreationError
 from monaistream.interface import StreamSourceComponent
 

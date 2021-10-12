@@ -7,10 +7,10 @@ import pyds
 import torch
 from torch.utils.dlpack import from_dlpack, to_dlpack
 
-gi.require_version('Gst', '1.0')
-gi.require_version('GstBase', '1.0')
-gi.require_version('GstVideo', '1.0')
-gi.require_version('GstAudio', '1.0')
+gi.require_version("Gst", "1.0")
+gi.require_version("GstBase", "1.0")
+gi.require_version("GstVideo", "1.0")
+gi.require_version("GstAudio", "1.0")
 
 from gi.repository import GObject, Gst, GstBase
 
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 # `do_transform` seems to not be used if RGBA convereter is linked
 # (NV12 format directly from uridecodebin triggers `do_transform`)
-NVMM_FORMAT = 'video/x-raw(memory:NVMM),format=RGBA,width=[320,7680],height=[240,4320]'
+NVMM_FORMAT = "video/x-raw(memory:NVMM),format=RGBA,width=[320,7680],height=[240,4320]"
 IN_CAPS = Gst.Caps.from_string(NVMM_FORMAT)
 OUT_CAPS = Gst.Caps.from_string(NVMM_FORMAT)
 
@@ -27,7 +27,10 @@ OUT_CAPS = Gst.Caps.from_string(NVMM_FORMAT)
 def get_buffer_as_cupy_matrix(inbuf: Gst.Buffer, batch_id) -> cupy.ndarray:
     owner = None
 
-    data_type, shape, strides, data_ptr, size = pyds.get_nvds_buf_surface_gpu(hash(inbuf), batch_id, )
+    data_type, shape, strides, data_ptr, size = pyds.get_nvds_buf_surface_gpu(
+        hash(inbuf),
+        batch_id,
+    )
     logger.debug(f"Type: {data_type}, Shape: {shape}, Strides: {strides}, Size: {size}")
     ctypes.pythonapi.PyCapsule_GetPointer.restype = ctypes.c_void_p
     ctypes.pythonapi.PyCapsule_GetPointer.argtypes = [ctypes.py_object, ctypes.c_char_p]
@@ -42,7 +45,7 @@ def get_buffer_as_cupy_matrix(inbuf: Gst.Buffer, batch_id) -> cupy.ndarray:
         dtype=data_type,
         memptr=memptr,
         strides=strides,
-        order='C',
+        order="C",
     )
     return cupy_array
 
@@ -66,10 +69,10 @@ def copy_tensor_to_buffer(in_tensor: torch.Tensor, outbuf: Gst.Buffer, batch_id:
 class UserCallbackTransform(GstBase.BaseTransform):
 
     __gstmetadata__ = (
-        'UserCallbackTransform',
-        'Transform',
+        "UserCallbackTransform",
+        "Transform",
         'MONAI User-defined callback function to use as transform. Usage: gst-launch-1.0 uridecodebin uri=file:///app/videos/d1_im.mp4 ! mux.sink_0 nvstreammux name=mux width=1260 height=1024 batch-size=1 ! nvvideoconvert ! "video/x-raw(memory:NVMM),format=RGBA" ! usercallbacktransform ! nveglglessink sync=True',
-        'Alvin Ihsani <aihsani at nvidia dot com>'
+        "Alvin Ihsani <aihsani at nvidia dot com>",
     )
 
     __gproperties__ = {
@@ -81,14 +84,10 @@ class UserCallbackTransform(GstBase.BaseTransform):
         ),
     }
 
-    __gsttemplates__ = (Gst.PadTemplate.new("src",
-                                            Gst.PadDirection.SRC,
-                                            Gst.PadPresence.ALWAYS,
-                                            OUT_CAPS),
-                        Gst.PadTemplate.new("sink",
-                                            Gst.PadDirection.SINK,
-                                            Gst.PadPresence.ALWAYS,
-                                            IN_CAPS))
+    __gsttemplates__ = (
+        Gst.PadTemplate.new("src", Gst.PadDirection.SRC, Gst.PadPresence.ALWAYS, OUT_CAPS),
+        Gst.PadTemplate.new("sink", Gst.PadDirection.SINK, Gst.PadPresence.ALWAYS, IN_CAPS),
+    )
 
     def __init__(self) -> None:
         super(UserCallbackTransform, self).__init__()
@@ -123,8 +122,8 @@ class UserCallbackTransform(GstBase.BaseTransform):
 
     def do_set_caps(self, incaps: Gst.Caps, outcaps: Gst.Caps) -> bool:
 
-        self._in_width, self._in_height = [incaps.get_structure(0).get_value(v) for v in ['width', 'height']]
-        self._out_width, self._out_height = [outcaps.get_structure(0).get_value(v) for v in ['width', 'height']]
+        self._in_width, self._in_height = [incaps.get_structure(0).get_value(v) for v in ["width", "height"]]
+        self._out_width, self._out_height = [outcaps.get_structure(0).get_value(v) for v in ["width", "height"]]
 
         logger.info(f"do_set_caps: ({self._in_width},{self._in_height}) -> ({self._out_width},{self._out_height})")
 
@@ -134,8 +133,8 @@ class UserCallbackTransform(GstBase.BaseTransform):
 
     def do_fixate_caps(self, direction: Gst.PadDirection, caps: Gst.Caps, othercaps: Gst.Caps) -> Gst.Caps:
         """
-            caps: initial caps
-            othercaps: target caps
+        caps: initial caps
+        othercaps: target caps
         """
         logger.info(f"do_fixate_caps: {caps} -> {othercaps}")
         if direction == Gst.PadDirection.SRC:
@@ -166,7 +165,8 @@ class UserCallbackTransform(GstBase.BaseTransform):
                 try:
                     frame_meta = pyds.NvDsFrameMeta.cast(frame_list.data)
                     logger.debug(
-                        f"Frame meta:\nFrame #: {frame_meta.frame_num}\nBatch id: {frame_meta.batch_id}\n{frame_meta}")
+                        f"Frame meta:\nFrame #: {frame_meta.frame_num}\nBatch id: {frame_meta.batch_id}\n{frame_meta}"
+                    )
                 except StopIteration:
                     break
 
@@ -175,11 +175,13 @@ class UserCallbackTransform(GstBase.BaseTransform):
 
                 inbuf_torch = get_buffer_as_tensor(inbuf, frame_meta.batch_id)
                 logger.debug(
-                    f"Converted buffer to tensor: Shape {inbuf_torch.size()}, Type: {inbuf_torch.type()}, Device: {inbuf_torch.device.type}")
+                    f"Converted buffer to tensor: Shape {inbuf_torch.size()}, Type: {inbuf_torch.type()}, Device: {inbuf_torch.device.type}"
+                )
 
                 user_output = self._callback(inbuf_torch)
                 logger.debug(
-                    f"Callback output: Shape {user_output.size()}, Type: {user_output.type()}, Device: {user_output.device.type}")
+                    f"Callback output: Shape {user_output.size()}, Type: {user_output.type()}, Device: {user_output.device.type}"
+                )
 
                 copy_tensor_to_buffer(user_output, outbuf, frame_meta.batch_id)
                 logger.debug("Copied user output to output buffer")

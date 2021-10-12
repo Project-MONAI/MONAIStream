@@ -15,16 +15,12 @@ from setuptools import find_packages, setup
 
 import versioneer
 
-
 data_files = [("logconfig", ["src/monaistream/logging.json"])]
 
 setup(
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
-    packages=(
-        find_packages() +
-        find_packages(where="./src", exclude=("utils",))
-    ),
+    packages=(find_packages() + find_packages(where="./src", exclude=("utils",))),
     zip_safe=False,
     package_data={"monailabel": ["py.typed"]},
     include_package_data=True,
