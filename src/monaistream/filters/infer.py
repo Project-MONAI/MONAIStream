@@ -1,4 +1,3 @@
-
 import json
 import os
 from typing import Any, Dict, List, Literal, Optional
@@ -7,8 +6,9 @@ from uuid import uuid4
 from gi.repository import Gst
 from jinja2 import Template
 from pydantic import BaseModel
-from stream.errors import BinCreationError
-from stream.interface import InferenceFilterComponent
+
+from monaistream.errors import BinCreationError
+from monaistream.interface import InferenceFilterComponent
 
 
 class TritonModelRepo(BaseModel):
@@ -33,8 +33,17 @@ class OutputLayer(IOLayer):
 
 class InputLayer(IOLayer):
     dims: List[int]
-    data_type: Literal["TENSOR_DT_NONE", "TENSOR_DT_FP32", "TENSOR_DT_FP16", "TENSOR_DT_INT8", "TENSOR_DT_INT16",
-                       "TENSOR_DT_INT32", "TENSOR_DT_UINT8", "TENSOR_DT_UINT16", "TENSOR_DT_UINT32"] = "TENSOR_DT_NONE"
+    data_type: Literal[
+        "TENSOR_DT_NONE",
+        "TENSOR_DT_FP32",
+        "TENSOR_DT_FP16",
+        "TENSOR_DT_INT8",
+        "TENSOR_DT_INT16",
+        "TENSOR_DT_INT32",
+        "TENSOR_DT_UINT8",
+        "TENSOR_DT_UINT16",
+        "TENSOR_DT_UINT32",
+    ] = "TENSOR_DT_NONE"
 
 
 class BackendParams(BaseModel):
@@ -49,13 +58,15 @@ class NormalizeModel(BaseModel):
 
 
 class PreprocessParams(BaseModel):
-    network_format: Literal["MEDIA_FORMAT_NONE", "IMAGE_FORMAT_RGB", "IMAGE_FORMAT_BGR",
-                            "IMAGE_FORMAT_GRAY", "IMAGE_FORMAT_RGB"] = "IMAGE_FORMAT_RGB"
+    network_format: Literal[
+        "MEDIA_FORMAT_NONE", "IMAGE_FORMAT_RGB", "IMAGE_FORMAT_BGR", "IMAGE_FORMAT_GRAY", "IMAGE_FORMAT_RGB"
+    ] = "IMAGE_FORMAT_RGB"
     tensor_order: Literal["TENSOR_ORDER_NONE", "TENSOR_ORDER_LINEAR", "TENSOR_ORDER_NHWC"] = "TENSOR_ORDER_LINEAR"
     tensor_name: Optional[str]
     maintain_aspect_ratio: Literal[0, 1] = 0
-    frame_scaling_hw: Literal["FRAME_SCALING_HW_DEFAULT", "FRAME_SCALING_HW_GPU",
-                              "FRAME_SCALING_HW_VIC"] = "FRAME_SCALING_HW_DEFAULT"
+    frame_scaling_hw: Literal[
+        "FRAME_SCALING_HW_DEFAULT", "FRAME_SCALING_HW_GPU", "FRAME_SCALING_HW_VIC"
+    ] = "FRAME_SCALING_HW_DEFAULT"
     frame_scaling_filter: int = 1
     normalize: NormalizeModel = NormalizeModel(scale_factor=0.00392156, channel_offsets=[0, 0, 0])
 
@@ -370,7 +381,9 @@ async_mode: {{ async_mode|string|lower }}
     }
     """
 
-    def __init__(self, name: str = None, config: InferServerConfiguration = None, config_path: str = "/tmp") -> None:
+    def __init__(
+        self, name: str = "", config: Optional[InferServerConfiguration] = None, config_path: str = "/tmp"
+    ) -> None:
 
         if not name:
             self._name = str(uuid4().hex)

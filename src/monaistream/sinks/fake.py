@@ -1,13 +1,13 @@
 from uuid import uuid4
 
 from gi.repository import Gst
-from stream.interface import StreamSinkComponent
-from stream.errors import BinCreationError
+
+from monaistream.errors import BinCreationError
+from monaistream.interface import StreamSinkComponent
 
 
 class FakeSink(StreamSinkComponent):
-
-    def __init__(self, name: str = None) -> None:
+    def __init__(self, name: str = "") -> None:
         if not name:
             name = str(uuid4().hex)
         self._name = name

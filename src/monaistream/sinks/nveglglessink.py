@@ -1,20 +1,20 @@
 from uuid import uuid4
 
 from gi.repository import Gst
-from stream.errors import BinCreationError
-from stream.interface import StreamSinkComponent
+
+from monaistream.errors import BinCreationError
+from monaistream.interface import StreamSinkComponent
 
 
 class NVEglGlesSink(StreamSinkComponent):
-
-    def __init__(self, name: str = None, sync: bool = False) -> None:
+    def __init__(self, name: str = "", sync: bool = False) -> None:
         if not name:
             name = str(uuid4().hex)
         self._name = name
         self._sync = sync
 
     def initialize(self):
-        eglsink = Gst.ElementFactory.make('nveglglessink', self.get_name())
+        eglsink = Gst.ElementFactory.make("nveglglessink", self.get_name())
         if not eglsink:
             raise BinCreationError(f"Unable to create {self.__class__.__name__} {self.get_name()}")
 

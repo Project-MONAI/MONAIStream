@@ -25,7 +25,7 @@
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}/sample/monai-stream-app",
             "env": {
-                "PYTHONPATH": "${workspaceFolder}/src/monai",
+                "PYTHONPATH": "${workspaceFolder}/src",
                 "GST_DEBUG": "3",
                 "GST_DEBUG_DUMP_DOT_DIR": "/app/sample/monai-stream-app",
                 "PATH": "$PATH:/opt/nvidia/deepstream/deepstream/lib"

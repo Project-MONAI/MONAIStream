@@ -1,0 +1,40 @@
+[build-system]
+requires = [
+  "wheel",
+  "setuptools",
+]
+build-backend = "setuptools.build_meta"
+
+[tool.black]
+line-length = 120
+target-version = ['py36', 'py37', 'py38']
+include = '\.pyi?$'
+exclude = '''
+(
+  /(
+    # exclude a few common directories in the root of the project
+      \.eggs
+    | \.git
+    | \.hg
+    | \.mypy_cache
+    | \.tox
+    | \.venv
+    | \.pytype
+    | _build
+    | buck-out
+    | build
+    | dist
+    | plugins
+    | pyds
+  )/
+  # also separately exclude a file named versioneer.py
+  | src/monaistream/_version.py
+  | src/monaistream/__init__.py
+  | versioneer.py
+)
+'''
+
+[tool.pytest.ini_options]
+log_cli = true
+log_cli_level = "INFO"
+log_cli_format = "[%(threadName)s] [%(levelname)s] (%(name)s:%(lineno)d) %(message)s"

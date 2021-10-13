@@ -4,19 +4,36 @@ from uuid import uuid4
 
 from gi.repository import Gst
 from pydantic import BaseModel, conint
-from stream.errors import BinCreationError
-from stream.interface import StreamFilterComponent
+from pydantic.types import ConstrainedInt
+
+from monaistream.errors import BinCreationError
+from monaistream.interface import StreamFilterComponent
 
 logger = logging.getLogger(__name__)
+
+
+class SizeConstraint(ConstrainedInt):
+    ge = 2
+    le = 15360
+
+
+class ChannelConstraint(ConstrainedInt):
+    ge = 1
+    ls = 1023
+
+
+class ConstrainedFramerate(ConstrainedInt):
+    ge = 1
+    ls = 65535
 
 
 class FilterProperties(BaseModel):
     memory: Literal["(memory:NVMM)", "-yuv", "(ANY)"] = "(memory:NVMM)"
     format: Optional[Literal["RGBA", "ARGB", "RGB", "BGR"]] = "RGBA"
-    width: Optional[conint(ge=2, le=15360)]
-    height: Optional[conint(ge=2, le=15360)]
-    channels: Optional[conint(ge=1, le=1023)]
-    framerate: Optional[conint(ge=1, le=65535)]
+    width: Optional[SizeConstraint]
+    height: Optional[SizeConstraint]
+    channels: Optional[ChannelConstraint]
+    framerate: Optional[ConstrainedFramerate]
 
     def to_str(self) -> str:
         format_str = f"video/x-raw{self.memory}"
@@ -40,8 +57,7 @@ class FilterProperties(BaseModel):
 
 
 class NVVideoConvert(StreamFilterComponent):
-
-    def __init__(self, filter: FilterProperties, name: str = None) -> None:
+    def __init__(self, filter: FilterProperties, name: str = "") -> None:
         if not name:
             name = str(uuid4().hex)
 
@@ -63,7 +79,6 @@ class NVVideoConvert(StreamFilterComponent):
         filter.set_property("caps", caps)
 
         self._filter = filter
-
 
     def get_name(self):
         return f"{self._name}-nvvideoconvert"

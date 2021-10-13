@@ -22,24 +22,26 @@
 # DEALINGS IN THE SOFTWARE.
 ################################################################################
 import sys
-sys.path.append('../')
-import cupy
+
+sys.path.append("../")
 import ctypes
-import os.path
 import os
-import cv2
-import pyds
-import cupy.cudnn
+import os.path
+
+import cupy
 import cupy.cuda.cudnn
-import numpy as np
-from common.FPS import GETFPS
-from common.bus_call import bus_call
-from common.is_aarch_64 import is_aarch64
-import math
-from ctypes import *
-from gi.repository import GObject, Gst
+import cupy.cudnn
+import cv2
 import gi
-gi.require_version('Gst', '1.0')
+import numpy as np
+from common.bus_call import bus_call
+from common.FPS import GETFPS
+from common.is_aarch_64 import is_aarch64
+from gi.repository import GObject, Gst
+
+import pyds
+
+gi.require_version("Gst", "1.0")
 
 
 fps_streams = {}
@@ -90,10 +92,7 @@ def q_src_pad_buffer_probe(pad, info, u_data):
             except StopIteration:
                 break
 
-            if (
-                    user_meta.base_meta.meta_type
-                    != pyds.NvDsMetaType.NVDSINFER_TENSOR_OUTPUT_META
-            ):
+            if user_meta.base_meta.meta_type != pyds.NvDsMetaType.NVDSINFER_TENSOR_OUTPUT_META:
                 continue
 
             tensor_meta = pyds.NvDsInferTensorMeta.cast(user_meta.user_meta_data)
@@ -108,7 +107,8 @@ def q_src_pad_buffer_probe(pad, info, u_data):
             # the input should be address of buffer and batch_id
             # Retrieve dtype, shape of the array, strides, pointer to the GPU buffer, and size of the allocated memory
             data_type, shape, strides, dataptr, size = pyds.get_nvds_buf_surface_gpu(
-                hash(gst_buffer), frame_meta.batch_id)
+                hash(gst_buffer), frame_meta.batch_id
+            )
             # dataptr is of type PyCapsule -> Use ctypes to retrieve the pointer as an int to pass into cupy
             ctypes.pythonapi.PyCapsule_GetPointer.restype = ctypes.c_void_p
             ctypes.pythonapi.PyCapsule_GetPointer.argtypes = [ctypes.py_object, ctypes.c_char_p]
@@ -118,20 +118,22 @@ def q_src_pad_buffer_probe(pad, info, u_data):
             # Create MemoryPointer object from unownedmem, at index 0
             memptr = cupy.cuda.MemoryPointer(unownedmem, 0)
             # Create cupy array to access the image data. This array is in GPU buffer
-            n_frame_gpu = cupy.ndarray(shape=shape, dtype=data_type, memptr=memptr, strides=strides, order='C')
+            n_frame_gpu = cupy.ndarray(shape=shape, dtype=data_type, memptr=memptr, strides=strides, order="C")
             # n_frame_gpu values range from 0 - 255
 
-            '''If we want to convert NvDsInferLayerInfo buffer to numpy array and use opencv,
+            """If we want to convert NvDsInferLayerInfo buffer to numpy array and use opencv,
             # from this forum https://forums.developer.nvidia.com/t/urgent-how-to-convert-deepstream-tensor-to-numpy/128601/9
             # access the seg mask as follows
             ptr = ctypes.cast(pyds.get_ptr(layer.buffer), ctypes.POINTER(ctypes.c_float))
             v = np.ctypeslib.as_array(ptr, shape=(VIDEO_HEIGHT, VIDEO_WIDTH))
-            '''
+            """
 
             # create UnownedMemory object from the segmentation mask gpu buffer
             seg_unownedmem = cupy.cuda.UnownedMemory(
                 ctypes.pythonapi.PyCapsule_GetPointer(layer.buffer, None),
-                ctypes.sizeof(ctypes.c_float) * VIDEO_WIDTH * VIDEO_HEIGHT, owner)
+                ctypes.sizeof(ctypes.c_float) * VIDEO_WIDTH * VIDEO_HEIGHT,
+                owner,
+            )
             # Create MemoryPointer object from unownedmem, at index 0
             seg_memptr = cupy.cuda.MemoryPointer(seg_unownedmem, 0)
             # Create cupy array to access the seg mask data. This array is in GPU buffer
@@ -142,7 +144,7 @@ def q_src_pad_buffer_probe(pad, info, u_data):
                 # Use cp.asnumpy to move array into CPU buffer to perform cv2 operations
                 mask_cpu = cupy.asnumpy(seg_mask_gpu)
                 # convert python array into numpy array format in the copy mode.
-                mask_numpy = np.array(mask_cpu, copy=True, order='C')
+                mask_numpy = np.array(mask_cpu, copy=True, order="C")
                 # convert the array into cv2 default color format
                 mask_numpy = cv2.cvtColor(mask_numpy, cv2.COLOR_RGBA2BGRA)
                 img_path = "{}/stream_{}/rawMask_frame_{}.jpg".format(folder_name, frame_meta.pad_index, frame_number)
@@ -154,9 +156,7 @@ def q_src_pad_buffer_probe(pad, info, u_data):
             stream = cupy.cuda.stream.Stream()
             stream.use()
             # seg_mask_activated is of range [0,1]
-            seg_mask_activated = cupy.cudnn.activation_forward(
-                                    seg_mask_gpu,
-                                    cupy.cuda.cudnn.CUDNN_ACTIVATION_SIGMOID)
+            seg_mask_activated = cupy.cudnn.activation_forward(seg_mask_gpu, cupy.cuda.cudnn.CUDNN_ACTIVATION_SIGMOID)
             # modify only the red channel to show mask
             n_frame_gpu[:, :, 0] = cupy.multiply(1.0 - seg_mask_activated, n_frame_gpu[:, :, 0])
             stream.synchronize()
@@ -185,7 +185,7 @@ def cb_newpad(decodebin, decoder_src_pad, data):
 
     # Need to check if the pad created by the decodebin is for video and not
     # audio.
-    if (gstname.find("video") != -1):
+    if gstname.find("video") != -1:
         # Link the decodebin pad only if decodebin has picked nvidia
         # decoder plugin nvdec_*. We do this by checking if the pad caps contain
         # NVMM memory features.
@@ -198,14 +198,15 @@ def cb_newpad(decodebin, decoder_src_pad, data):
             sys.stderr.write(" Error: Decodebin did not pick nvidia decoder plugin.\n")
 
 
-def decodebin_child_added(child_proxy, Object, name, user_data):
+def decodebin_child_added(child_proxy, _object, name, user_data):
     if debug_mode:
         print("Decodebin child added:", name, "\n")
     if name.find("decodebin") != -1:
-        Object.connect("child-added", decodebin_child_added, user_data)
+        _object.connect("child-added", decodebin_child_added, user_data)
     if name.find("nvv4l2decoder") != -1:
-        Object.set_property("num-extra-surfaces", 4)
-        Object.set_property('cudadec-memtype', 0)
+        _object.set_property("num-extra-surfaces", 4)
+        _object.set_property("cudadec-memtype", 0)
+
 
 def create_source_bin(index, uri):
     if debug_mode:
@@ -258,15 +259,15 @@ def main(args):
 
     global debug_mode
     debug_mode = False
-    if args[-1] == 'debug':
+    if args[-1] == "debug":
         debug_mode = True
-    elif args[-1] == 'performance':
+    elif args[-1] == "performance":
         debug_mode = False
     else:
         sys.stderr.write("Must specify debug or performance in the command line, defaulting to performance \n")
 
     global folder_name
-    folder_name = 'output_frames'
+    folder_name = "output_frames"
 
     if debug_mode:
         os.makedirs(folder_name, exist_ok=True)
@@ -330,7 +331,7 @@ def main(args):
     if not filter1:
         sys.stderr.write(" Unable to get the caps filter1 \n")
     filter1.set_property("caps", caps1)
-    if (is_aarch64()):
+    if is_aarch64():
         if debug_mode:
             print("Creating transform \n ")
         transform = Gst.ElementFactory.make("nvegltransform", "nvegl-transform")
@@ -367,22 +368,27 @@ def main(args):
     if is_live:
         if debug_mode:
             print("Atleast one of the sources is live")
-        streammux.set_property('live-source', 1)
+        streammux.set_property("live-source", 1)
 
-    streammux.set_property('width', VIDEO_WIDTH)
-    streammux.set_property('height', VIDEO_HEIGHT)
-    streammux.set_property('batch-size', number_sources)
-    streammux.set_property('buffer-pool-size', 4)
-    streammux.set_property('batched-push-timeout', MUXER_BATCH_TIMEOUT_USEC)
-    streammux.set_property('nvbuf-memory-type', 2)
+    streammux.set_property("width", VIDEO_WIDTH)
+    streammux.set_property("height", VIDEO_HEIGHT)
+    streammux.set_property("batch-size", number_sources)
+    streammux.set_property("buffer-pool-size", 4)
+    streammux.set_property("batched-push-timeout", MUXER_BATCH_TIMEOUT_USEC)
+    streammux.set_property("nvbuf-memory-type", 2)
 
-    nvvidconv1.set_property('nvbuf-memory-type', 2)
+    nvvidconv1.set_property("nvbuf-memory-type", 2)
 
     pgie.set_property("config-file-path", "configs/config_unet_pytorch_nopostprocess.txt")
     pgie_batch_size = pgie.get_property("batch-size")
-    if (pgie_batch_size != number_sources):
-        print("WARNING: Overriding infer-config batch-size", pgie_batch_size, " with number of sources ",
-              number_sources, " \n")
+    if pgie_batch_size != number_sources:
+        print(
+            "WARNING: Overriding infer-config batch-size",
+            pgie_batch_size,
+            " with number of sources ",
+            number_sources,
+            " \n",
+        )
         pgie.set_property("batch-size", number_sources)
 
     sink.set_property("sync", 0)
@@ -438,7 +444,7 @@ def main(args):
     pipeline.set_state(Gst.State.PLAYING)
     try:
         loop.run()
-    except:
+    except Exception:
         pass
 
     # cleanup
@@ -446,5 +452,5 @@ def main(args):
     pipeline.set_state(Gst.State.NULL)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main(sys.argv))

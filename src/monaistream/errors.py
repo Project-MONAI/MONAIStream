@@ -1,5 +1,3 @@
-
-
 class BinCreationError(Exception):
     pass
 

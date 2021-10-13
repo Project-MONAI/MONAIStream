@@ -1,22 +1,23 @@
 import logging
-from typing import Callable, Sequence
+from typing import Any, Sequence, Tuple, Union
 
 from gi.repository import GObject, Gst
-from numpy import isin
 
-from stream.errors import StreamComposeCreationError
-from stream.filters.nvstreammux import NVStreamMux
-from stream.interface import (AggregatedSourcesComponent,
-                              InferenceFilterComponent, MultiplexerComponent,
-                              StreamComponent, StreamFilterComponent)
+from monaistream.errors import StreamComposeCreationError
+from monaistream.filters.nvstreammux import NVStreamMux
+from monaistream.interface import (
+    AggregatedSourcesComponent,
+    InferenceFilterComponent,
+    MultiplexerComponent,
+    StreamComponent,
+    StreamFilterComponent,
+)
 
 logger = logging.getLogger(__name__)
 
 
 class StreamCompose(object):
-
-    def __init__(self,
-                 components: Sequence[StreamComponent]) -> None:
+    def __init__(self, components: Sequence[StreamComponent]) -> None:
         self._pipeline = Gst.Pipeline()
 
         # initialize and configure components
@@ -37,9 +38,8 @@ class StreamCompose(object):
             if isinstance(component, AggregatedSourcesComponent):
                 source_bin = component
 
-            elif (
-                isinstance(components[component_idx - 1], AggregatedSourcesComponent) and
-                isinstance(component, StreamFilterComponent)
+            elif isinstance(components[component_idx - 1], AggregatedSourcesComponent) and isinstance(
+                component, StreamFilterComponent
             ):
 
                 first_filter_index = component_idx
@@ -67,8 +67,10 @@ class StreamCompose(object):
 
                     link_failed = srcpad.link(sinkpad)
                     if link_failed:
-                        logger.error(f"Linking of {component.get_name()} and "
-                                     f"{components[component_idx - 1].get_name()} failed: {link_failed.value}")
+                        logger.error(
+                            f"Linking of {component.get_name()} and "
+                            f"{components[component_idx - 1].get_name()} failed: {link_failed.value}"
+                        )
                         exit(1)
 
             elif isinstance(component, InferenceFilterComponent):
@@ -78,7 +80,7 @@ class StreamCompose(object):
         # link the components in the chain
         for idx in range(first_filter_index, len(components) - 1):
 
-            elems = ()
+            elems: Union[Any, Tuple[Any]] = ()
 
             if isinstance(components[idx].get_gst_element(), tuple):
                 elems = components[idx].get_gst_element()
@@ -101,8 +103,7 @@ class StreamCompose(object):
             link_succeeded = connect_component_prev.link(connect_component_next)
 
             if not link_succeeded:
-                logger.error(f"Linking of {components[idx].get_name()} and "
-                             f"{components[idx + 1].get_name()} failed")
+                logger.error(f"Linking of {components[idx].get_name()} and " f"{components[idx + 1].get_name()} failed")
                 exit(1)
 
     def bus_call(self, bus, message, loop):
@@ -121,24 +122,18 @@ class StreamCompose(object):
             loop.quit()
         elif message.type == Gst.MessageType.STATE_CHANGED:
             old, new, pending = message.parse_state_changed()
-            logger.debug('State changed from %s to %s (pending=%s)',
-                         old.value_name, new.value_name, pending.value_name)
+            logger.debug("State changed from %s to %s (pending=%s)", old.value_name, new.value_name, pending.value_name)
             Gst.debug_bin_to_dot_file(
-                self._pipeline,
-                Gst.DebugGraphDetails.ALL,
-                f"{self._pipeline.name}-{old.value_name}-{new.value_name}"
+                self._pipeline, Gst.DebugGraphDetails.ALL, f"{self._pipeline.name}-{old.value_name}-{new.value_name}"
             )
         elif message.type == Gst.MessageType.STREAM_STATUS:
             type_, owner = message.parse_stream_status()
-            logger.debug('Stream status changed to %s (owner=%s)',
-                         type_.value_name, owner.name)
+            logger.debug("Stream status changed to %s (owner=%s)", type_.value_name, owner.name)
             Gst.debug_bin_to_dot_file(
-                self._pipeline,
-                Gst.DebugGraphDetails.ALL,
-                f"{self._pipeline.name}-{type_.value_name}"
+                self._pipeline, Gst.DebugGraphDetails.ALL, f"{self._pipeline.name}-{type_.value_name}"
             )
         elif message.type == Gst.MessageType.DURATION_CHANGED:
-            logger.debug('Duration changed')
+            logger.debug("Duration changed")
         return True
 
     def __call__(self) -> None:
