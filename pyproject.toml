@@ -31,6 +31,7 @@ exclude = '''
   )/
   # also separately exclude a file named versioneer.py
   | src/monaistream/_version.py
+  | src/monaistream/__init__.py
   | versioneer.py
 )
 '''
