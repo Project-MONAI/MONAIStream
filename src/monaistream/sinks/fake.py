@@ -7,7 +7,7 @@ from monaistream.interface import StreamSinkComponent
 
 
 class FakeSink(StreamSinkComponent):
-    def __init__(self, name: str = None) -> None:
+    def __init__(self, name: str = "") -> None:
         if not name:
             name = str(uuid4().hex)
         self._name = name

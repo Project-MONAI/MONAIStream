@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class URISource(StreamSourceComponent):
-    def __init__(self, uri: str, name: str = None) -> None:
+    def __init__(self, uri: str, name: str = "") -> None:
 
         if not name:
             name = str(uuid4().hex)

@@ -41,7 +41,7 @@ def _child_added_handler(child_proxy, obj, name, user_data):
 
 
 class NVAggregatedSourcesBin(AggregatedSourcesComponent):
-    def __init__(self, sources: List[StreamSourceComponent], name: str = None) -> None:
+    def __init__(self, sources: List[StreamSourceComponent], name: str = "") -> None:
 
         if not name:
             name = str(uuid4().hex)

@@ -7,7 +7,7 @@ from monaistream.interface import StreamSinkComponent
 
 
 class NVEglGlesSink(StreamSinkComponent):
-    def __init__(self, name: str = None, sync: bool = False) -> None:
+    def __init__(self, name: str = "", sync: bool = False) -> None:
         if not name:
             name = str(uuid4().hex)
         self._name = name

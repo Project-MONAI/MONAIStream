@@ -17,7 +17,7 @@ class NVInferenceMetaToTensor(StreamSinkComponent):
     # TODO: can this be made more configurable so we can get the data from any previous StreamComponent?
 
     def __init__(
-        self, shape: List[int], element_type: Any = ctypes.c_float, synchronize: bool = True, name: str = None
+        self, shape: List[int], element_type: Any = ctypes.c_float, synchronize: bool = True, name: str = ""
     ) -> None:
         if not name:
             name = str(uuid4().hex)

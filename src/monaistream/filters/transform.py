@@ -1,10 +1,11 @@
 import ctypes
 import logging
-from typing import Callable, List
+from typing import Callable, Dict, List, Union
 from uuid import uuid4
 
 import cupy
 from gi.repository import Gst
+from torch.functional import Tensor
 from torch.utils.dlpack import from_dlpack, to_dlpack
 
 import pyds
@@ -20,7 +21,7 @@ DEFAULT_HEIGHT = 240
 
 class TransformChainComponent(StreamFilterComponent):
     def __init__(
-        self, transform_chain: Callable, input_labels: List[str] = [], output_label: str = "", name: str = None
+        self, transform_chain: Callable, input_labels: List[str] = [], output_label: str = "", name: str = ""
     ) -> None:
         self._user_callback = transform_chain
         if not name:
@@ -135,6 +136,8 @@ class TransformChainComponent(StreamFilterComponent):
 
             stream = cupy.cuda.stream.Stream()
             stream.use()
+
+            user_input_data: Union[List[Tensor], Dict[str, Tensor]] = []
 
             if self._input_labels:
                 user_input_data = {

@@ -381,7 +381,8 @@ async_mode: {{ async_mode|string|lower }}
     }
     """
 
-    def __init__(self, name: str = None, config: InferServerConfiguration = None, config_path: str = "/tmp") -> None:
+    def __init__(
+            self, name: str = "", config: Optional[InferServerConfiguration] = None, config_path: str = "/tmp") -> None:
 
         if not name:
             self._name = str(uuid4().hex)

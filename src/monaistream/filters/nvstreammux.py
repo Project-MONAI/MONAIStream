@@ -1,3 +1,4 @@
+from typing import Optional
 from uuid import uuid4
 
 from gi.repository import Gst
@@ -8,7 +9,7 @@ from monaistream.interface import MultiplexerComponent
 
 class NVStreamMux(MultiplexerComponent):
     def __init__(
-        self, num_sources: int, width: int, height: int, batched_push_timeout: int = None, name: str = None
+        self, num_sources: int, width: int, height: int, batched_push_timeout: Optional[int] = None, name: str = ""
     ) -> None:
         if not name:
             name = str(uuid4().hex)
