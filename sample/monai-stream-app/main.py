@@ -23,11 +23,11 @@ def color_blender(img: torch.Tensor):
 
 if __name__ == "__main__":
 
-    inferServerConfig = NVInferServer.generate_default_config()
-    inferServerConfig.infer_config.backend.trt_is.model_repo.root = "/app/models"
-    inferServerConfig.infer_config.backend.trt_is.model_name = "monai_unet_trt"
-    inferServerConfig.infer_config.backend.trt_is.version = "-1"
-    inferServerConfig.infer_config.backend.trt_is.model_repo.log_level = 0
+    infer_server_config = NVInferServer.generate_default_config()
+    infer_server_config.infer_config.backend.trt_is.model_repo.root = "/app/models"
+    infer_server_config.infer_config.backend.trt_is.model_name = "monai_unet_trt"
+    infer_server_config.infer_config.backend.trt_is.version = "-1"
+    infer_server_config.infer_config.backend.trt_is.model_repo.log_level = 0
 
     chain = StreamCompose(
         [
@@ -49,7 +49,7 @@ if __name__ == "__main__":
                 )
             ),
             NVInferServer(
-                config=inferServerConfig,
+                config=infer_server_config,
             ),
             TransformChainComponent(
                 input_labels=["original_image", "seg_output"],

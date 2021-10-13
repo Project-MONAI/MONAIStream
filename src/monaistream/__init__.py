@@ -1,3 +1,4 @@
+
 import sys
 
 import gi
@@ -39,4 +40,4 @@ def print_config(file=sys.stdout):
     for k, v in output.items():
         print(f"{k} version: {v}", file=file, flush=True)
 
-    print(f"MONAILabel rev id: {__revision_id__}")
+    print(f"MONAIStream rev id: {__revision_id__}")

@@ -26,11 +26,12 @@ exclude = '''
     | buck-out
     | build
     | dist
-    | plugins/ohif
+    | plugins
+    | pyds
   )/
   # also separately exclude a file named versioneer.py
-  | monailabel/_version.py
-  | plugins/ohif
+  | src/monaistream/_version.py
+  | versioneer.py
 )
 '''
 

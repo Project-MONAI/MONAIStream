@@ -25,10 +25,8 @@ import sys
 
 sys.path.append("../")
 import ctypes
-import math
 import os
 import os.path
-from ctypes import *
 
 import cupy
 import cupy.cuda.cudnn
@@ -200,14 +198,14 @@ def cb_newpad(decodebin, decoder_src_pad, data):
             sys.stderr.write(" Error: Decodebin did not pick nvidia decoder plugin.\n")
 
 
-def decodebin_child_added(child_proxy, Object, name, user_data):
+def decodebin_child_added(child_proxy, _object, name, user_data):
     if debug_mode:
         print("Decodebin child added:", name, "\n")
     if name.find("decodebin") != -1:
-        Object.connect("child-added", decodebin_child_added, user_data)
+        _object.connect("child-added", decodebin_child_added, user_data)
     if name.find("nvv4l2decoder") != -1:
-        Object.set_property("num-extra-surfaces", 4)
-        Object.set_property("cudadec-memtype", 0)
+        _object.set_property("num-extra-surfaces", 4)
+        _object.set_property("cudadec-memtype", 0)
 
 
 def create_source_bin(index, uri):
@@ -446,7 +444,7 @@ def main(args):
     pipeline.set_state(Gst.State.PLAYING)
     try:
         loop.run()
-    except:
+    except Exception:
         pass
 
     # cleanup

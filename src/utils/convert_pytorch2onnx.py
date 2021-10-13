@@ -1,5 +1,4 @@
 import torch.onnx
-from torch import nn
 
 model_path = "model_jit.pt"  # modify with your own path to the pytorch model
 

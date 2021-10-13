@@ -22,7 +22,7 @@ setup(
     cmdclass=versioneer.get_cmdclass(),
     packages=(find_packages() + find_packages(where="./src", exclude=("utils",))),
     zip_safe=False,
-    package_data={"monailabel": ["py.typed"]},
+    package_data={"monaistream": ["py.typed"]},
     include_package_data=True,
     data_files=data_files,
 )
