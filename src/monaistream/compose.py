@@ -1,5 +1,5 @@
 import logging
-from typing import Sequence
+from typing import Any, Sequence, Tuple, Union
 
 from gi.repository import GObject, Gst
 
@@ -80,7 +80,7 @@ class StreamCompose(object):
         # link the components in the chain
         for idx in range(first_filter_index, len(components) - 1):
 
-            elems = ()
+            elems: Union[Any, Tuple[Any]] = ()
 
             if isinstance(components[idx].get_gst_element(), tuple):
                 elems = components[idx].get_gst_element()
