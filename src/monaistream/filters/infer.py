@@ -1,6 +1,7 @@
 import json
 import os
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Optional
+from typing_extensions import Literal
 from uuid import uuid4
 
 from gi.repository import Gst
