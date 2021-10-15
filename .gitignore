@@ -141,3 +141,7 @@ cython_debug/
 *.engine
 *.pt
 *.onnx
+
+#IDE
+.vscode
+.idea
