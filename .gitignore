@@ -145,3 +145,6 @@ cython_debug/
 #IDE
 .vscode
 .idea
+
+# api docs
+docs/source/apidocs
