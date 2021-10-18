@@ -1,5 +1,6 @@
 import logging
-from typing import Literal, Optional
+from typing import Optional
+from typing_extensions import Literal
 from uuid import uuid4
 
 from gi.repository import Gst

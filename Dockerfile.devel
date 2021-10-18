@@ -48,7 +48,7 @@ ENV GST_PLUGIN_PATH=/app/plugins/gst
 ENV PATH=$PATH:/opt/nvidia/deepstream/deepstream-6.0/lib
 
 WORKDIR /opt/nvidia/deepstream/deepstream-6.0/lib
-COPY ./lib/pyds-py3.8-patched.so pyds.so
+COPY ./lib/pyds-py3.8-x86.so pyds.so
 RUN python3 setup.py install
 
 ENTRYPOINT [ "bash" ]
