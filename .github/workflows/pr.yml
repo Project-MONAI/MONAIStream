@@ -74,10 +74,9 @@ jobs:
   build:
     needs: docker_build
     runs-on: ubuntu-latest
-    container:
-      image: "docker://${{ needs.docker_build.outputs.monaistream_docker_image }}"
     steps:
       - name: Clean
+        uses: "docker://${{ needs.docker_build.outputs.monaistream_docker_image }}"
         run: |
           runtests.sh --clean
       - name: ISort
