@@ -35,6 +35,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
+        with:
+          images: ${{ env.GHCR_REGISTRY }}/${{ github.repository }}
+
       - name: Check if Docker Image with Tag Exists
         id: docker_build_conditional
         run: |
@@ -43,13 +49,6 @@ jobs:
             run: echo "::set-output name=skip_docker_build::true"
           else:
             run: echo "::set-output name=skip_docker_build::false"
-
-      - name: Extract metadata (tags, labels) for Docker
-        if: steps.docker_build_conditional.outputs.skip_docker_build == 'true'
-        id: meta
-        uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
-        with:
-          images: ${{ env.GHCR_REGISTRY }}/${{ github.repository }}
 
       - name: Login to NGC Repo
         if: steps.docker_build_conditional.outputs.skip_docker_build == 'true'
