@@ -74,34 +74,33 @@ jobs:
   build:
     needs: docker_build
     runs-on: ubuntu-latest
-    container: "${{ needs.docker_build.outputs.monaistream_docker_image }}"
+    container:
+      image: "${{ needs.docker_build.outputs.monaistream_docker_image }}"
     steps:
-      # - name: Set up Python 3.8
-      #   uses: actions/setup-python@v2
-      #   with:
-      #     python-version: 3.8
-      # - name: Install dependencies
-      #   run: |
-      #     python -m pip install --upgrade pip wheel
-      #     pip install -r requirements-dev.txt
       - name: Clean
+        uses: "${{ needs.docker_build.outputs.monaistream_docker_image }}"
         run: |
-          $(pwd)/runtests.sh --clean
+          runtests.sh --clean
       - name: ISort
+        uses: "${{ needs.docker_build.outputs.monaistream_docker_image }}"
         run: |
-          $(pwd)/runtests.sh --isort
+          runtests.sh --isort
       - name: Black
+        uses: "${{ needs.docker_build.outputs.monaistream_docker_image }}"
         run: |
-          $(pwd)/runtests.sh --black
+          runtests.sh --black
       - name: Flake8
+        uses: "${{ needs.docker_build.outputs.monaistream_docker_image }}"
         run: |
-          $(pwd)/runtests.sh --flake8
+          runtests.sh --flake8
       - name: PyType
+        uses: "${{ needs.docker_build.outputs.monaistream_docker_image }}"
         run: |
-          $(pwd)/runtests.sh --pytype
+          runtests.sh --pytype
       - name: MyPy
+        uses: "${{ needs.docker_build.outputs.monaistream_docker_image }}"
         run: |
-          $(pwd)/runtests.sh --mypy
+          runtests.sh --mypy
       # - name: Unit Tests
       #   run: |
       #     $(pwd)/runtests.sh --unittests --coverage
@@ -117,32 +116,21 @@ jobs:
   packaging:
     needs: docker_build
     runs-on: ubuntu-latest
-    container: "${{ needs.docker_build.outputs.monaistream_docker_image }}"
+    container:
+      image: "${{ needs.docker_build.outputs.monaistream_docker_image }}"
     steps:
-      - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-      - name: Set up Python 3.8
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.8
       - name: cache weekly timestamp
+        uses: "${{ needs.docker_build.outputs.monaistream_docker_image }}"
         id: pip-cache
         run: |
           echo "::set-output name=datew::$(date '+%Y-%V')"
-      - name: cache for pip
-        uses: actions/cache@v2
-        id: cache
-        with:
-          path: |
-            ~/.cache/pip
-            ~/.cache/torch
-          key: ${{ runner.os }}-pip-${{ steps.pip-cache.outputs.datew }}
       - name: Install dependencies
+        uses: "${{ needs.docker_build.outputs.monaistream_docker_image }}"
         run: |
           python -m pip install --user --upgrade pip setuptools wheel twine
           python -m pip install torch>=1.8 torchvision
       - name: Test source archive and wheel file
+        uses: "${{ needs.docker_build.outputs.monaistream_docker_image }}"
         run: |
           root_dir=$PWD
           echo "$root_dir"
@@ -179,30 +167,21 @@ jobs:
   build-docs:
     needs: docker_build
     runs-on: ubuntu-latest
-    container: "${{ needs.docker_build.outputs.monaistream_docker_image }}"
+    container:
+      image: "${{ needs.docker_build.outputs.monaistream_docker_image }}"
     steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python 3.8
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.8
       - name: cache weekly timestamp
+        uses: "${{ needs.docker_build.outputs.monaistream_docker_image }}"
         id: pip-cache
         run: |
           echo "::set-output name=datew::$(date '+%Y-%V')"
-      - name: cache for pip
-        uses: actions/cache@v2
-        id: cache
-        with:
-          path: |
-            ~/.cache/pip
-            ~/.cache/torch
-          key: ${{ runner.os }}-pip-${{ steps.pip-cache.outputs.datew }}
       - name: Install dependencies
+        uses: "${{ needs.docker_build.outputs.monaistream_docker_image }}"
         run: |
           python -m pip install --upgrade pip wheel
           python -m pip install -r docs/requirements.txt
       - name: Make html
+        uses: "${{ needs.docker_build.outputs.monaistream_docker_image }}"
         run: |
           export PYTHONPATH=$(pwd)
           cd docs/
