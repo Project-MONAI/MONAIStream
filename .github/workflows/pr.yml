@@ -35,13 +35,24 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Check if Docker Image with Tag Exists
+        id: docker_build_conditional
+        run: |
+          docker manifest inspect "${monaistream_docker_image}"
+          if [ $? -eq 0 ]; then
+            run: echo "::set-output name=skip_docker_build::true"
+          else:
+            run: echo "::set-output name=skip_docker_build::false"
+
       - name: Extract metadata (tags, labels) for Docker
+        if: steps.docker_build_conditional.outputs.skip_docker_build == 'true'
         id: meta
         uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
         with:
           images: ${{ env.GHCR_REGISTRY }}/${{ github.repository }}
 
       - name: Login to NGC Repo
+        if: steps.docker_build_conditional.outputs.skip_docker_build == 'true'
         uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
         with:
           registry: ${{ env.NVCR_REGISTRY }}
@@ -49,6 +60,7 @@ jobs:
           password: ${{ secrets.NGC_TOKEN }}
 
       - name: Build and Push MONAI SDK Development Docker Image
+        if: steps.docker_build_conditional.outputs.skip_docker_build == 'true'
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
           context: .
@@ -60,7 +72,8 @@ jobs:
 
   build:
     needs: docker_build
-    runs-on: "${{ needs.docker_build.outputs.monaistream_docker_image }}"
+    runs-on: ubuntu-latest
+    container: "${{ needs.docker_build.outputs.monaistream_docker_image }}"
     steps:
       - name: Set up Python 3.8
         uses: actions/setup-python@v2
@@ -102,7 +115,8 @@ jobs:
 
   packaging:
     needs: docker_build
-    runs-on: "${{ needs.docker_build.outputs.monaistream_docker_image }}"
+    runs-on: ubuntu-latest
+    container: "${{ needs.docker_build.outputs.monaistream_docker_image }}"
     steps:
       - uses: actions/checkout@v2
         with:
@@ -163,7 +177,8 @@ jobs:
 
   build-docs:
     needs: docker_build
-    runs-on: "${{ needs.docker_build.outputs.monaistream_docker_image }}"
+    runs-on: ubuntu-latest
+    container: "${{ needs.docker_build.outputs.monaistream_docker_image }}"
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python 3.8
