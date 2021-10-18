@@ -76,42 +76,42 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clean
-        uses: ${{ needs.docker_build.outputs.monaistream_docker_image }}
+        uses: "docker://${{ needs.docker_build.outputs.monaistream_docker_image }}"
         with:
           entrypoint: bash
           args: -c "runtests.sh --clean"
       - name: ISort
-        uses: ${{ needs.docker_build.outputs.monaistream_docker_image }}
+        uses: "docker://${{ needs.docker_build.outputs.monaistream_docker_image }}"
         with:
           entrypoint: bash
           args: -c "runtests.sh --isort"
       - name: Black
-        uses: ${{ needs.docker_build.outputs.monaistream_docker_image }}
+        uses: "docker://${{ needs.docker_build.outputs.monaistream_docker_image }}"
         with:
           entrypoint: bash
           args: -c "runtests.sh --black"
       - name: Flake8
-        uses: ${{ needs.docker_build.outputs.monaistream_docker_image }}
+        uses: "docker://${{ needs.docker_build.outputs.monaistream_docker_image }}"
         with:
           entrypoint: bash
           args: -c "runtests.sh --flake8"
       - name: PyType
-        uses: ${{ needs.docker_build.outputs.monaistream_docker_image }}
+        uses: "docker://${{ needs.docker_build.outputs.monaistream_docker_image }}"
         with:
           entrypoint: bash
           args: -c "runtests.sh --pytype"
       - name: MyPy
-        uses: ${{ needs.docker_build.outputs.monaistream_docker_image }}
+        uses: "docker://${{ needs.docker_build.outputs.monaistream_docker_image }}"
         with:
           entrypoint: bash
           args: -c "runtests.sh --mypy"
       # - name: Unit Tests
-      #   uses: ${{ needs.docker_build.outputs.monaistream_docker_image }}
+      #   uses: "docker://${{ needs.docker_build.outputs.monaistream_docker_image }}"
       #   with:
       #     entrypoint: bash
       #     args: -c "runtests.sh --unittests --coverage"
       # - name: Coverage
-      #   uses: ${{ needs.docker_build.outputs.monaistream_docker_image }}
+      #   uses: "docker://${{ needs.docker_build.outputs.monaistream_docker_image }}"
       #   with:
       #     entrypoint: bash
       #     args: -c "coverage xml"
