@@ -76,14 +76,14 @@ jobs:
     runs-on: ubuntu-latest
     container: "${{ needs.docker_build.outputs.monaistream_docker_image }}"
     steps:
-      - name: Set up Python 3.8
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.8
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip wheel
-          pip install -r requirements-dev.txt
+      # - name: Set up Python 3.8
+      #   uses: actions/setup-python@v2
+      #   with:
+      #     python-version: 3.8
+      # - name: Install dependencies
+      #   run: |
+      #     python -m pip install --upgrade pip wheel
+      #     pip install -r requirements-dev.txt
       - name: Clean
         run: |
           $(pwd)/runtests.sh --clean
