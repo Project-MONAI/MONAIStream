@@ -52,7 +52,7 @@ jobs:
 
 
   build:
-    needs: [docker-build, "${{ needs.docker_build.outputs.monaistream_docker_image }}"]
+    needs: docker_build
     runs-on: "${{ needs.docker_build.outputs.monaistream_docker_image }}"
     steps:
       - name: Set up Python 3.8
@@ -94,7 +94,7 @@ jobs:
       #     file: ./coverage.xml
 
   packaging:
-    needs: [docker-build, "${{ needs.docker_build.outputs.monaistream_docker_image }}"]
+    needs: docker_build
     runs-on: "${{ needs.docker_build.outputs.monaistream_docker_image }}"
     steps:
       - uses: actions/checkout@v2
@@ -155,7 +155,7 @@ jobs:
           shell: bash
 
   build-docs:
-    needs: [docker-build, "${{ needs.docker_build.outputs.monaistream_docker_image }}"]
+    needs: docker_build
     runs-on: "${{ needs.docker_build.outputs.monaistream_docker_image }}"
     steps:
       - uses: actions/checkout@v2
