@@ -43,7 +43,7 @@ jobs:
 
       - name: Check if Docker Image with Tag Exists
         run: |
-          docker manifest inspect "${monaistream_docker_image}"
+          docker manifest inspect "${{ steps.meta.outputs.tags }}"
           if [ $? -eq 0 ]
           then
             echo "::set-env name=skip_docker_build::true"
