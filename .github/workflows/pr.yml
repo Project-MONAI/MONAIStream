@@ -179,7 +179,7 @@ jobs:
           # move packages to a temp dir
           tmp_dir=$(mktemp -d)
           cp dist/monaistream* "$tmp_dir"
-          rm -r build dist monaistream.egg-info
+          rm -r build dist
           cd "$tmp_dir"
           ls -al
 
@@ -237,7 +237,7 @@ jobs:
 
       - name: Make html
         run: |
-          export PYTHONPATH=$(pwd)
+          export PYTHONPATH=$(pwd)/src
           cd docs/
           make clean
           make html 2>&1 | tee tmp_log
