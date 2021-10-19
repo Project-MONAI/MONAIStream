@@ -205,7 +205,6 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: "${{ needs.docker_build.outputs.monaistream_docker_image }}"
-      options: "--runtime=nvidia"
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v2
@@ -239,6 +238,7 @@ jobs:
       - name: Make html
         run: |
           export PYTHONPATH=$(pwd)/src
+          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/compat/lib.real
           cd docs/
           make clean
           make html 2>&1 | tee tmp_log
