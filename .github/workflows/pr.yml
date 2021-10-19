@@ -44,7 +44,7 @@ jobs:
         id: docker_build_check
         run: |
           
-          if ! docker manifest inspect "${{ steps.meta.outputs.tags }}"; then
+          if docker manifest inspect "${{ steps.meta.outputs.tags }}"; then
             echo "::set-output name=skip_docker_build::true"
           else
             echo "::set-output name=skip_docker_build::false"
