@@ -41,19 +41,19 @@ jobs:
         with:
           images: ${{ env.GHCR_REGISTRY }}/${{ github.repository }}
 
-      # - name: Check if Docker Image with Tag Exists
-      #   id: docker_build_check
-      #   run: |
-      #     docker manifest inspect "${{ steps.meta.outputs.tags }}"
-      #     if [ $? -eq 0 ]
-      #     then
-      #       echo "::set-output name=skip_docker_build::true"
-      #     else
-      #       echo "::set-output name=skip_docker_build::false"
-      #     fi
+      - name: Check if Docker Image with Tag Exists
+        id: docker_build_check
+        run: |
+          docker manifest inspect "${{ steps.meta.outputs.tags }}"
+          if [ $? -eq 0 ]
+          then
+            echo "::set-output name=skip_docker_build::true"
+          else
+            echo "::set-output name=skip_docker_build::false"
+          fi
 
       - name: Login to NGC Repo
-        # if: steps.docker_build_check.outputs.skip_docker_build == 'false'
+        if: steps.docker_build_check.outputs.skip_docker_build == 'false'
         uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
         with:
           registry: ${{ env.NVCR_REGISTRY }}
@@ -61,7 +61,7 @@ jobs:
           password: ${{ secrets.NGC_TOKEN }}
 
       - name: Build and Push MONAI SDK Development Docker Image
-        # if: steps.docker_build_check.outputs.skip_docker_build == 'false'
+        if: steps.docker_build_check.outputs.skip_docker_build == 'false'
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
           context: .
@@ -76,12 +76,11 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: "docker://${{ needs.docker_build.outputs.monaistream_docker_image }}"
-      # options: "--entrypoint '/bin/bash'"
+      options: "--entrypoint '/bin/bash'"
     steps:
       - name: Debug
         run: |
-          pwd
-          ls -lart
+          docker run --rm "${{ needs.docker_build.outputs.monaistream_docker_image }}" ls
       - name: Clean
         run: |
           runtests.sh --clean
