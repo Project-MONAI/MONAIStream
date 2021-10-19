@@ -39,8 +39,6 @@ RUN python -m pip install -r requirements-dev.txt && \
     python -m pip install monai && \
     rm requirements*.txt
 
-WORKDIR /app
-
 # disable PyTorch backend
 RUN mv /opt/tritonserver/backends/pytorch /opt/tritonserver/backends/pytorch_bck
 
@@ -51,4 +49,6 @@ WORKDIR /opt/nvidia/deepstream/deepstream-6.0/lib
 COPY ./lib/pyds-py3.8-x86.so pyds.so
 RUN python3 setup.py install
 
-ENTRYPOINT [ "bash" ]
+WORKDIR /app
+
+ENTRYPOINT [ "/bin/bash" ]

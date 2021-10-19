@@ -78,6 +78,10 @@ jobs:
       image: "docker://${{ needs.docker_build.outputs.monaistream_docker_image }}"
       options: "--rm -it --entrypoint /bin/bash --workdir /app"
     steps:
+      - name: Debug
+        run: |
+          pwd
+          ls -lart
       - name: Clean
         run: |
           runtests.sh --clean
