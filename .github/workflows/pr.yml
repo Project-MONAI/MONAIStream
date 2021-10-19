@@ -43,9 +43,8 @@ jobs:
       - name: Check if Docker Image with Tag Exists
         id: docker_build_check
         run: |
-          docker manifest inspect "${{ steps.meta.outputs.tags }}"
-          if [ $? -eq 0 ]
-          then
+          
+          if ! docker manifest inspect "${{ steps.meta.outputs.tags }}"; then
             echo "::set-output name=skip_docker_build::true"
           else
             echo "::set-output name=skip_docker_build::false"
