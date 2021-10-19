@@ -76,13 +76,11 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: "docker://${{ needs.docker_build.outputs.monaistream_docker_image }}"
-      options: "--entrypoint '/bin/bash'"
+      options: "--workdir /app"
     steps:
-      - name: Debug
-        run: |
-          docker run --rm "${{ needs.docker_build.outputs.monaistream_docker_image }}" ls
       - name: Clean
         run: |
+          cd /app
           runtests.sh --clean
       - name: ISort
         run: |
