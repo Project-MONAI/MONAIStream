@@ -76,7 +76,7 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: "docker://${{ needs.docker_build.outputs.monaistream_docker_image }}"
-      options: "--rm --entrypoint /bin/bash --workdir /app"
+      options: "--rm -it --entrypoint /bin/bash --workdir /app"
     steps:
       - name: Clean
         run: |
