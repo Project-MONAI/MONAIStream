@@ -33,11 +33,11 @@ RUN apt update && \
     pip3 install --upgrade opencv-python && \
     pip3 install cupy-cuda111==8.6.0
 
-COPY requirements.txt .
-COPY requirements-dev.txt .
-RUN python -m pip install -r requirements-dev.txt && \
-    python -m pip install monai && \
-    rm requirements*.txt
+# COPY requirements.txt .
+# COPY requirements-dev.txt .
+# RUN python -m pip install -r requirements-dev.txt && \
+#     python -m pip install monai && \
+#     rm requirements*.txt
 
 # disable PyTorch backend
 RUN mv /opt/tritonserver/backends/pytorch /opt/tritonserver/backends/pytorch_bck
@@ -45,10 +45,11 @@ RUN mv /opt/tritonserver/backends/pytorch /opt/tritonserver/backends/pytorch_bck
 ENV GST_PLUGIN_PATH=/app/plugins/gst
 ENV PATH=$PATH:/opt/nvidia/deepstream/deepstream-6.0/lib
 
-WORKDIR /opt/nvidia/deepstream/deepstream-6.0/lib
-COPY ./lib/pyds-py3.8-x86.so pyds.so
-RUN python3 setup.py install
+# WORKDIR /opt/nvidia/deepstream/deepstream-6.0/lib
+# COPY ./lib/pyds-py3.8-x86.so pyds.so
+# RUN python3 setup.py install
 
 WORKDIR /app
 
-# ENTRYPOINT [ "/bin/bash" ]
+ENTRYPOINT tail -f /dev/null
+CMD [ "/bin/bash" ]
