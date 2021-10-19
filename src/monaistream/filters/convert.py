@@ -3,7 +3,7 @@ from typing import Optional
 from uuid import uuid4
 
 from gi.repository import Gst
-from pydantic import BaseModel, conint
+from pydantic import BaseModel
 from pydantic.types import ConstrainedInt
 from typing_extensions import Literal
 

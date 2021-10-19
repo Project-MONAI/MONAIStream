@@ -1,5 +1,4 @@
 import logging
-from typing import List
 from uuid import uuid4
 
 from gi.repository import Gst

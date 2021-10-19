@@ -4,10 +4,9 @@ from typing import List
 import cupy
 import cupy.cuda.cudnn
 import cupy.cudnn
-import numpy as np
 
 from monaistream.compose import StreamCompose
-from monaistream.filters import FilterProperties, NVInferServer, NVStreamMux, NVVideoConvert
+from monaistream.filters import NVInferServer, NVStreamMux
 from monaistream.filters.transform_cupy import TransformChainComponentCupy
 from monaistream.sinks import NVEglGlesSink
 from monaistream.sources import AJAVideoSource
