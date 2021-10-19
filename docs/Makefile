@@ -22,4 +22,4 @@ help:
 clean:
 	rm -rf build/
 	rm -rf source/apidocs/
-	rm tmp_log
+	rm -f tmp_log
