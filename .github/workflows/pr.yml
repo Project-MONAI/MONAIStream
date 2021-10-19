@@ -179,7 +179,7 @@ jobs:
           # move packages to a temp dir
           tmp_dir=$(mktemp -d)
           cp dist/monaistream* "$tmp_dir"
-          rm -r build dist
+          rm -r build dist src/monaistream.egg-info
           cd "$tmp_dir"
           ls -al
 
