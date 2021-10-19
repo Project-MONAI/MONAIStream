@@ -50,15 +50,8 @@ jobs:
             echo "::set-output name=skip_docker_build::false"
           fi
 
-      - name: Check if Dockerfile was updated
-        id: dockerfile_update_check
-        uses: tj-actions/verify-changed-files@v8.1
-        with:
-          files: |
-            Dockerfile.devel
-
       - name: Login to NGC Repo
-        if: steps.dockerfile_update_check.outputs.files_changed == 'true' || steps.docker_build_check.outputs.skip_docker_build == 'false'
+        if: steps.docker_build_check.outputs.skip_docker_build == 'false'
         uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
         with:
           registry: ${{ env.NVCR_REGISTRY }}
@@ -66,7 +59,7 @@ jobs:
           password: ${{ secrets.NGC_TOKEN }}
 
       - name: Build and Push MONAI SDK Development Docker Image
-        if: steps.dockerfile_update_check.outputs.files_changed == 'true' || steps.docker_build_check.outputs.skip_docker_build == 'false'
+        if: steps.docker_build_check.outputs.skip_docker_build == 'false'
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
           context: .
