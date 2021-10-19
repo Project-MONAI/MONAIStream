@@ -75,35 +75,35 @@ jobs:
     needs: docker_build
     runs-on: ubuntu-latest
     container:
-      image: "docker://${{ needs.docker_build.outputs.monaistream_docker_image }}"
+      image: "${{ needs.docker_build.outputs.monaistream_docker_image }}"
     steps:
       - name: Clean
-        uses: "docker://${{ needs.docker_build.outputs.monaistream_docker_image }}"
+        uses: "${{ needs.docker_build.outputs.monaistream_docker_image }}"
         with:
           entrypoint: bash
           args: -c "runtests.sh --clean"
       - name: ISort
-        uses: "docker://${{ needs.docker_build.outputs.monaistream_docker_image }}"
+        uses: "${{ needs.docker_build.outputs.monaistream_docker_image }}"
         with:
           entrypoint: bash
           args: -c "runtests.sh --isort"
       - name: Black
-        uses: "docker://${{ needs.docker_build.outputs.monaistream_docker_image }}"
+        uses: "${{ needs.docker_build.outputs.monaistream_docker_image }}"
         with:
           entrypoint: bash
           args: -c "runtests.sh --black"
       - name: Flake8
-        uses: "docker://${{ needs.docker_build.outputs.monaistream_docker_image }}"
+        uses: "${{ needs.docker_build.outputs.monaistream_docker_image }}"
         with:
           entrypoint: bash
           args: -c "runtests.sh --flake8"
       - name: PyType
-        uses: "docker://${{ needs.docker_build.outputs.monaistream_docker_image }}"
+        uses: "${{ needs.docker_build.outputs.monaistream_docker_image }}"
         with:
           entrypoint: bash
           args: -c "runtests.sh --pytype"
       - name: MyPy
-        uses: "docker://${{ needs.docker_build.outputs.monaistream_docker_image }}"
+        uses: "${{ needs.docker_build.outputs.monaistream_docker_image }}"
         with:
           entrypoint: bash
           args: -c "runtests.sh --mypy"
