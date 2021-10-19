@@ -1,11 +1,11 @@
 import logging
 from typing import Optional
-from typing_extensions import Literal
 from uuid import uuid4
 
 from gi.repository import Gst
 from pydantic import BaseModel, conint
 from pydantic.types import ConstrainedInt
+from typing_extensions import Literal
 
 from monaistream.errors import BinCreationError
 from monaistream.interface import StreamFilterComponent

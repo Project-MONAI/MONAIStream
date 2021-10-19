@@ -25,7 +25,6 @@ from sphinx.transforms import SphinxTransform
 import monaistream
 
 
-
 # -- Project information -----------------------------------------------------
 
 project = "MONAI Stream"

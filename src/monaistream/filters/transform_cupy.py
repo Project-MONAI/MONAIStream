@@ -18,8 +18,7 @@ DEFAULT_HEIGHT = 240
 
 
 class TransformChainComponentCupy(StreamFilterComponent):
-    def __init__(
-        self, transform_chain: Callable, name: str = "") -> None:
+    def __init__(self, transform_chain: Callable, name: str = "") -> None:
         self._user_callback = transform_chain
         if not name:
             name = str(uuid4().hex)
