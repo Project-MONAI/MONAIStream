@@ -1,1 +1,0 @@
-The onnx file is an intermediate step to convert the Pytoch model to TensorRT using `trtexec`. The onnx files do not dependend on machine or GPU architecture that they are generated on. For more info see [`ConvertTRT.md`](../../ConvertTRT.md)
