@@ -4,11 +4,7 @@ from typing import Any, Sequence, Tuple, Union
 from gi.repository import GObject, Gst
 
 from monaistream.errors import StreamComposeCreationError
-from monaistream.interface import (
-    AggregatedSourcesComponent,
-    InferenceFilterComponent,
-    StreamComponent,
-)
+from monaistream.interface import AggregatedSourcesComponent, InferenceFilterComponent, StreamComponent
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +44,8 @@ class StreamCompose(object):
                     sinkpad = muxer.get_request_pad(f"sink_{src_idx}")
                     if not sinkpad:
                         raise StreamComposeCreationError(
-                            f"Unable to create multiplexer sink pad bin for {component.get_name()}")
+                            f"Unable to create multiplexer sink pad bin for {component.get_name()}"
+                        )
 
                     # get the source pad from the upstream component
                     srcpad = source_bin.get_static_pad("src")
