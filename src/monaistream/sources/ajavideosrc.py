@@ -4,12 +4,13 @@ from uuid import uuid4
 from gi.repository import Gst
 
 from monaistream.errors import BinCreationError
-from monaistream.interface import AggregatedSourcesComponent
+from monaistream.interface import StreamSourceComponent
 
 logger = logging.getLogger(__name__)
 
 
-class AJAVideoSource(AggregatedSourcesComponent):
+class AJAVideoSource(StreamSourceComponent):
+
     def __init__(self, mode: str, input_mode: str, is_nvmm: bool, name: str = "") -> None:
 
         if not name:
@@ -38,10 +39,7 @@ class AJAVideoSource(AggregatedSourcesComponent):
         return self._is_live
 
     def get_name(self):
-        return f"{self._name}-source"
+        return f"{self._name}-ajasource"
 
     def get_gst_element(self):
         return self._aja_video_src
-
-    def get_num_sources(self):
-        return 1

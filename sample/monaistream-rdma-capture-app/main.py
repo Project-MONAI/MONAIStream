@@ -6,10 +6,11 @@ import cupy.cuda.cudnn
 import cupy.cudnn
 
 from monaistream.compose import StreamCompose
-from monaistream.filters import NVInferServer, NVStreamMux
+from monaistream.filters import NVInferServer
 from monaistream.filters.transform_cupy import TransformChainComponentCupy
 from monaistream.sinks import NVEglGlesSink
 from monaistream.sources import AJAVideoSource
+from monaistream.sources.sourcebin import NVAggregatedSourcesBin
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -37,11 +38,8 @@ if __name__ == "__main__":
                 mode="UHDp30-rgba",
                 input_mode="hdmi",
                 is_nvmm=True,
-            ),
-            NVStreamMux(
-                num_sources=1,
-                width=864,
-                height=480,
+                output_width=864,
+                output_height=480,
             ),
             NVInferServer(
                 config=infer_server_config,

@@ -1,5 +1,5 @@
 import logging
-from typing import List
+from typing import List, Optional, Union
 from uuid import uuid4
 
 from gi.repository import Gst
@@ -41,21 +41,33 @@ def _child_added_handler(child_proxy, obj, name, user_data):
 
 
 class NVAggregatedSourcesBin(AggregatedSourcesComponent):
-    def __init__(self, sources: List[StreamSourceComponent], name: str = "") -> None:
+    def __init__(
+        self,
+        sources: Union[StreamSourceComponent, List[StreamSourceComponent]],
+        output_width: int,
+        output_height: int,
+        batched_push_timeout: Optional[int] = None,
+        name: str = ""
+    ) -> None:
 
         if not name:
             name = str(uuid4().hex)
 
         self._name = name
-        self._sources = sources
+        self._sources = sources if isinstance(sources, list) else [sources]
+        self._width = output_width
+        self._height = output_height
+        self._batched_push_timeout = batched_push_timeout
         # if any of the sources are live then so is the wrapper bin
         self._is_live = any([source.is_live() for source in sources])
 
     def initialize(self):
+
+        # create the source bin with all the sources specified
         gst_bin = Gst.Bin.new(self.get_name())
         if not gst_bin:
             raise BinCreationError(
-                f"Unable to create generic source bin {self.__class__.__name__} " f"with name {self.get_name()}"
+                f"Unable to create generic source bin {self.__class__.__name__} with name {self.get_name()}"
             )
 
         for source in self._sources:
@@ -73,6 +85,22 @@ class NVAggregatedSourcesBin(AggregatedSourcesComponent):
 
         self._gst_bin = gst_bin
 
+        # create the stream multiplexer to aggregate all input sources into a batch dimension
+        streammux = Gst.ElementFactory.make("nvstreammux", f"{self._name}-nvstreammux")
+        if not streammux:
+            raise BinCreationError(
+                f"Unable to create multiplexer for {self.__class__._name} with name {self.get_name()}")
+
+        self._streammux = streammux
+        self._streammux.set_property("batch-size", len(self._sources))
+        self._streammux.set_property("width", self._width)
+        self._streammux.set_property("height", self._height)
+        self._streammux.set_property("live-source", self._is_live)
+        if self._batched_push_timeout:
+            self._streammux.set_property("batched-push-timeout", self._batched_push_timeout)
+
+        # the bin and muxer will be linked in the composer as they first need to be added to the pipeline
+
     def is_live(self):
         return self._is_live
 
@@ -80,7 +108,7 @@ class NVAggregatedSourcesBin(AggregatedSourcesComponent):
         return f"{self._name}-source"
 
     def get_gst_element(self):
-        return self._gst_bin
+        return (self._gst_bin, self._streammux)
 
     def get_num_sources(self):
         return len(self._sources)
