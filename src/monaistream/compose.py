@@ -4,13 +4,10 @@ from typing import Any, Sequence, Tuple, Union
 from gi.repository import GObject, Gst
 
 from monaistream.errors import StreamComposeCreationError
-from monaistream.filters.nvstreammux import NVStreamMux
 from monaistream.interface import (
     AggregatedSourcesComponent,
     InferenceFilterComponent,
-    MultiplexerComponent,
     StreamComponent,
-    StreamFilterComponent,
 )
 
 logger = logging.getLogger(__name__)
@@ -24,7 +21,7 @@ class StreamCompose(object):
         # link the sources and sinks between the aggregator and multiplexer
         # configure batch size in nvinfer server
         first_filter_index = -1
-        source_bin = None
+        batch_size = 1
         for component_idx, component in enumerate(components):
             component.initialize()
 
@@ -36,73 +33,66 @@ class StreamCompose(object):
                 self._pipeline.add(component.get_gst_element())
 
             if isinstance(component, AggregatedSourcesComponent):
-                source_bin = component
 
-            elif isinstance(components[component_idx - 1], AggregatedSourcesComponent) and isinstance(
-                component, StreamFilterComponent
-            ):
+                batch_size = component.get_num_sources()
 
-                first_filter_index = component_idx
-
-                if isinstance(component, NVStreamMux):
-                    component.set_is_live(components[component_idx - 1].is_live())
+                first_filter_index = component_idx + 1
 
                 # each source in the aggregator pad (assumed to be the component before
                 # the multiplexer) will be linked to a sink of the multiplexer pad
-                for src_idx in range(components[component_idx - 1].get_num_sources()):
+                source_bin, muxer = component.get_gst_element()
+
+                for src_idx in range(component.get_num_sources()):
 
                     # get a sinkpad for each source in the stream multiplexer
-                    sinkpad = None
-                    if isinstance(component, MultiplexerComponent):
-                        sinkpad = component.get_gst_element().get_request_pad(f"sink_{src_idx}")
-                    else:
-                        sinkpad = component.get_gst_element().get_static_pad("sink")
-                        if not sinkpad:
-                            raise StreamComposeCreationError("Unable to create sink pad bin")
+                    sinkpad = muxer.get_request_pad(f"sink_{src_idx}")
+                    if not sinkpad:
+                        raise StreamComposeCreationError(
+                            f"Unable to create multiplexer sink pad bin for {component.get_name()}")
 
                     # get the source pad from the upstream component
-                    srcpad = components[component_idx - 1].get_gst_element().get_static_pad("src")
+                    srcpad = source_bin.get_static_pad("src")
                     if not srcpad:
-                        raise StreamComposeCreationError("Unable to create src pad bin")
+                        raise StreamComposeCreationError(f"Unable to create bin src pad for {component.get_name()}")
 
-                    link_failed = srcpad.link(sinkpad)
-                    if link_failed:
+                    link_code = srcpad.link(sinkpad)
+                    if link_code != Gst.PadLinkReturn.OK:
                         logger.error(
-                            f"Linking of {component.get_name()} and "
-                            f"{components[component_idx - 1].get_name()} failed: {link_failed.value}"
+                            f"Linking of source bin and multiplexer for component {component.get_name()}"
+                            f" failed: {link_code.value_nick}"
                         )
                         exit(1)
 
             elif isinstance(component, InferenceFilterComponent):
 
-                component.set_batch_size(source_bin.get_num_sources())
+                component.set_batch_size(batch_size)
 
         # link the components in the chain
-        for idx in range(first_filter_index, len(components) - 1):
+        for idx in range(first_filter_index, len(components)):
 
             elems: Union[Any, Tuple[Any]] = ()
 
+            if isinstance(components[idx - 1].get_gst_element(), tuple):
+                connect_component_prev = components[idx - 1].get_gst_element()[-1]
+            else:
+                connect_component_prev = components[idx - 1].get_gst_element()
+
             if isinstance(components[idx].get_gst_element(), tuple):
                 elems = components[idx].get_gst_element()
-                connect_component_prev = elems[-1]
+                connect_component_next = elems[0]
             else:
-                connect_component_prev = components[idx].get_gst_element()
-
-            if isinstance(components[idx + 1].get_gst_element(), tuple):
-                connect_component_next = components[idx + 1].get_gst_element()[0]
-            else:
-                connect_component_next = components[idx + 1].get_gst_element()
+                connect_component_next = components[idx].get_gst_element()
 
             # link subelements of element (e.g. converters and capsfilters in NVVideoConvert components)
             for subidx in range(len(elems) - 1):
-                link_succeeded = elems[subidx].link(elems[subidx + 1])
-                if not link_succeeded:
+                link_code = elems[subidx].link(elems[subidx + 1])
+                if not link_code:
                     logger.error(f"Creation of {components[idx].get_name()} failed")
                     exit(1)
 
-            link_succeeded = connect_component_prev.link(connect_component_next)
+            link_code = connect_component_prev.link(connect_component_next)
 
-            if not link_succeeded:
+            if not link_code:
                 logger.error(f"Linking of {components[idx].get_name()} and " f"{components[idx + 1].get_name()} failed")
                 exit(1)
 

@@ -43,10 +43,6 @@ class InferenceFilterComponent(StreamFilterComponent):
         raise NotImplementedError(f"Subclass {self.__class__.__name__} must implement `set_batch_size`")
 
 
-class MultiplexerComponent(StreamFilterComponent):
-    pass
-
-
 class StreamSinkComponent(StreamComponent):
     def register_probe(self, callback: Callable[[Any, Any], None]):
         self._probe_callback = callback

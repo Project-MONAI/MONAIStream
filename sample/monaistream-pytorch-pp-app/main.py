@@ -8,7 +8,7 @@ from monai.transforms.intensity.dictionary import ScaleIntensityd
 from monai.transforms.utility.dictionary import AddChanneld, AsChannelLastd, CastToTyped, ConcatItemsd, RepeatChanneld
 
 from monaistream.compose import StreamCompose
-from monaistream.filters import FilterProperties, NVInferServer, NVStreamMux, NVVideoConvert
+from monaistream.filters import FilterProperties, NVInferServer, NVVideoConvert
 from monaistream.filters.transform import TransformChainComponent
 from monaistream.sinks import NVEglGlesSink
 from monaistream.sources import NVAggregatedSourcesBin, URISource
@@ -34,12 +34,9 @@ if __name__ == "__main__":
             NVAggregatedSourcesBin(
                 [
                     URISource(uri="file:///app/videos/d1_im.mp4"),
-                ]
-            ),
-            NVStreamMux(
-                num_sources=1,
-                width=1260,
-                height=1024,
+                ],
+                output_width=1260,
+                output_height=1024,
             ),
             NVVideoConvert(
                 FilterProperties(
