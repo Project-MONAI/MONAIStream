@@ -1,5 +1,4 @@
 import logging
-from typing import List
 from uuid import uuid4
 
 from gi.repository import Gst
@@ -8,6 +7,7 @@ from monaistream.errors import BinCreationError
 from monaistream.interface import AggregatedSourcesComponent
 
 logger = logging.getLogger(__name__)
+
 
 class AJAVideoSource(AggregatedSourcesComponent):
     def __init__(self, mode: str, input_mode: str, is_nvmm: bool, name: str = "") -> None:
@@ -26,9 +26,7 @@ class AJAVideoSource(AggregatedSourcesComponent):
         aja_video_src_name = f"{self._name}-ajavideosrc"
         aja_video_src = Gst.ElementFactory.make("ajavideosrc", aja_video_src_name)
         if not aja_video_src:
-            raise BinCreationError(
-                f"Unable to create source {self.__class__.__name__} with name {aja_video_src}"
-            )
+            raise BinCreationError(f"Unable to create source {self.__class__.__name__} with name {aja_video_src}")
 
         aja_video_src.set_property("mode", self._mode)
         aja_video_src.set_property("input-mode", self._input_mode)

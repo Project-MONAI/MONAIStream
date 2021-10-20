@@ -141,3 +141,10 @@ cython_debug/
 *.engine
 *.pt
 *.onnx
+
+#IDE
+.vscode
+.idea
+
+# api docs
+docs/source/apidocs

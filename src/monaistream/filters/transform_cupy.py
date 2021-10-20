@@ -1,6 +1,6 @@
 import ctypes
 import logging
-from typing import Callable, Dict, List, Union
+from typing import Callable
 from uuid import uuid4
 
 import cupy
@@ -18,8 +18,7 @@ DEFAULT_HEIGHT = 240
 
 
 class TransformChainComponentCupy(StreamFilterComponent):
-    def __init__(
-        self, transform_chain: Callable, name: str = "") -> None:
+    def __init__(self, transform_chain: Callable, name: str = "") -> None:
         self._user_callback = transform_chain
         if not name:
             name = str(uuid4().hex)

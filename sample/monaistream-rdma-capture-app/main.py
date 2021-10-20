@@ -1,19 +1,18 @@
 import logging
+from typing import List
 
 import cupy
 import cupy.cuda.cudnn
 import cupy.cudnn
-import numpy as np
-
-from typing import List
 
 from monaistream.compose import StreamCompose
-from monaistream.filters import FilterProperties, NVInferServer, NVStreamMux, NVVideoConvert
+from monaistream.filters import NVInferServer, NVStreamMux
 from monaistream.filters.transform_cupy import TransformChainComponentCupy
 from monaistream.sinks import NVEglGlesSink
 from monaistream.sources import AJAVideoSource
 
 logging.basicConfig(level=logging.DEBUG)
+
 
 def color_blender(img: cupy.ndarray, mask: List[cupy.ndarray]):
     if mask:
@@ -22,6 +21,7 @@ def color_blender(img: cupy.ndarray, mask: List[cupy.ndarray]):
         # modify only the red channel to apply mask
         img[..., 0] = cupy.multiply(1.0 - mask[0], img[..., 0])
     return
+
 
 if __name__ == "__main__":
 
@@ -46,9 +46,7 @@ if __name__ == "__main__":
             NVInferServer(
                 config=infer_server_config,
             ),
-            TransformChainComponentCupy(
-                transform_chain = color_blender
-            ),
+            TransformChainComponentCupy(transform_chain=color_blender),
             NVEglGlesSink(sync=True),
         ]
     )

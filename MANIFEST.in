@@ -1,2 +1,5 @@
 include versioneer.py
 include src/monaistream/_version.py
+
+include README.md
+include LICENSE

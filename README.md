@@ -1,10 +1,8 @@
-# Deepstream for Monai
+# MONAI Stream
 
-This repo will contain the work needed to do POC to provide framework where Monai pipelines can be run with Deepstream backend.
+[![License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](https://opensource.org/licenses/Apache-2.0)
+[![CI Build](https://github.com/Project-MONAI/monai-stream-experimental/actions/workflows/pr.yml/badge.svg)](https://github.com/Project-MONAI/monai-stream-experimental/actions/workflows/pr.yml)
 
-There are the following Python DeepStream sample applications:
-
- - [`deepstream_cupy_monai_unet`](sample//cupy-app/deepstream_cupy_monai_unet.py) which takes in a mp4 file and performs inference using the Triton Inference Server backend in DeepStream, then displays the segmentation mask on screen. Read through the [`README`](sample//cupy-app/README.md) before running the app.
-
-
-For converting the PyTorch model into TRT, follow the steps in [`ConvertTRT.md`](ConvertTRT.md).
+MONAI Stream SDK aims to equip experienced MONAI Researchers an Developers with the ability to
+build streaming inference pipelines while enjoying the familiar MONAI development experienced
+and utilities.
