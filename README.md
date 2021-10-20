@@ -4,5 +4,5 @@
 [![CI Build](https://github.com/Project-MONAI/monai-stream-experimental/actions/workflows/pr.yml/badge.svg)](https://github.com/Project-MONAI/monai-stream-experimental/actions/workflows/pr.yml)
 
 MONAI Stream SDK aims to equip experienced MONAI Researchers an Developers with the ability to
-build streaming inference pipelines while enjoying the familiar MONAI development experienced
+build streaming inference pipelines while enjoying the familiar MONAI development experience
 and utilities.

@@ -5,7 +5,7 @@ MONAI Stream
 *Medical Open Network for AI*
 
 MONAI Stream SDK aims to equip experienced MONAI Researchers an Developers with the ability to
-build streaming inference pipelines while enjoying the familiar MONAI development experienced
+build streaming inference pipelines while enjoying the familiar MONAI development experience
 and utilities.
 
 
