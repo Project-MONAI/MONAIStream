@@ -1,11 +1,9 @@
 import logging
+from typing import List
 
 import cupy
 import cupy.cuda.cudnn
 import cupy.cudnn
-import numpy as np
-
-from typing import List
 
 from monaistream.compose import StreamCompose
 from monaistream.filters import FilterProperties, NVInferServer, NVStreamMux, NVVideoConvert
@@ -15,16 +13,18 @@ from monaistream.sources import NVAggregatedSourcesBin, URISource
 
 logging.basicConfig(level=logging.DEBUG)
 
+
 def color_blender(img: cupy.ndarray, mask: List[cupy.ndarray]):
     if mask:
         # mask is of range [0,1]
         mask[0] = cupy.cudnn.activation_forward(mask[0], cupy.cuda.cudnn.CUDNN_ACTIVATION_SIGMOID)
 
-        # Ultrasound model outputs two channels, so modify only the red 
-        # and green channel in-place to apply mask
+        # Ultrasound model outputs two channels, so modify only the red
+        # and green channel in-place to apply mask.
         img[..., 0] = cupy.multiply(mask[0][0, ...], img[..., 0])
         img[..., 1] = cupy.multiply(1.0 - mask[0][1, ...], img[..., 1])
     return
+
 
 if __name__ == "__main__":
 
@@ -56,10 +56,7 @@ if __name__ == "__main__":
             NVInferServer(
                 config=infer_server_config,
             ),
-            TransformChainComponentCupy(
-                transform_chain = color_blender,
-                num_channel_user_meta = 2
-            ),
+            TransformChainComponentCupy(transform_chain=color_blender, num_channel_user_meta=2),
             NVEglGlesSink(sync=True),
         ]
     )

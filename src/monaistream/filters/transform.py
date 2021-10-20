@@ -5,7 +5,7 @@ from uuid import uuid4
 
 import cupy
 from gi.repository import Gst
-from torch.functional import Tensor
+from torch import Tensor
 from torch.utils.dlpack import from_dlpack, to_dlpack
 
 import pyds
@@ -21,7 +21,12 @@ DEFAULT_HEIGHT = 240
 
 class TransformChainComponent(StreamFilterComponent):
     def __init__(
-        self, transform_chain: Callable, input_labels: List[str] = [], output_label: str = "", name: str = ""
+        self,
+        transform_chain: Callable,
+        input_labels: List[str] = [],
+        output_label: str = "",
+        num_channel_user_meta: int = 1,
+        name: str = "",
     ) -> None:
         self._user_callback = transform_chain
         if not name:
@@ -125,7 +130,9 @@ class TransformChainComponent(StreamFilterComponent):
                     )
                     udata_memptr = cupy.cuda.MemoryPointer(udata_unownedmem, 0)
                     udata_memptr_cupy = cupy.ndarray(
-                        shape=(image_height, image_width), dtype=ctypes.c_float, memptr=udata_memptr
+                        shape=(image_height, image_width),
+                        dtype=ctypes.c_float,
+                        memptr=udata_memptr,
                     )
 
                     user_data_tensor_layers.append(from_dlpack(udata_memptr_cupy.toDlpack()))

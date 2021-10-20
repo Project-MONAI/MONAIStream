@@ -17,9 +17,9 @@ DEFAULT_WIDTH = 320
 DEFAULT_HEIGHT = 240
 MAX_NUM_CHANNELS_USER_META = 4
 
+
 class TransformChainComponentCupy(StreamFilterComponent):
-    def __init__(
-        self, transform_chain: Callable, name: str = "", num_channel_user_meta: int = 1) -> None:
+    def __init__(self, transform_chain: Callable, num_channel_user_meta: int = 1, name: str = "") -> None:
         self._user_callback = transform_chain
         if not name:
             name = str(uuid4().hex)
@@ -124,7 +124,7 @@ class TransformChainComponentCupy(StreamFilterComponent):
                     udata_memptr_cupy = cupy.ndarray(
                         shape=(self._num_channel_user_meta, image_height, image_width),
                         dtype=ctypes.c_float,
-                        memptr=udata_memptr
+                        memptr=udata_memptr,
                     )
 
                     user_data_cupy_layers.append(udata_memptr_cupy)

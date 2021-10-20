@@ -33,19 +33,19 @@ if __name__ == "__main__":
         [
             NVAggregatedSourcesBin(
                 [
-                    URISource(uri="file:///app/videos/d1_im.mp4"),
+                    URISource(uri="file:///app/videos/endo.mp4"),
                 ]
             ),
             NVStreamMux(
                 num_sources=1,
-                width=1260,
-                height=1024,
+                width=864,
+                height=480,
             ),
             NVVideoConvert(
                 FilterProperties(
                     format="RGBA",
-                    width=1264,
-                    height=1024,
+                    width=864,
+                    height=480,
                 )
             ),
             NVInferServer(
