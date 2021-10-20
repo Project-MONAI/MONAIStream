@@ -54,12 +54,12 @@ class NVAggregatedSourcesBin(AggregatedSourcesComponent):
             name = str(uuid4().hex)
 
         self._name = name
-        self._sources = sources if isinstance(sources, list) else [sources]
+        self._sources: List[StreamSourceComponent] = sources if isinstance(sources, list) else [sources]
         self._width = output_width
         self._height = output_height
         self._batched_push_timeout = batched_push_timeout
         # if any of the sources are live then so is the wrapper bin
-        self._is_live = any([source.is_live() for source in sources])
+        self._is_live = any([source.is_live() for source in self._sources])
 
     def initialize(self):
 
