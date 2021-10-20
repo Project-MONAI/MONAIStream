@@ -47,7 +47,7 @@ class NVAggregatedSourcesBin(AggregatedSourcesComponent):
         output_width: int,
         output_height: int,
         batched_push_timeout: Optional[int] = None,
-        name: str = ""
+        name: str = "",
     ) -> None:
 
         if not name:
@@ -89,7 +89,8 @@ class NVAggregatedSourcesBin(AggregatedSourcesComponent):
         streammux = Gst.ElementFactory.make("nvstreammux", f"{self._name}-nvstreammux")
         if not streammux:
             raise BinCreationError(
-                f"Unable to create multiplexer for {self.__class__._name} with name {self.get_name()}")
+                f"Unable to create multiplexer for {self.__class__._name} with name {self.get_name()}"
+            )
 
         self._streammux = streammux
         self._streammux.set_property("batch-size", len(self._sources))

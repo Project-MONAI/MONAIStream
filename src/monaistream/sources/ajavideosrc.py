@@ -10,7 +10,6 @@ logger = logging.getLogger(__name__)
 
 
 class AJAVideoSource(StreamSourceComponent):
-
     def __init__(self, mode: str, input_mode: str, is_nvmm: bool, name: str = "") -> None:
 
         if not name:
