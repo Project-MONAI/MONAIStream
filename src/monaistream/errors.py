@@ -24,3 +24,7 @@ class StreamTransformChainError(Exception):
 
 class StreamTransormChainNoRegisteredCallbackError(StreamTransformChainError):
     pass
+
+
+class NumChannelsExceededError(Exception):
+    pass

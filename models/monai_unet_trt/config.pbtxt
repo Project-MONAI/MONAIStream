@@ -28,14 +28,14 @@ input [
   {
     name: "INPUT__0"
     data_type: TYPE_FP32
-    dims: [ 3, 1024, 1264 ]
+    dims: [ 3, 480, 864 ]
   }
 ]
 output [
   {
     name: "OUTPUT__0"
     data_type: TYPE_FP32
-    dims: [ 1, 1024, 1264]
+    dims: [ 1, 480, 864]
   }
 ]
 
