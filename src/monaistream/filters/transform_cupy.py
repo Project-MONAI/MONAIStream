@@ -7,7 +7,7 @@ import cupy
 from gi.repository import Gst
 
 import pyds
-from monaistream.errors import BinCreationError
+from monaistream.errors import BinCreationError, NumChannelsExceededError
 from monaistream.interface import StreamFilterComponent
 
 logger = logging.getLogger(__name__)
@@ -26,7 +26,7 @@ class TransformChainComponentCupy(StreamFilterComponent):
         self._name = name
         self._num_channel_user_meta = num_channel_user_meta
         if self._num_channel_user_meta > MAX_NUM_CHANNELS_USER_META:
-            self._num_channel_user_meta = MAX_NUM_CHANNELS_USER_META
+            raise NumChannelsExceededError(f"Cannot have more than {MAX_NUM_CHANNELS_USER_META} channels in user meta")
 
     def initialize(self):
         ucbt = Gst.ElementFactory.make("queue", self.get_name())
