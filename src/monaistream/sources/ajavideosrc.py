@@ -4,13 +4,13 @@ from uuid import uuid4
 from gi.repository import Gst
 
 from monaistream.errors import BinCreationError
-from monaistream.interface import StreamSourceComponent
+from monaistream.interface import AggregatedSourcesComponent
 
 logger = logging.getLogger(__name__)
 
 
-class AJAVideoSource(StreamSourceComponent):
-    def __init__(self, mode: str, input_mode: str, is_nvmm: bool, name: str = "") -> None:
+class AJAVideoSource(AggregatedSourcesComponent):
+    def __init__(self, mode: str, input_mode: str, is_nvmm: bool, output_width: int, output_height: int, batched_push_timeout = Optional[int] = None, name: str = "") -> None:
 
         if not name:
             name = str(uuid4().hex)
@@ -20,6 +20,9 @@ class AJAVideoSource(StreamSourceComponent):
         self._input_mode = input_mode
         self._is_nvmm = is_nvmm
         self._is_live = True
+        self._output_width = output_width
+        self._output_height = output_height
+        self._batched_push_timeout = batched_push_timeout
 
     def initialize(self):
 
@@ -34,6 +37,21 @@ class AJAVideoSource(StreamSourceComponent):
 
         self._aja_video_src = aja_video_src
 
+        # create the stream multiplexer to aggregate all input sources into a batch dimension
+        streammux = Gst.ElementFactory.make("nvstreammux", f"{self._name}-nvstreammux")
+        if not streammux:
+            raise BinCreationError(
+                f"Unable to create multiplexer for {self.__class__._name} with name {self.get_name()}"
+            )
+
+        self._streammux = streammux
+        self._streammux.set_property("batch-size", 1)
+        self._streammux.set_property("width", self._output_width)
+        self._streammux.set_property("height", self._output_height)
+        self._streammux.set_property("live-source", self._is_live)
+        if self._batched_push_timeout:
+            self._streammux.set_property("batched-push-timeout", self._batched_push_timeout)
+
     def is_live(self):
         return self._is_live
 
@@ -41,4 +59,7 @@ class AJAVideoSource(StreamSourceComponent):
         return f"{self._name}-ajasource"
 
     def get_gst_element(self):
-        return self._aja_video_src
+        return (self._aja_video_src, self._streammux)
+
+    def get_num_sources(self):
+        return 1

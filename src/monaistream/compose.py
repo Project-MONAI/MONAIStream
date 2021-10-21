@@ -36,7 +36,7 @@ class StreamCompose(object):
 
                 # each source in the aggregator pad (assumed to be the component before
                 # the multiplexer) will be linked to a sink of the multiplexer pad
-                source_bin, muxer = component.get_gst_element()
+                source, muxer = component.get_gst_element()
 
                 for src_idx in range(component.get_num_sources()):
 
@@ -48,14 +48,14 @@ class StreamCompose(object):
                         )
 
                     # get the source pad from the upstream component
-                    srcpad = source_bin.get_static_pad("src")
+                    srcpad = source.get_static_pad("src")
                     if not srcpad:
                         raise StreamComposeCreationError(f"Unable to create bin src pad for {component.get_name()}")
 
                     link_code = srcpad.link(sinkpad)
                     if link_code != Gst.PadLinkReturn.OK:
                         logger.error(
-                            f"Linking of source bin and multiplexer for component {component.get_name()}"
+                            f"Linking of source and multiplexer for component {component.get_name()}"
                             f" failed: {link_code.value_nick}"
                         )
                         exit(1)
