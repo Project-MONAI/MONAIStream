@@ -6,7 +6,7 @@ import cupy.cuda.cudnn
 import cupy.cudnn
 
 from monaistream.compose import StreamCompose
-from monaistream.filters import FilterProperties, NVInferServer, NVStreamMux, NVVideoConvert
+from monaistream.filters import FilterProperties, NVInferServer, NVVideoConvert
 from monaistream.filters.transform_cupy import TransformChainComponentCupy
 from monaistream.sinks import NVEglGlesSink
 from monaistream.sources import NVAggregatedSourcesBin, URISource
@@ -39,12 +39,9 @@ if __name__ == "__main__":
             NVAggregatedSourcesBin(
                 [
                     URISource(uri="file:///app/videos/Q000_04_tu_segmented_ultrasound_256.avi"),
-                ]
-            ),
-            NVStreamMux(
-                num_sources=1,
-                width=256,
-                height=256,
+                ],
+                output_width=256,
+                output_height=256,
             ),
             NVVideoConvert(
                 FilterProperties(

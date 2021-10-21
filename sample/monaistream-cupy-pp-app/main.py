@@ -35,7 +35,7 @@ if __name__ == "__main__":
         [
             NVAggregatedSourcesBin(
                 [
-                    URISource(uri="file:///media/m2/monai-stream-experimental/videos/d1_im.mp4"),
+                    URISource(uri="file:///app/videos/endo.mp4"),
                 ],
                 output_width=864,
                 output_height=480,
