@@ -11,7 +11,16 @@ logger = logging.getLogger(__name__)
 
 
 class AJAVideoSource(AggregatedSourcesComponent):
-    def __init__(self, mode: str, input_mode: str, is_nvmm: bool, output_width: int, output_height: int, batched_push_timeout: Optional[int] = None, name: str = "") -> None:
+    def __init__(
+        self,
+        mode: str,
+        input_mode: str,
+        is_nvmm: bool,
+        output_width: int,
+        output_height: int,
+        batched_push_timeout: Optional[int] = None,
+        name: str = "",
+    ) -> None:
 
         if not name:
             name = str(uuid4().hex)

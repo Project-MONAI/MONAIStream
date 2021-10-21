@@ -6,7 +6,6 @@ from gi.repository import Gst
 
 from monaistream.errors import BinCreationError
 from monaistream.interface import AggregatedSourcesComponent, StreamSourceComponent
-from monaistream.sources.uri import URISource
 
 logger = logging.getLogger(__name__)
 

@@ -10,7 +10,6 @@ from monaistream.filters import NVInferServer
 from monaistream.filters.transform_cupy import TransformChainComponentCupy
 from monaistream.sinks import NVEglGlesSink
 from monaistream.sources import AJAVideoSource
-from monaistream.sources.sourcebin import NVAggregatedSourcesBin
 
 logging.basicConfig(level=logging.DEBUG)
 
