@@ -6,7 +6,7 @@ import cupy.cuda.cudnn
 import cupy.cudnn
 
 from monaistream.compose import StreamCompose
-from monaistream.filters import FilterProperties, NVInferServer, NVStreamMux, NVVideoConvert
+from monaistream.filters import FilterProperties, NVInferServer, NVVideoConvert
 from monaistream.filters.transform_cupy import TransformChainComponentCupy
 from monaistream.sinks import NVEglGlesSink
 from monaistream.sources import NVAggregatedSourcesBin, URISource
@@ -36,12 +36,9 @@ if __name__ == "__main__":
             NVAggregatedSourcesBin(
                 [
                     URISource(uri="file:///app/videos/endo.mp4"),
-                ]
-            ),
-            NVStreamMux(
-                num_sources=1,
-                width=864,
-                height=480,
+                ],
+                output_width=864,
+                output_height=480,
             ),
             NVVideoConvert(
                 FilterProperties(
