@@ -5,12 +5,12 @@ from uuid import uuid4
 from gi.repository import Gst
 
 from monaistream.errors import BinCreationError
-from monaistream.interface import AggregatedSourcesComponent
+from monaistream.interface import StreamSourceComponent
 
 logger = logging.getLogger(__name__)
 
 
-class AJAVideoSource(AggregatedSourcesComponent):
+class AJAVideoSource(StreamSourceComponent):
     def __init__(
         self,
         mode: str,
@@ -70,6 +70,3 @@ class AJAVideoSource(AggregatedSourcesComponent):
 
     def get_gst_element(self):
         return (self._aja_video_src, self._streammux)
-
-    def get_num_sources(self):
-        return 1

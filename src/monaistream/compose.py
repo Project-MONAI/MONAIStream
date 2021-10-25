@@ -4,7 +4,12 @@ from typing import Any, Sequence, Tuple, Union
 from gi.repository import GObject, Gst
 
 from monaistream.errors import StreamComposeCreationError
-from monaistream.interface import AggregatedSourcesComponent, InferenceFilterComponent, StreamComponent
+from monaistream.interface import (
+    AggregatedSourcesComponent,
+    InferenceFilterComponent,
+    StreamComponent,
+    StreamSourceComponent,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -16,76 +21,77 @@ class StreamCompose(object):
         # initialize and configure components
         # link the sources and sinks between the aggregator and multiplexer
         # configure batch size in nvinfer server
-        first_filter_index = -1
         batch_size = 1
-        for component_idx, component in enumerate(components):
+        for component in components:
             component.initialize()
 
-            # some elements return tuples (e.g. `NVVideoConvert`)
+            # add elements from stream components to pipeline
             if isinstance(component.get_gst_element(), tuple):
                 for elem in component.get_gst_element():
                     self._pipeline.add(elem)
             else:
                 self._pipeline.add(component.get_gst_element())
 
+            # set the batch size of nvinferserver if it exists in the pipeline
+            # from the number of sources
             if isinstance(component, AggregatedSourcesComponent):
-
                 batch_size = component.get_num_sources()
-
-                first_filter_index = component_idx + 1
-
-                # each source in the aggregator pad (assumed to be the component before
-                # the multiplexer) will be linked to a sink of the multiplexer pad
-                source, muxer = component.get_gst_element()
-
-                for src_idx in range(component.get_num_sources()):
-
-                    # get a sinkpad for each source in the stream multiplexer
-                    sinkpad = muxer.get_request_pad(f"sink_{src_idx}")
-                    if not sinkpad:
-                        raise StreamComposeCreationError(
-                            f"Unable to create multiplexer sink pad bin for {component.get_name()}"
-                        )
-
-                    # get the source pad from the upstream component
-                    srcpad = source.get_static_pad("src")
-                    if not srcpad:
-                        raise StreamComposeCreationError(f"Unable to create bin src pad for {component.get_name()}")
-
-                    link_code = srcpad.link(sinkpad)
-                    if link_code != Gst.PadLinkReturn.OK:
-                        logger.error(
-                            f"Linking of source and multiplexer for component {component.get_name()}"
-                            f" failed: {link_code.value_nick}"
-                        )
-                        exit(1)
-
             elif isinstance(component, InferenceFilterComponent):
-
                 component.set_batch_size(batch_size)
 
         # link the components in the chain
-        for idx in range(first_filter_index, len(components)):
+        for idx in range(len(components) - 1):
 
             elems: Union[Any, Tuple[Any]] = ()
 
-            if isinstance(components[idx - 1].get_gst_element(), tuple):
-                connect_component_prev = components[idx - 1].get_gst_element()[-1]
-            else:
-                connect_component_prev = components[idx - 1].get_gst_element()
-
             if isinstance(components[idx].get_gst_element(), tuple):
                 elems = components[idx].get_gst_element()
-                connect_component_next = elems[0]
+                connect_component_prev = elems[-1]
             else:
-                connect_component_next = components[idx].get_gst_element()
+                connect_component_prev = components[idx].get_gst_element()
+
+            if isinstance(components[idx + 1].get_gst_element(), tuple):
+                connect_component_next = components[idx + 1].get_gst_element()[0]
+            else:
+                connect_component_next = components[idx + 1].get_gst_element()
 
             # link subelements of element (e.g. converters and capsfilters in NVVideoConvert components)
             for subidx in range(len(elems) - 1):
-                link_code = elems[subidx].link(elems[subidx + 1])
-                if not link_code:
-                    logger.error(f"Creation of {components[idx].get_name()} failed")
-                    exit(1)
+
+                if isinstance(components[idx], StreamSourceComponent):
+                    source, muxer = elems
+
+                    num_sources = 1
+                    if isinstance(components[idx], AggregatedSourcesComponent):
+                        num_sources = components[idx].get_num_sources()
+
+                    for src_idx in range(num_sources):
+
+                        # get a sinkpad for each source in the stream multiplexer
+                        sinkpad = muxer.get_request_pad(f"sink_{src_idx}")
+                        if not sinkpad:
+                            raise StreamComposeCreationError(
+                                f"Unable to create multiplexer sink pad bin for {component.get_name()}"
+                            )
+
+                        # get the source pad from the upstream component
+                        srcpad = source.get_static_pad("src")
+                        if not srcpad:
+                            raise StreamComposeCreationError(f"Unable to create bin src pad for {component.get_name()}")
+
+                        link_code = srcpad.link(sinkpad)
+                        if link_code != Gst.PadLinkReturn.OK:
+                            logger.error(
+                                f"Linking of source and multiplexer for component {component.get_name()}"
+                                f" failed: {link_code.value_nick}"
+                            )
+                            exit(1)
+
+                else:
+                    link_code = elems[subidx].link(elems[subidx + 1])
+                    if not link_code:
+                        logger.error(f"Creation of {components[idx].get_name()} failed")
+                        exit(1)
 
             link_code = connect_component_prev.link(connect_component_next)
 
