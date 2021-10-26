@@ -12,7 +12,6 @@
 ################################################################################
 
 import logging
-from typing import Optional
 from uuid import uuid4
 
 from gi.repository import Gst
