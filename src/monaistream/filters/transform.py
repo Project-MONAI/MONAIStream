@@ -21,8 +21,9 @@ DEFAULT_HEIGHT = 240
 
 class TransformChainComponent(StreamFilterComponent):
     """
-    The `TransformChainComponent` allows users to plugin a MONAI transformation pipeline into the MONAI `StreamCompose` component 
+    The `TransformChainComponent` allows users to plugin a MONAI transformation pipeline into the MONAI `StreamCompose` component
     """
+
     def __init__(
         self,
         transform_chain: Callable,
@@ -44,7 +45,7 @@ class TransformChainComponent(StreamFilterComponent):
 
     def initialize(self):
         """
-        Initializes the GStreamer element wrapped by this component, which is a `queue` element 
+        Initializes the GStreamer element wrapped by this component, which is a `queue` element
         """
         ucbt = Gst.ElementFactory.make("queue", self.get_name())
         if not ucbt:
@@ -76,9 +77,10 @@ class TransformChainComponent(StreamFilterComponent):
 
     def probe_callback(self, pad: Gst.Pad, info: Gst.PadProbeInfo, user_data: object):
         """
-        A wrapper function for the `transform_chain` callable set in the constructor. Performs conversion of GStreamer data
-        to a `torch.Tensor` before the user-specified `transform_chain` is called, and converts back from the user's `torch.Tensor`
-        result. 
+        A wrapper function for the `transform_chain` callable set in the constructor. Performs conversion of GStreamer
+        data to a `torch.Tensor` before the user-specified `transform_chain` is called; the result of `transform_chain`
+        is expected to be a `torch.Tensor` which is converted back to a `Gst.Buffer` and written into the original
+        input buffer. NOTE: The size of the output must be the same as or smaller than the input buffer.
         """
 
         inbuf = info.get_buffer()

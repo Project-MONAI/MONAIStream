@@ -15,7 +15,17 @@ logger = logging.getLogger(__name__)
 
 
 class StreamCompose(object):
-    def __init__(self, components: Sequence[StreamComponent]) -> None:
+    """
+    MONAI Stream pipeline composer is the core function that allows MONAI Stream and MONAI core elements to integrate.
+    """
+
+    def __init__(self, components: Sequence[StreamComponent]):
+        """
+        At initialization all components in the pipeline are initilized thought the `initialize` method, and are then
+        linked by retrieving their underlying GStreamer elements through `get_gst_element`.
+
+        :param components: is a sequence of `StreamComponent` from which all components in MONAI Stream SDK are inherited
+        """
         self._pipeline = Gst.Pipeline()
 
         # initialize and configure components

@@ -10,7 +10,15 @@ logger = logging.getLogger(__name__)
 
 
 class URISource(StreamSourceComponent):
+    """
+    Creates a source which reads data from a URI. Source may be live (e.g. `rtsp://`) or playback (e.g. `file:///`, `http://`)
+    """
+
     def __init__(self, uri: str, name: str = "") -> None:
+        """
+        :param uri: the URI to the data source
+        :param name: the name to assign to this component
+        """
 
         if not name:
             name = str(uuid4().hex)
@@ -20,6 +28,9 @@ class URISource(StreamSourceComponent):
         self._is_live = uri.find("rtsp://") == 0
 
     def initialize(self):
+        """
+        Initialize the `uridecodebin` GStreamer component.
+        """
 
         uri_decode_bin_name = f"{self._name}-uridecodebin"
         uri_decode_bin = Gst.ElementFactory.make("uridecodebin", uri_decode_bin_name)
@@ -33,10 +44,25 @@ class URISource(StreamSourceComponent):
         self._uri_decode_bin = uri_decode_bin
 
     def is_live(self):
+        """
+        Determine whether the URI source is live.
+
+        :return: `True` is source is `rtsp://`, and `False` otherwise
+        """
         return self._is_live
 
     def get_name(self):
+        """
+        Get the assigned name of the component
+
+        :return: the name of the component as a `str`
+        """
         return f"{self._name}-source"
 
     def get_gst_element(self):
+        """
+        Return the raw `Gst.Element`
+
+        :return: the `uridecodebin` `Gst.Element`
+        """
         return self._uri_decode_bin

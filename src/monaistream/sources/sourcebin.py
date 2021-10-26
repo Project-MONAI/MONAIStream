@@ -74,7 +74,7 @@ class NVAggregatedSourcesBin(AggregatedSourcesComponent):
 
     def initialize(self):
         """
-        Initializer method for all provided source components and the `nvstreammux` component which is used 
+        Initializer method for all provided source components and the `nvstreammux` component which is used
         to batch the output data from all provided sources
         """
 

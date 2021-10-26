@@ -14,6 +14,7 @@ class AJAVideoSource(StreamSourceComponent):
     """
     AJA video capture component
     """
+
     def __init__(
         self,
         mode: str,
