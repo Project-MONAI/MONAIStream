@@ -20,14 +20,21 @@ DEFAULT_HEIGHT = 240
 
 
 class TransformChainComponent(StreamFilterComponent):
+    """
+    The `TransformChainComponent` allows users to plugin a MONAI transformation pipeline into the MONAI `StreamCompose` component 
+    """
     def __init__(
         self,
         transform_chain: Callable,
         input_labels: List[str] = [],
         output_label: str = "",
-        num_channel_user_meta: int = 1,
         name: str = "",
     ) -> None:
+        """
+        :param transform_chain: a `Callable` object such as `monai.transforms.compose.Compose`
+        :param input_labels: the label keys we want to assign to the inputs to this component
+        :param output_labels: the label key to select the output from this component
+        """
         self._user_callback = transform_chain
         if not name:
             name = str(uuid4().hex)
@@ -36,6 +43,9 @@ class TransformChainComponent(StreamFilterComponent):
         self._output_label = output_label
 
     def initialize(self):
+        """
+        Initializes the GStreamer element wrapped by this component, which is a `queue` element 
+        """
         ucbt = Gst.ElementFactory.make("queue", self.get_name())
         if not ucbt:
             raise BinCreationError(f"Unable to create {self.__class__.__name__} {self.get_name()}")
@@ -49,12 +59,27 @@ class TransformChainComponent(StreamFilterComponent):
         transform_sinkpad.add_probe(Gst.PadProbeType.BUFFER, self.probe_callback, 0)
 
     def get_name(self):
+        """
+        Get the name assigned to the component
+
+        :return: the name as a `str`
+        """
         return f"{self._name}-usercallbacktransform"
 
     def get_gst_element(self):
+        """
+        Return the GStreamer element
+
+        :return: the raw `queue` `Gst.Element`
+        """
         return self._ucbt
 
     def probe_callback(self, pad: Gst.Pad, info: Gst.PadProbeInfo, user_data: object):
+        """
+        A wrapper function for the `transform_chain` callable set in the constructor. Performs conversion of GStreamer data
+        to a `torch.Tensor` before the user-specified `transform_chain` is called, and converts back from the user's `torch.Tensor`
+        result. 
+        """
 
         inbuf = info.get_buffer()
         if not inbuf:

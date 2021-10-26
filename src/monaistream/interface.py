@@ -78,7 +78,7 @@ class StreamFilterComponent(StreamComponent):
 class InferenceFilterComponent(StreamFilterComponent):
     """
     An inference (filter) component abstracting basic methods for components that perform inference
-    (e.g. :class:`monaistream.filters.NVInferServer`).
+    (e.g. :class:`monaistream.filters.infer.NVInferServer`).
     """
 
     def get_config(self) -> Any:

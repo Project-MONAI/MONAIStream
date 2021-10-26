@@ -11,7 +11,9 @@ MONAIStream Sources
 .. autoclass:: NVAggregatedSourcesBin
     :members:
     :noindex:
-
+.. autoclass:: AJAVideoSource
+    :members:
+    :noindex:
 
 MONAIStream filters
 ===================

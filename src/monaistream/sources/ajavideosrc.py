@@ -11,6 +11,9 @@ logger = logging.getLogger(__name__)
 
 
 class AJAVideoSource(StreamSourceComponent):
+    """
+    AJA video capture component
+    """
     def __init__(
         self,
         mode: str,
@@ -18,9 +21,16 @@ class AJAVideoSource(StreamSourceComponent):
         is_nvmm: bool,
         output_width: int,
         output_height: int,
-        batched_push_timeout: Optional[int] = None,
         name: str = "",
     ) -> None:
+        """
+        :param mode: __(Anisha to complete)__
+        :param input_mode: __(Anisha to complete)__
+        :param is_nvmm: __(Anisha to complete)__
+        :param output_width: the desired output width from the capture card
+        :param output_height: the desired output heigh from the capture card
+        :param name: the name to assign to the component
+        """
 
         if not name:
             name = str(uuid4().hex)
@@ -32,9 +42,11 @@ class AJAVideoSource(StreamSourceComponent):
         self._is_live = True
         self._output_width = output_width
         self._output_height = output_height
-        self._batched_push_timeout = batched_push_timeout
 
     def initialize(self):
+        """
+        Initialize the GStreamer elements that are part of this component, namely `ajavideosrc` and `nvstreammux`
+        """
 
         aja_video_src_name = f"{self._name}-ajavideosrc"
         aja_video_src = Gst.ElementFactory.make("ajavideosrc", aja_video_src_name)
@@ -59,14 +71,27 @@ class AJAVideoSource(StreamSourceComponent):
         self._streammux.set_property("width", self._output_width)
         self._streammux.set_property("height", self._output_height)
         self._streammux.set_property("live-source", self._is_live)
-        if self._batched_push_timeout:
-            self._streammux.set_property("batched-push-timeout", self._batched_push_timeout)
 
     def is_live(self):
+        """
+        Determine if the capture is live
+
+        :return: `True`
+        """
         return self._is_live
 
     def get_name(self):
+        """
+        Return the name of the component
+
+        :return: component anem as `str`
+        """
         return f"{self._name}-ajasource"
 
     def get_gst_element(self):
+        """
+        Return the GStreamer elements wrapped in this component
+
+        :return: get a tuple `Gst.Element`s of type `(ajavideosrc, nvstreammux)`
+        """
         return (self._aja_video_src, self._streammux)

@@ -41,6 +41,11 @@ def _child_added_handler(child_proxy, obj, name, user_data):
 
 
 class NVAggregatedSourcesBin(AggregatedSourcesComponent):
+    """
+    An aggregating source bin which, when provided with multiple sources, will batch the inputs from all sources provided
+    and send the batched data to downstream components
+    """
+
     def __init__(
         self,
         sources: Union[StreamSourceComponent, List[StreamSourceComponent]],
@@ -49,7 +54,13 @@ class NVAggregatedSourcesBin(AggregatedSourcesComponent):
         batched_push_timeout: Optional[int] = None,
         name: str = "",
     ) -> None:
-
+        """
+        :param sources: One source or a list of sources that are "aggregated" by concatenating the output of all sources in the batch dimension
+        :param output_width: The width of the batched output
+        :param output_height: The height of the batched output
+        :param batched_push_timeout: The timeout in milliseconds to wait for the batch to be formed
+        :param name: the desired name of the aggregator component
+        """
         if not name:
             name = str(uuid4().hex)
 
@@ -62,6 +73,10 @@ class NVAggregatedSourcesBin(AggregatedSourcesComponent):
         self._is_live = any([source.is_live() for source in self._sources])
 
     def initialize(self):
+        """
+        Initializer method for all provided source components and the `nvstreammux` component which is used 
+        to batch the output data from all provided sources
+        """
 
         # create the source bin with all the sources specified
         gst_bin = Gst.Bin.new(self.get_name())
@@ -103,13 +118,33 @@ class NVAggregatedSourcesBin(AggregatedSourcesComponent):
         # the bin and muxer will be linked in the composer as they first need to be added to the pipeline
 
     def is_live(self):
+        """
+        Returns whether any of the aggregated sources is "live" (e.g. capture card, `rtsp://`, etc.)
+
+        :return: `true` if any of the sources is live
+        """
         return self._is_live
 
     def get_name(self):
+        """
+        Get the name of the component
+
+        :return: the name as a `str`
+        """
         return f"{self._name}-source"
 
     def get_gst_element(self):
+        """
+        Return a tuple of GStreamer elements initialized in the components
+
+        :return: a tuple of `Gst.Element`s of types `(gst-bin, nvstreammux)`
+        """
         return (self._gst_bin, self._streammux)
 
     def get_num_sources(self):
+        """
+        Return the number sources added to this component
+
+        :return: the number of sources assigned to the aggregated component
+        """
         return len(self._sources)
