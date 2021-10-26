@@ -58,7 +58,17 @@ class FilterProperties(BaseModel):
 
 
 class NVVideoConvert(StreamFilterComponent):
+    """
+    Video converter component for NVIDIA GPU-based video stream
+    """
+
     def __init__(self, filter: FilterProperties, name: str = "") -> None:
+        """
+        Create an :class:`.NVVIdeoConvert` object based on the :class:`.FilterProperties`
+
+        :param filter: the filter property for the video converter component
+        :param name: the name of the component
+        """
         if not name:
             name = str(uuid4().hex)
 
@@ -66,6 +76,9 @@ class NVVideoConvert(StreamFilterComponent):
         self._filter = filter
 
     def initialize(self):
+        """
+        Initialize the `nvvideoconvert` GStreamer component
+        """
         nvvidconv = Gst.ElementFactory.make("nvvideoconvert", self.get_name())
         if not nvvidconv:
             raise BinCreationError(f"Unable to create {self.__class__._name} {self.get_name()}")
@@ -82,7 +95,17 @@ class NVVideoConvert(StreamFilterComponent):
         self._filter = filter
 
     def get_name(self):
+        """
+        Get the name of the component
+
+        :return: the name of the component
+        """
         return f"{self._name}-nvvideoconvert"
 
     def get_gst_element(self):
+        """
+        Get the GStreamer elements initialized with this component
+
+        :return: get a tuple of GStreamer elements of types `(nvvideoconvert, capsfilter)`
+        """
         return (self._nvvidconv, self._filter)
