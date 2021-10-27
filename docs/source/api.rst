@@ -8,16 +8,24 @@ MONAIStream Sources
 ===================
 
 .. currentmodule:: monaistream.sources
+.. autoclass:: URISource
+    :members:
+    :noindex:
 .. autoclass:: NVAggregatedSourcesBin
     :members:
     :noindex:
-
+.. autoclass:: AJAVideoSource
+    :members:
+    :noindex:
 
 MONAIStream filters
 ===================
 
 .. currentmodule:: monaistream.filters
 .. autoclass:: TransformChainComponent
+    :members:
+    :noindex:
+.. autoclass:: TransformChainComponentCupy
     :members:
     :noindex:
 .. autoclass:: NVInferServer
@@ -40,7 +48,7 @@ MONAIStream Sink
     :noindex:
 
 
-MONAIStream Composer
+MONAI Stream Compose
 ====================
 
 .. currentmodule:: monaistream.compose

@@ -167,6 +167,9 @@ class InferServerConfiguration(BaseModel):
 
 
 class NVInferServer(InferenceFilterComponent):
+    """
+    Triton Inference server component
+    """
 
     output_template = """infer_config {
     unique_id: {{ infer_config.unique_id }}
@@ -396,8 +399,18 @@ async_mode: {{ async_mode|string|lower }}
     """
 
     def __init__(
-        self, name: str = "", config: Optional[InferServerConfiguration] = None, config_path: str = "/tmp"
+        self,
+        name: str = "",
+        config: Optional[InferServerConfiguration] = None,
+        config_path: str = "/tmp",
     ) -> None:
+        """
+        Constructor for Triton Inference server component
+
+        :param config: the configuration (:class:`.InferServerConfiguration`) for the Triton Inference Server streaming component
+                       (if none is provided a default configuration is used)
+        :param name: the name of the component
+        """
 
         if not name:
             self._name = str(uuid4().hex)
@@ -411,9 +424,17 @@ async_mode: {{ async_mode|string|lower }}
 
     @staticmethod
     def generate_default_config():
+        """
+        Get the default configuration for the Triton Inference server for customization purposes
+
+        :return: the default inference server component of type :class:`.InferServerConfiguration`
+        """
         return InferServerConfiguration(**json.loads(NVInferServer.default_config))
 
     def initialize(self):
+        """
+        Initialize the `nvinferserver` GStreamer element and configure based on the provided configuration
+        """
 
         self._config_path = os.path.join(self._config_path, f"config-{self.get_name()}.txt")
 
@@ -428,13 +449,33 @@ async_mode: {{ async_mode|string|lower }}
         self._pgie.set_property("config-file-path", self._config_path)
 
     def get_config(self) -> Any:
+        """
+        Get the configuration of the component
+
+        :return: the configuration of the Triton Inference server component
+        """
         return self._config
 
     def get_name(self) -> Any:
+        """
+        Get the name of the component
+
+        :return: the name of the component as `str`
+        """
         return f"{self._name}-inference"
 
     def set_batch_size(self, batch_size: int):
+        """
+        Configure the batch size of the inference server
+
+        :param batch_size: a positive integer determining the maximum batch size for the inference server
+        """
         self._pgie.set_property("batch-size", batch_size)
 
     def get_gst_element(self):
+        """
+        Get the `nvinferserver` GStreamer element being wrapped by this component
+
+        :return: the `nvinferserver` GStreamer element
+        """
         return self._pgie
