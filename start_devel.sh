@@ -14,7 +14,7 @@
 ################################################################################
 
 xhost + && \
-docker build -t deepstream-monai:ds6.0-dev . -f Dockerfile.devel && \
+docker build -t monaistream-sdk:main . -f Dockerfile.devel && \
 docker run --gpus all \
            --rm \
            -it \
@@ -24,4 +24,4 @@ docker run --gpus all \
            -v ${PWD}/sample:/sample \
            -w /sample \
            -e DISPLAY \
-           deepstream-monai:ds6.0-dev
+           monaistream-sdk:main
