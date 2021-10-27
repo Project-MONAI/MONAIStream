@@ -10,19 +10,22 @@ provides a dockerfile script that will automatically perform the setup and allow
 inside a container on the machine of their choice (x86 or `Clara AGX <https://developer.nvidia.com/clara-agx-devkit>`_)
 running a Linux operating system.
 
-Workstation Development Container Setup
-==============================================
+Steps for `x86` Development Container Setup
+===========================================
+
+Creating a Local Development Container
+--------------------------------------
 
 To build a developer container for your workstation simply clone the repo and run the setup script as follows.
 
 .. code-block:: bash
 
     # clone the repo
-    git clone https://github.com/Project-MONAI/MONAIStream
+    git clone -b main https://github.com/Project-MONAI/MONAIStream
 
     # start development setup script
     cd MONAIStream
-    ./start_devel
+    ./start_devel.sh
 
 With the successful completion of the setup script, a container will be running containing all the necessary libraries
 for the developer to start designing MONAI Stream SDK inference pipelines. The development however is limited to within
@@ -30,7 +33,7 @@ the container and the mounted volumes. The developer may modify ``Dockerfile.dev
 needs.
 
 Connecting VSCode to the Development Container
-==============================================
+----------------------------------------------
 
 To start developing within the newly created MONAI Stream SDK development container users may choose to use their favorite
 editor or IDE. Here, we show how one could setup VSCode on their local machine to start developing MONAI Stream inference

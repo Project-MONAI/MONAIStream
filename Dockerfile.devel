@@ -41,16 +41,19 @@ RUN python -m pip install -r requirements-dev.txt && \
     python -m pip install monai && \
     rm requirements*.txt
 
-# disable PyTorch backend
+# disable PyTorch backend for Triton
 RUN mv /opt/tritonserver/backends/pytorch /opt/tritonserver/backends/pytorch_bck
 
-ENV GST_PLUGIN_PATH=/app/plugins/gst
 ENV PATH=$PATH:/opt/nvidia/deepstream/deepstream-6.0/lib
 
 WORKDIR /opt/nvidia/deepstream/deepstream-6.0/lib
 COPY ./lib/pyds-py3.8-x86.so pyds.so
-RUN python3 setup.py install
+RUN python setup.py install
 
-WORKDIR /app
+WORKDIR /monaistream-sdk
+COPY . .
+RUN pip install .
+
+WORKDIR /sample
 
 ENTRYPOINT [ "bash" ]

@@ -21,7 +21,7 @@ docker run --gpus all \
            --shm-size=1g --ulimit memlock=-1 \
            -v /tmp/.X11-unix:/tmp/.X11-unix \
            -v ${HOME}/.Xauthority:/home/user/.Xauthority \
-           -v ${PWD}:/app \
-           -w /app \
+           -v ${PWD}/sample:/sample \
+           -w /sample \
            -e DISPLAY \
            deepstream-monai:ds6.0-dev
