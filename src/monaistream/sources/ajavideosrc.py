@@ -37,9 +37,9 @@ class AJAVideoSource(StreamSourceComponent):
         name: str = "",
     ) -> None:
         """
-        :param mode: __(Anisha to complete)__
-        :param input_mode: __(Anisha to complete)__
-        :param is_nvmm: __(Anisha to complete)__
+        :param mode: depicts the color format and framerate of input sensor
+        :param input_mode: whether the capture is via HDMI or SDI
+        :param is_nvmm: should be True for RDMA capture
         :param output_width: the desired output width from the capture card
         :param output_height: the desired output heigh from the capture card
         :param name: the name to assign to the component
