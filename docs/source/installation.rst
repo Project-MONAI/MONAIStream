@@ -20,7 +20,7 @@ To build a developer container for your workstation simply clone the repo and ru
 
 .. code-block:: bash
 
-    # clone the repo
+    # clone the latest release from the repo
     git clone -b main https://github.com/Project-MONAI/MONAIStream
 
     # start development setup script
@@ -58,7 +58,35 @@ pipelines.
 The above steps should allow the user to develop inside the MONAI Stream container using VSCode.
 
 Run the Endoscopy Inference Sample App
-======================================
+--------------------------------------
 
-MONAI Stream SDK comes with example inference pipelines. Here, we will go through the steps of setting up a sample App
+MONAI Stream SDK comes with example inference pipelines. Here, we run a sample app
 to perform instrument segmentation in an endoscopy video.
+
+Inside the development container perform the following steps.
+
+  1. Download the endoscopy data in the container.
+
+  .. code-block:: bash
+  
+    mkdir -p /app/data
+    cd /app/data
+    wget https://github.com/Project-MONAI/monai-stream-experimental/releases/download/data/CholecSeg8K.zip
+    unzip CholecSeg8K.zip -d .
+    mv CholecSeg8K/endo.mp4 .
+
+  2. Download the endoscopy instrument segmentation model.
+
+  .. code-block:: bash
+  
+    mkdir -p /app/models
+    cd /app/models
+    wget https://github.com/Project-MONAI/monai-stream-experimental/releases/download/data/EndoModel.zip
+    unzip EndoModel.zip -d .
+
+  3. Running the example streaming instrument segmentation.
+  
+  .. code-block:: bash
+  
+      cd /sample/monaistream-pytorch-pp-app
+      python main.py
