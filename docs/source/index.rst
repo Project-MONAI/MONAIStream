@@ -5,8 +5,12 @@ MONAI Stream
 *Medical Open Network for AI*
 
 MONAI Stream SDK aims to equip experienced MONAI Researchers an Developers with the ability to
-build streaming inference pipelines while enjoying the familiar MONAI development experience
-and utilities.
+build streaming inference pipelines on the GPU while enjoying the familiar MONAI development
+experience.
+
+Using MONAI Stream SDK developers are able to design and run streaming AI inference pipelines that 
+benefit from the performance of GPUs. Users can run streaming inference pipelines both on their workstations
+and `Clara AGX <https://developer.nvidia.com/clara-agx-devkit>`_ seamlessly.
 
 
 -----------------

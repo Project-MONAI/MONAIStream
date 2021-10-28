@@ -54,6 +54,7 @@ source_suffix = {
 
 extensions = [
     "recommonmark",
+    "sphinx_copybutton",
     "sphinx.ext.intersphinx",
     "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
