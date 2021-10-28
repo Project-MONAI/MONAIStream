@@ -38,7 +38,7 @@ if __name__ == "__main__":
 
     infer_server_config = NVInferServer.generate_default_config()
     infer_server_config.infer_config.backend.trt_is.model_repo.root = "/app/models"
-    infer_server_config.infer_config.backend.trt_is.model_name = "monai_unet_trt"
+    infer_server_config.infer_config.backend.trt_is.model_name = "cholec_unet_864x480"
     infer_server_config.infer_config.backend.trt_is.version = "-1"
     infer_server_config.infer_config.backend.trt_is.model_repo.log_level = 0
 

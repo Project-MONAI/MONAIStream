@@ -65,7 +65,7 @@ to perform instrument segmentation in an endoscopy video.
 
 Inside the development container perform the following steps.
 
-  1. Download the endoscopy data in the container.
+  1. Download the endoscopy data and models in the container.
 
   .. code-block:: bash
   
@@ -73,20 +73,50 @@ Inside the development container perform the following steps.
     cd /app/data
     wget https://github.com/Project-MONAI/monai-stream-experimental/releases/download/data/CholecSeg8K.zip
     unzip CholecSeg8K.zip -d .
-    mv CholecSeg8K/endo.mp4 .
 
-  2. Download the endoscopy instrument segmentation model.
+  2. Copy the endoscopy video to ``/app/videos/endo.mp4`` as the example app expects.
+
+  .. code-block:: bash
+
+    mkdir -p /app/videos
+    cp /app/data/CholecSeg8K/endo.mp4 /app/videos/.
+
+  3. Convert ONNX model to TRT engine.
+
+  .. code-block:: bash
+
+      cd /app/data/CholecSeg8K/
+      /usr/src/tensorrt/bin/trtexec --onnx=cholec_unet_864x480.onnx --saveEngine=model.engine --explicitBatch --verbose --workspace=1000
+
+  4. Copy the endoscopy instrument segmentation model under ``/app/models/cholec_unet_864x480/1`` as our sample app expects.
 
   .. code-block:: bash
   
-    mkdir -p /app/models
-    cd /app/models
-    wget https://github.com/Project-MONAI/monai-stream-experimental/releases/download/data/EndoModel.zip
-    unzip EndoModel.zip -d .
+    mkdir -p /app/models/cholec_unet_864x480/1
+    cp /app/data/CholecSeg8K/model.engine /app/models/cholec_unet_864x480/1/.
 
-  3. Running the example streaming instrument segmentation.
+  5. Running the example streaming instrument segmentation pipeline on the endoscopy video.
   
   .. code-block:: bash
   
       cd /sample/monaistream-pytorch-pp-app
       python main.py
+
+
+Steps for `Clara AGX` Development Setup
+=======================================
+
+Setting Up Clara AGX
+--------------------
+
+<docs here>
+
+Setting Up AJA Capture
+----------------------
+
+<docs here>
+
+Running the AJA Capture Sample App
+----------------------------------
+
+<docs here>

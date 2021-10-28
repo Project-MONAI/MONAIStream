@@ -31,7 +31,8 @@ RUN apt update && \
     gobject-introspection \
     gir1.2-gst-rtsp-server-1.0 \
     gstreamer1.0-plugins-base \
-    gstreamer1.0-python3-plugin-loader && \
+    gstreamer1.0-python3-plugin-loader \
+    unzip && \
     pip3 install --upgrade opencv-python && \
     pip3 install cupy-cuda111==8.6.0
 
@@ -52,7 +53,8 @@ RUN python setup.py install
 
 WORKDIR /monaistream-sdk
 COPY . .
-RUN pip install .
+RUN pip install . && \
+    rm -rf /monaistream-sdk
 
 WORKDIR /sample
 
