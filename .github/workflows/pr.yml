@@ -15,7 +15,7 @@ env:
 
 jobs:
   docker_build:
-    runs-on: ubuntu-latest
+    runs-on:  [arm, dgx]
     permissions:
       contents: read
       packages: write
