@@ -75,10 +75,6 @@ if __name__ == "__main__":
                         ConcatItemsd(keys=["original_image", "seg_output"], name="seg_overlay", dim=2),
                         Lambdad(keys=["seg_overlay"], func=color_blender),
                         CastToTyped(keys="seg_overlay", dtype=np.uint8),
-                        # to view segmentation map alone
-                        RepeatChanneld(keys=["seg_output"], repeats=4),
-                        ScaleIntensityd(keys=["seg_output"], minv=0, maxv=256),
-                        CastToTyped(keys="seg_output", dtype=np.uint8),
                     ]
                 ),
             ),
