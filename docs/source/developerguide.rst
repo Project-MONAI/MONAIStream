@@ -334,8 +334,8 @@ Let us walk through a simple example such as `monaistream-rdma-capture-app <LINK
 where the pipeline can be visualized as shown below.
 
 .. mermaid::
-
-  stateDiagram-v2
+   
+   stateDiagram-v2
       AJAVideoSource --> NVInferServer: RGBA Output
       NVInferServer --> TransformChainComponent: Original Image
       NVInferServer --> TransformChainComponent: User Metadata
