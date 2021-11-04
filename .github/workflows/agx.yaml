@@ -21,7 +21,7 @@ jobs:
         run: | 
           cp /opt/stream/US/Q000_04_tu_segmented_ultrasound_256.avi /app/videos/
           cp /opt/stream/US/config_us_trt.pbtxt /app/models/monai_unet_trt/config.pbtxt
-          cp /opt/stream/US/us_unet_256x256_cagx.engine /app/models/monai_unet_trt/1/monai-unet.engine
+          cp /opt/stream/US/us_unet_256x256_cagx.engine /app/models/monai_unet_trt/1/monai_unet.engine
 
       - name: Run Test
         run: |
