@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  test-monaistream-cupy-pp-app:
     runs-on: ["agx"]
 
     steps:
@@ -21,7 +21,21 @@ jobs:
       - name: Make temp directory for nee files
         run: mkdir tmp
 
-      - name: Clone down test data
+      - name: Make Videos Directory, copy endoscopy video
         run: |
-          wget https://github.com/Project-MONAI/monai-stream-experimental/releases/download/data/CholecSeg8K.zip
-          unzip *.zip
+          mkdir videos
+          cp /opt/stream/CholecSeg8K/endo.mp4 ./videos/
+
+      # - name: Copy in files
+      #   run: | 
+      #     mkdir models/monai_unet_trt/1
+      #     cp /opt/stream/CholecSeg8K/cholec_unet_864x480_cagx.engine models/monai_unet_trt/1/monai_unet.engine
+      #     cp /opt/stream/CholecSeg8K/config_cholec_trt.pbtxt models/monai_unet_trt/config.pbtxt
+
+      # - name: Change path of app
+      #     run: |
+
+      - name: Run Test
+        run: |
+          export DISPLAY=:0.0
+          PYTHONPATH=src/ python3 sample/monaistream-cupy-pp-app/main.py
