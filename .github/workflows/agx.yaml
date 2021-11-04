@@ -17,13 +17,13 @@ jobs:
         with:
           clean: true
 
-    - name: Copy in files
-      run: | 
-        cp /opt/stream/US/Q000_04_tu_segmented_ultrasound_256.avi /app/videos/
-        cp /opt/stream/US/config_us_trt.pbtxt /app/models/monai_unet_trt/config.pbtxt
-        cp /opt/stream/US/us_unet_256x256_cagx.engine /app/models/monai_unet_trt/1/monai-unet.engine
+      - name: Copy in files
+        run: | 
+          cp /opt/stream/US/Q000_04_tu_segmented_ultrasound_256.avi /app/videos/
+          cp /opt/stream/US/config_us_trt.pbtxt /app/models/monai_unet_trt/config.pbtxt
+          cp /opt/stream/US/us_unet_256x256_cagx.engine /app/models/monai_unet_trt/1/monai-unet.engine
 
-      - name: Run Test
-        run: |
-          export DISPLAY=:0.0
-          PYTHONPATH=src/ python3 sample/monaistream-cupy-pp-app/main.py
+        - name: Run Test
+          run: |
+            export DISPLAY=:0.0
+            PYTHONPATH=src/ python3 sample/monaistream-cupy-pp-app/main.py
