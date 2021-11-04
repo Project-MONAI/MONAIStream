@@ -15,7 +15,7 @@ jobs:
       - name: Checkout Source Code
         uses: actions/checkout@v2
         with:
-          path: "/app"
+          # path: "/app"
           clean: true
 
       - name: Make temp directory for nee files
