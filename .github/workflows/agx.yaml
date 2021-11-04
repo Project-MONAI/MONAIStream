@@ -26,4 +26,4 @@ jobs:
       - name: Run Test
         run: |
           export DISPLAY=:0.0
-          PYTHONPATH=src/ python3 sample/monaistream-cupy-pp-app/main.py
+          PYTHONPATH=src/ python3 sample/monaistream-us-cupy-app/main.py
