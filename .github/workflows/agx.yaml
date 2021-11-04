@@ -23,5 +23,5 @@ jobs:
 
     - name: Clone down test data
       run: |
-      wget https://github.com/Project-MONAI/monai-stream-experimental/releases/download/data/CholecSeg8K.zip
-      unzip *.zip
+        wget https://github.com/Project-MONAI/monai-stream-experimental/releases/download/data/CholecSeg8K.zip
+        unzip *.zip
