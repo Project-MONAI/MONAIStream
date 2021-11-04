@@ -11,17 +11,17 @@ jobs:
   build:
     runs-on: ["agx"]
 
-  steps:
-    - name: Checkout Source Code
-      uses: actions/checkout@v2
-      with:
-        path: "/app"
-        clean: true
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v2
+        with:
+          path: "/app"
+          clean: true
 
-    - name: Make temp directory for nee files
-      run: mkdir tmp
+      - name: Make temp directory for nee files
+        run: mkdir tmp
 
-    - name: Clone down test data
-      run: |
-        wget https://github.com/Project-MONAI/monai-stream-experimental/releases/download/data/CholecSeg8K.zip
-        unzip *.zip
+      - name: Clone down test data
+        run: |
+          wget https://github.com/Project-MONAI/monai-stream-experimental/releases/download/data/CholecSeg8K.zip
+          unzip *.zip
