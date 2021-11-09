@@ -21,7 +21,6 @@ Table of Contents
    :maxdepth: 1
 
    installation
-   quickstart
    developerguide
    api
 
