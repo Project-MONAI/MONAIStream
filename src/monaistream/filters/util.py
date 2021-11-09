@@ -11,6 +11,8 @@
 # limitations under the License.
 ################################################################################
 
+from typing import Any
+
 import numpy as np
 import pyds
 
@@ -29,7 +31,7 @@ def get_nvdstype_size(nvds_type: pyds.NvDsInferDataType) -> int:
     return 4
 
 
-def get_nvdstype_npsize(nvds_type: pyds.NvDsInferDataType) -> np.dtype:
+def get_nvdstype_npsize(nvds_type: pyds.NvDsInferDataType) -> Any:
 
     if nvds_type == pyds.NvDsInferDataType.INT8:
         return np.int8

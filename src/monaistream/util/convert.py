@@ -84,7 +84,7 @@ def to_trt(
         convert_command.append("--verbose")
 
     if workspace <= 0:
-        return ValueError("Invalid `workspace` value provided for TRT model conversion")
+        raise ValueError("Invalid `workspace` value provided for TRT model conversion")
 
     convert_command.append(f"--workspace={workspace}")
 

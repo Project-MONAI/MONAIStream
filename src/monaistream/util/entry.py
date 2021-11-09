@@ -18,7 +18,7 @@ class Entry:
             "[%(asctime)s] [%(process)s] [%(threadName)s] " "[%(levelname)s] (%(name)s:%(lineno)d) - %(message)s"
         ),
     ) -> None:
-        self.actions = set([actions] if isinstance(actions, str) else actions)
+        self.actions = actions
         logging.basicConfig(level=loglevel, format=logformat)
 
     def create_parser(self) -> argparse.ArgumentParser:

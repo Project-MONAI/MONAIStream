@@ -13,7 +13,7 @@
 
 import ctypes
 import logging
-from typing import Callable, Dict, List, Union
+from typing import Callable, Dict
 from uuid import uuid4
 
 import cupy
@@ -169,9 +169,7 @@ class TransformChainComponentCupy(StreamFilterComponent):
             stream = cupy.cuda.stream.Stream()
             stream.use()
 
-            user_input_data: Dict[str, cupy.ndarray] = []
-
-            user_input_data = {
+            user_input_data: Dict[str, cupy.ndarray] = {
                 label: data for label, data in zip(self._input_labels, [input_cupy_array, *user_data_cupy_layers])
             }
 
