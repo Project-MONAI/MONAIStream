@@ -1,10 +1,6 @@
 name: build
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -21,9 +17,20 @@ jobs:
         run: | 
           cp /opt/stream/US/Q000_04_tu_segmented_ultrasound_256.avi /app/videos/
           cp /opt/stream/US/config_us_trt.pbtxt /app/models/monai_unet_trt/config.pbtxt
-          cp /opt/stream/US/us_unet_256x256_cagx.engine /app/models/monai_unet_trt/1/monai_unet.engine
+          
+      - name: Covert model from .onnx to .engine
+        run: | 
+          export MODEL_FILE_ONNX=/opt/stream/US/us_unet_256x256.onnx
+          export MODEL_FILE_CONVERTED=/app/models/monai_unet_trt/1/monai_unet.engine
+          /usr/src/tensorrt/bin/trtexec --onnx=${MODEL_FILE_ONNX} --saveEngine=${MODEL_FILE_CONVERTED} --explicitBatch --verbose --workspace=5000
 
       - name: Run Test
         run: |
           export DISPLAY=:0.0
           PYTHONPATH=src/ python3 sample/monaistream-us-cupy-app/main.py
+
+      - name: Clean System
+        run: |
+          rm /app/models/monai_unet_trt/config.pbtxt
+          rm /app/models/monai_unet_trt/1/monai_unet.engine
+          rm /app/videos/*
