@@ -17,7 +17,6 @@ from typing import Callable, Dict, List, Union
 from uuid import uuid4
 
 import cupy
-import numpy as np
 import pyds
 from gi.repository import Gst
 from torch import Tensor
@@ -25,36 +24,9 @@ from torch.utils.dlpack import from_dlpack, to_dlpack
 
 from monaistream.errors import BinCreationError
 from monaistream.interface import StreamFilterComponent
+from monaistream.filters.util import get_nvdstype_npsize, get_nvdstype_size
 
 logger = logging.getLogger(__name__)
-
-
-def get_nvdstype_size(nvds_type: pyds.NvDsInferDataType) -> int:
-
-    if nvds_type == pyds.NvDsInferDataType.INT8:
-        return 1
-    elif nvds_type == pyds.NvDsInferDataType.HALF:
-        return 2
-    elif nvds_type == pyds.NvDsInferDataType.INT32:
-        return 4
-    elif nvds_type == pyds.NvDsInferDataType.FLOAT:
-        return 4
-
-    return 4
-
-
-def get_nvdstype_npsize(nvds_type: pyds.NvDsInferDataType) -> np.dtype:
-
-    if nvds_type == pyds.NvDsInferDataType.INT8:
-        return np.int8
-    elif nvds_type == pyds.NvDsInferDataType.HALF:
-        return np.half
-    elif nvds_type == pyds.NvDsInferDataType.INT32:
-        return np.int32
-    elif nvds_type == pyds.NvDsInferDataType.FLOAT:
-        return np.float32
-
-    return np.float32
 
 
 class TransformChainComponent(StreamFilterComponent):
