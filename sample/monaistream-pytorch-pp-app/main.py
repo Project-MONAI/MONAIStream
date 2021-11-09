@@ -31,8 +31,8 @@ logging.basicConfig(level=logging.DEBUG)
 
 def color_blender(img: torch.Tensor):
     # show background segmentation as red
-    img[..., 1] -= img[..., 1] * (1. - img[..., 4])
-    img[..., 2] -= img[..., 2] * (1. - img[..., 4])
+    img[..., 1] -= img[..., 1] * (1.0 - img[..., 4])
+    img[..., 2] -= img[..., 2] * (1.0 - img[..., 4])
 
     # show foreground segmentation as blue
     img[..., 0] -= img[..., 0] * img[..., 5]

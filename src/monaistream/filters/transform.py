@@ -35,12 +35,7 @@ class TransformChainComponent(StreamFilterComponent):
     into the MONAI `StreamCompose` component
     """
 
-    def __init__(
-        self,
-        transform_chain: Callable,
-        output_label: str,
-        name: str = "",
-    ) -> None:
+    def __init__(self, transform_chain: Callable, output_label: str, name: str = "") -> None:
         """
         :param transform_chain: a `Callable` object such as `monai.transforms.compose.Compose`
         :param input_labels: the label keys we want to assign to the inputs to this component
@@ -169,7 +164,10 @@ class TransformChainComponent(StreamFilterComponent):
                         memptr=udata_memptr,
                     )
 
-                    logger.debug(f"Layer name: {layer.layerName}, Is Input: {layer.isInput}, dims: {layer_dims}")
+                    logger.debug(
+                        f"Layer Name: {layer.layerName}, Is Input: {layer.isInput},"
+                        f" Dims: {layer_dims}, Data Type: {layer.dataType}"
+                    )
 
                     user_data_tensor_layers.append(from_dlpack(udata_memptr_cupy.toDlpack()))
 
@@ -183,10 +181,9 @@ class TransformChainComponent(StreamFilterComponent):
             }
 
             try:
+
                 user_output_tensor = self._user_callback(user_input_data)[self._output_label]
-
                 user_output_cupy = cupy.fromDlpack(to_dlpack(user_output_tensor))
-
                 cupy.copyto(input_cupy_array, user_output_cupy)
 
             except Exception as e:
