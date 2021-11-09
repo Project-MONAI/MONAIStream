@@ -62,6 +62,7 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.autosectionlabel",
     "sphinxcontrib.exceltable",
+    "sphinxcontrib.mermaid",
     "sphinx_autodoc_typehints",
 ]
 
@@ -183,7 +184,7 @@ class GenerateTagLinks(SphinxTransform):
             if len(re.findall(self.accepted_tag_format, git_tag)) != 1:
                 git_tag = "main"
 
-            link_value = link_value.format(MONAILABEL_GIT_TAG=git_tag)
+            link_value = link_value.format(MONAISTREAM_GIT_TAG=git_tag)
 
             # replace the link reference with the link value
             target = node["refuri"].replace(link_key, link_value, 1)

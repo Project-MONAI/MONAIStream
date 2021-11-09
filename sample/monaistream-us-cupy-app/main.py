@@ -12,7 +12,7 @@
 ################################################################################
 
 import logging
-from typing import List
+from typing import Dict
 
 import cupy
 import cupy.cuda.cudnn
@@ -24,26 +24,29 @@ from monaistream.filters.transform_cupy import TransformChainComponentCupy
 from monaistream.sinks import NVEglGlesSink
 from monaistream.sources import NVAggregatedSourcesBin, URISource
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.ERROR)
 
 
-def color_blender(img: cupy.ndarray, mask: List[cupy.ndarray]):
-    if mask:
-        # mask is of range [0,1]
-        mask[0] = cupy.cudnn.activation_forward(mask[0], cupy.cuda.cudnn.CUDNN_ACTIVATION_SIGMOID)
+def color_blender(inputs: Dict[str, cupy.ndarray]):
+    img = inputs["ORIGINAL_IMAGE"]
+    mask = inputs["OUTPUT__0"]
 
-        # Ultrasound model outputs two channels, so modify only the red
-        # and green channel in-place to apply mask.
-        img[..., 0] = cupy.multiply(mask[0][0, ...], img[..., 0])
-        img[..., 1] = cupy.multiply(1.0 - mask[0][1, ...], img[..., 1])
-    return
+    mask = cupy.cudnn.activation_forward(mask, cupy.cuda.cudnn.CUDNN_ACTIVATION_SIGMOID)
+
+    # Ultrasound model outputs two channels, so modify only the red
+    # and green channel in-place to apply mask.
+    img[..., 1] = cupy.multiply(cupy.multiply(mask[0, ...], 1.0 - mask[1, ...]), img[..., 1])
+    img[..., 2] = cupy.multiply(mask[0, ...], img[..., 2])
+    img[..., 0] = cupy.multiply(1.0 - mask[1, ...], img[..., 0])
+
+    return {"BLENDED_IMAGE": img}
 
 
 if __name__ == "__main__":
 
     infer_server_config = NVInferServer.generate_default_config()
     infer_server_config.infer_config.backend.trt_is.model_repo.root = "/app/models"
-    infer_server_config.infer_config.backend.trt_is.model_name = "monai_unet_trt"
+    infer_server_config.infer_config.backend.trt_is.model_name = "us_unet_256x256"
     infer_server_config.infer_config.backend.trt_is.version = "-1"
     infer_server_config.infer_config.backend.trt_is.model_repo.log_level = 0
 
@@ -66,7 +69,7 @@ if __name__ == "__main__":
             NVInferServer(
                 config=infer_server_config,
             ),
-            TransformChainComponentCupy(transform_chain=color_blender, num_channel_user_meta=2),
+            TransformChainComponentCupy(transform_chain=color_blender, output_label="BLENDED_IMAGE"),
             NVEglGlesSink(sync=True),
         ]
     )
