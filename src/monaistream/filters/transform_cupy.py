@@ -13,22 +13,19 @@
 
 import ctypes
 import logging
-from typing import Callable
+from typing import Callable, Dict, List, Union
 from uuid import uuid4
 
 import cupy
 from gi.repository import Gst
 
 import pyds
-from monaistream.errors import BinCreationError, NumChannelsExceededError
+from monaistream.errors import BinCreationError
 from monaistream.interface import StreamFilterComponent
+from monaistream.filters.util import get_nvdstype_npsize, get_nvdstype_size
+
 
 logger = logging.getLogger(__name__)
-
-
-DEFAULT_WIDTH = 320
-DEFAULT_HEIGHT = 240
-MAX_NUM_CHANNELS_USER_META = 4
 
 
 class TransformChainComponentCupy(StreamFilterComponent):
@@ -37,18 +34,16 @@ class TransformChainComponentCupy(StreamFilterComponent):
     The user-specified callable must receive a Cupy array or list of Cupy arrays, and return one single Cupy array as the result.
     """
 
-    def __init__(self, transform_chain: Callable, num_channel_user_meta: int = 1, name: str = "") -> None:
+    def __init__(self, transform_chain: Callable, output_label: str, name: str = "") -> None:
         """
         :param transform_chain: a `Callable` object such as `monai.transforms.compose.Compose`
-        :param num_channel_user_meta: the label keys we want to assign to the inputs to this component
         """
         self._user_callback = transform_chain
         if not name:
             name = str(uuid4().hex)
         self._name = name
-        self._num_channel_user_meta = num_channel_user_meta
-        if self._num_channel_user_meta > MAX_NUM_CHANNELS_USER_META:
-            raise NumChannelsExceededError(f"Cannot have more than {MAX_NUM_CHANNELS_USER_META} channels in user meta")
+        self._input_labels = ["ORIGINAL_IMAGE"]
+        self._output_label = output_label
 
     def initialize(self):
         """
@@ -97,19 +92,6 @@ class TransformChainComponentCupy(StreamFilterComponent):
         batch_meta = pyds.gst_buffer_get_nvds_batch_meta(hash(inbuf))
         frame_list = batch_meta.frame_meta_list
 
-        caps = pad.get_current_caps()
-        if not caps:
-            caps = pad.get_allowed_caps()
-
-        caps_struct = caps.get_structure(0)
-        success, image_width = caps_struct.get_int("width")
-        if not success:
-            image_width = DEFAULT_WIDTH
-
-        success, image_height = caps_struct.get_int("height")
-        if not success:
-            image_height = DEFAULT_HEIGHT
-
         while frame_list is not None:
 
             try:
@@ -155,16 +137,31 @@ class TransformChainComponentCupy(StreamFilterComponent):
                 for layer_idx in range(user_meta_data.num_output_layers):
 
                     layer = pyds.get_nvds_LayerInfo(user_meta_data, layer_idx)
+
+                    layer_dims = []
+                    elems = 1
+                    for dim in range(layer.dims.numDims):
+                        layer_dims.append(layer.dims.d[dim])
+                        elems *= layer.dims.d[dim]
+
+                    if not layer.isInput:
+                        self._input_labels.append(layer.layerName)
+
                     udata_unownedmem = cupy.cuda.UnownedMemory(
                         ctypes.pythonapi.PyCapsule_GetPointer(layer.buffer, None),
-                        ctypes.sizeof(ctypes.c_float) * self._num_channel_user_meta * image_width * image_height,
+                        get_nvdstype_size(layer.dataType) * elems,
                         owner,
                     )
                     udata_memptr = cupy.cuda.MemoryPointer(udata_unownedmem, 0)
                     udata_memptr_cupy = cupy.ndarray(
-                        shape=(self._num_channel_user_meta, image_height, image_width),
-                        dtype=ctypes.c_float,
+                        shape=tuple(layer_dims),
+                        dtype=get_nvdstype_npsize(layer.dataType),
                         memptr=udata_memptr,
+                    )
+
+                    logger.debug(
+                        f"Layer Name: {layer.layerName}, Is Input: {layer.isInput},"
+                        f" Dims: {layer_dims}, Data Type: {layer.dataType}"
                     )
 
                     user_data_cupy_layers.append(udata_memptr_cupy)
@@ -172,13 +169,21 @@ class TransformChainComponentCupy(StreamFilterComponent):
             stream = cupy.cuda.stream.Stream()
             stream.use()
 
-            if not user_data_cupy_layers:
-                self._user_callback(input_cupy_array)
-            else:
-                self._user_callback(input_cupy_array, user_data_cupy_layers)
+            user_input_data: Dict[str, cupy.ndarray] = []
+
+            user_input_data = {
+                label: data for label, data in zip(self._input_labels, [input_cupy_array, *user_data_cupy_layers])
+            }
+
+            try:
+
+                user_output_cupy = self._user_callback(user_input_data)[self._output_label]
+                cupy.copyto(input_cupy_array, user_output_cupy)
+
+            except Exception as e:
+                logger.exception(e)
+                return Gst.PadProbeReturn.HANDLED
 
             stream.synchronize()
 
-            break
-
-        return Gst.PadProbeReturn.OK
+            return Gst.PadProbeReturn.OK
