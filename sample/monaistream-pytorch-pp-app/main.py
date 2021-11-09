@@ -26,7 +26,7 @@ from monaistream.filters.transform import TransformChainComponent
 from monaistream.sinks import NVEglGlesSink
 from monaistream.sources import NVAggregatedSourcesBin, URISource
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.ERROR)
 
 
 def color_blender(img: torch.Tensor):
