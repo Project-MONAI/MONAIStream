@@ -31,13 +31,13 @@ logger = logging.getLogger(__name__)
 
 def get_nvdstype_size(nvds_type: pyds.NvDsInferDataType) -> int:
 
-    if pyds.NvDsInferDataType.INT8:
+    if nvds_type == pyds.NvDsInferDataType.INT8:
         return 1
-    elif pyds.NvDsInferDataType.HALF:
+    elif nvds_type == pyds.NvDsInferDataType.HALF:
         return 2
-    elif pyds.NvDsInferDataType.INT32:
+    elif nvds_type == pyds.NvDsInferDataType.INT32:
         return 4
-    elif pyds.NvDsInferDataType.FLOAT:
+    elif nvds_type == pyds.NvDsInferDataType.FLOAT:
         return 4
 
     return 4
@@ -45,13 +45,13 @@ def get_nvdstype_size(nvds_type: pyds.NvDsInferDataType) -> int:
 
 def get_nvdstype_npsize(nvds_type: pyds.NvDsInferDataType) -> np.dtype:
 
-    if pyds.NvDsInferDataType.INT8:
+    if nvds_type == pyds.NvDsInferDataType.INT8:
         return np.int8
-    elif pyds.NvDsInferDataType.HALF:
+    elif nvds_type == pyds.NvDsInferDataType.HALF:
         return np.half
-    elif pyds.NvDsInferDataType.INT32:
+    elif nvds_type == pyds.NvDsInferDataType.INT32:
         return np.int32
-    elif pyds.NvDsInferDataType.FLOAT:
+    elif nvds_type == pyds.NvDsInferDataType.FLOAT:
         return np.float32
 
     return np.float32
@@ -176,10 +176,10 @@ class TransformChainComponent(StreamFilterComponent):
 
                     layer = pyds.get_nvds_LayerInfo(user_meta_data, layer_idx)
 
-                    dims = []
+                    layer_dims = []
                     elems = 1
                     for dim in range(layer.dims.numDims):
-                        dims.append(layer.dims.d[dim])
+                        layer_dims.append(layer.dims.d[dim])
                         elems *= layer.dims.d[dim]
 
                     if not layer.isInput:
@@ -192,10 +192,12 @@ class TransformChainComponent(StreamFilterComponent):
                     )
                     udata_memptr = cupy.cuda.MemoryPointer(udata_unownedmem, 0)
                     udata_memptr_cupy = cupy.ndarray(
-                        shape=tuple(dims),
+                        shape=tuple(layer_dims),
                         dtype=get_nvdstype_npsize(layer.dataType),
                         memptr=udata_memptr,
                     )
+
+                    logger.debug(f"Layer name: {layer.layerName}, Is Input: {layer.isInput}, dims: {layer_dims}")
 
                     user_data_tensor_layers.append(from_dlpack(udata_memptr_cupy.toDlpack()))
 
@@ -208,11 +210,16 @@ class TransformChainComponent(StreamFilterComponent):
                 label: data for label, data in zip(self._input_labels, [input_torch_tensor, *user_data_tensor_layers])
             }
 
-            user_output_tensor = self._user_callback(user_input_data)[self._output_label]
+            try:
+                user_output_tensor = self._user_callback(user_input_data)[self._output_label]
 
-            user_output_cupy = cupy.fromDlpack(to_dlpack(user_output_tensor))
+                user_output_cupy = cupy.fromDlpack(to_dlpack(user_output_tensor))
 
-            cupy.copyto(input_cupy_array, user_output_cupy)
+                cupy.copyto(input_cupy_array, user_output_cupy)
+
+            except Exception as e:
+                logger.exception(e)
+                return Gst.PadProbeReturn.HANDLED
 
             stream.synchronize()
 
