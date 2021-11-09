@@ -35,10 +35,9 @@ def color_blender(inputs: Dict[str, cupy.ndarray]):
 
     # Ultrasound model outputs two channels, so modify only the red
     # and green channel in-place to apply mask.
-    img[..., 1] = cupy.multiply(mask[0, ...], img[..., 1])
+    img[..., 1] = cupy.multiply(cupy.multiply(mask[0, ...], 1.0 - mask[1, ...]), img[..., 1])
     img[..., 2] = cupy.multiply(mask[0, ...], img[..., 2])
     img[..., 0] = cupy.multiply(1.0 - mask[1, ...], img[..., 0])
-    img[..., 1] = cupy.multiply(1.0 - mask[1, ...], img[..., 1])
 
     return {"BLENDED_IMAGE": img}
 
