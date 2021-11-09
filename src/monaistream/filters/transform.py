@@ -17,31 +17,56 @@ from typing import Callable, Dict, List, Union
 from uuid import uuid4
 
 import cupy
+import numpy as np
+import pyds
 from gi.repository import Gst
 from torch import Tensor
 from torch.utils.dlpack import from_dlpack, to_dlpack
 
-import pyds
 from monaistream.errors import BinCreationError
 from monaistream.interface import StreamFilterComponent
 
 logger = logging.getLogger(__name__)
 
 
-DEFAULT_WIDTH = 320
-DEFAULT_HEIGHT = 240
+def get_nvdstype_size(nvds_type: pyds.NvDsInferDataType) -> int:
+
+    if pyds.NvDsInferDataType.INT8:
+        return 1
+    elif pyds.NvDsInferDataType.HALF:
+        return 2
+    elif pyds.NvDsInferDataType.INT32:
+        return 4
+    elif pyds.NvDsInferDataType.FLOAT:
+        return 4
+
+    return 4
+
+
+def get_nvdstype_npsize(nvds_type: pyds.NvDsInferDataType) -> np.dtype:
+
+    if pyds.NvDsInferDataType.INT8:
+        return np.int8
+    elif pyds.NvDsInferDataType.HALF:
+        return np.half
+    elif pyds.NvDsInferDataType.INT32:
+        return np.int32
+    elif pyds.NvDsInferDataType.FLOAT:
+        return np.float32
+
+    return np.float32
 
 
 class TransformChainComponent(StreamFilterComponent):
     """
-    The `TransformChainComponent` allows users to plugin a MONAI transformation pipeline into the MONAI `StreamCompose` component
+    The `TransformChainComponent` allows users to plugin a MONAI transformation pipeline
+    into the MONAI `StreamCompose` component
     """
 
     def __init__(
         self,
         transform_chain: Callable,
-        input_labels: List[str] = [],
-        output_label: str = "",
+        output_label: str,
         name: str = "",
     ) -> None:
         """
@@ -53,7 +78,7 @@ class TransformChainComponent(StreamFilterComponent):
         if not name:
             name = str(uuid4().hex)
         self._name = name
-        self._input_labels = input_labels
+        self._input_labels = ["ORIGINAL_IMAGE"]
         self._output_label = output_label
 
     def initialize(self):
@@ -98,24 +123,11 @@ class TransformChainComponent(StreamFilterComponent):
 
         inbuf = info.get_buffer()
         if not inbuf:
-            logger.error("Unable to get GstBuffer ")
+            logger.error("Unable to get GstBuffer")
             return
 
         batch_meta = pyds.gst_buffer_get_nvds_batch_meta(hash(inbuf))
         frame_list = batch_meta.frame_meta_list
-
-        caps = pad.get_current_caps()
-        if not caps:
-            caps = pad.get_allowed_caps()
-
-        caps_struct = caps.get_structure(0)
-        success, image_width = caps_struct.get_int("width")
-        if not success:
-            image_width = DEFAULT_WIDTH
-
-        success, image_height = caps_struct.get_int("height")
-        if not success:
-            image_height = DEFAULT_HEIGHT
 
         while frame_list is not None:
 
@@ -146,10 +158,10 @@ class TransformChainComponent(StreamFilterComponent):
 
             user_data_tensor_layers = []
             user_meta_list = frame_meta.frame_user_meta_list
-            while user_meta_list is not None:
+            if user_meta_list is not None:
 
                 try:
-                    user_meta = pyds.NvDsUserMeta.cast(frame_meta.frame_user_meta_list.data)
+                    user_meta = pyds.NvDsUserMeta.cast(user_meta_list.data)
                 except StopIteration:
                     break
 
@@ -163,41 +175,40 @@ class TransformChainComponent(StreamFilterComponent):
                 for layer_idx in range(user_meta_data.num_output_layers):
 
                     layer = pyds.get_nvds_LayerInfo(user_meta_data, layer_idx)
+
+                    dims = []
+                    elems = 1
+                    for dim in range(layer.dims.numDims):
+                        dims.append(layer.dims.d[dim])
+                        elems *= layer.dims.d[dim]
+
+                    if not layer.isInput:
+                        self._input_labels.append(layer.layerName)
+
                     udata_unownedmem = cupy.cuda.UnownedMemory(
                         ctypes.pythonapi.PyCapsule_GetPointer(layer.buffer, None),
-                        ctypes.sizeof(ctypes.c_float) * image_width * image_height,
+                        get_nvdstype_size(layer.dataType) * elems,
                         owner,
                     )
                     udata_memptr = cupy.cuda.MemoryPointer(udata_unownedmem, 0)
                     udata_memptr_cupy = cupy.ndarray(
-                        shape=(image_height, image_width),
-                        dtype=ctypes.c_float,
+                        shape=tuple(dims),
+                        dtype=get_nvdstype_npsize(layer.dataType),
                         memptr=udata_memptr,
                     )
 
                     user_data_tensor_layers.append(from_dlpack(udata_memptr_cupy.toDlpack()))
-                    # logger.debug(f"Adding user data, size: {user_data_tensor_layers[-1].size()}")
-                    # logger.debug(f"Size of user data: {len(user_data_tensor_layers)}")
-
-                break
 
             stream = cupy.cuda.stream.Stream()
             stream.use()
 
             user_input_data: Union[List[Tensor], Dict[str, Tensor]] = []
 
-            if self._input_labels:
-                user_input_data = {
-                    label: data
-                    for label, data in zip(self._input_labels, [input_torch_tensor, *user_data_tensor_layers])
-                }
-            else:
-                user_input_data = [input_torch_tensor, *user_data_tensor_layers]
+            user_input_data = {
+                label: data for label, data in zip(self._input_labels, [input_torch_tensor, *user_data_tensor_layers])
+            }
 
-            if not self._output_label:
-                user_output_tensor = list(self._user_callback(user_input_data).values())[0]
-            else:
-                user_output_tensor = self._user_callback(user_input_data)[self._output_label]
+            user_output_tensor = self._user_callback(user_input_data)[self._output_label]
 
             user_output_cupy = cupy.fromDlpack(to_dlpack(user_output_tensor))
 
