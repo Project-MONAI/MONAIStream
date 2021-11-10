@@ -148,3 +148,14 @@ cython_debug/
 
 # api docs
 docs/source/apidocs
+
+# videos
+*.avi
+*.mp4
+
+# models
+config*.pbtxt
+*.engine
+*.ts
+*.pt
+*.onnx

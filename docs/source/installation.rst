@@ -1,6 +1,6 @@
-=================
-Development Setup
-=================
+============
+Installation
+============
 
 MONAI Stream SDK is a wrapper for `DeepStream SDK <https://developer.nvidia.com/deepstream-sdk>`_,
 and as such it requires DeepStream to be able to run. Users may choose to install all the libraries

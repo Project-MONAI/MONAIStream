@@ -26,5 +26,6 @@ setup(
     zip_safe=False,
     package_data={"monaistream": ["py.typed"]},
     include_package_data=True,
+    entry_points={"console_scripts": ["monaistream = monaistream.util.entry:main"]},
     data_files=data_files,
 )

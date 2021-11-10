@@ -11,7 +11,7 @@
 # limitations under the License.
 ################################################################################
 
-FROM nvcr.io/nvdeepstream/deepstream6_ea/deepstream:6.0-ea-21.06-triton
+FROM nvcr.io/nvidia/deepstream:6.0-ea-21.06-triton
 
 RUN apt update && \
     apt install -y \
