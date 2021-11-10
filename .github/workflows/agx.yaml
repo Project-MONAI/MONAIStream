@@ -20,12 +20,12 @@ jobs:
       - name: Copy in files
         run: | 
           cp /opt/stream/US/Q000_04_tu_segmented_ultrasound_256.avi /app/videos/
-          cp /opt/stream/US/config_us_trt.pbtxt /app/models/us_unet_256x256/config.pbtxt
+          cp /opt/stream/US/config_us_trt.pbtxt /app/models/monai_unet_trt/config.pbtxt
           
       - name: Covert model from .onnx to .engine
         run: | 
-          export MODEL_FILE_ONNX=/opt/stream/US/us_unet_256x256.onnx
-          export MODEL_FILE_CONVERTED=/app/models/us_unet_256x256/1/monai_unet.engine
+          export MODEL_FILE_ONNX=/opt/stream/US/monai_unet_trt.onnx
+          export MODEL_FILE_CONVERTED=/app/models/monai_unet_trt/1/monai_unet.engine
           /usr/src/tensorrt/bin/trtexec --onnx=${MODEL_FILE_ONNX} --saveEngine=${MODEL_FILE_CONVERTED} --explicitBatch --verbose --workspace=5000
 
       - name: Run Test
@@ -35,6 +35,6 @@ jobs:
 
       - name: Clean System
         run: |
-          rm /app/models/us_unet_256x256/config.pbtxt
-          rm /app/models/us_unet_256x256/1/monai_unet.engine
+          rm /app/models/monai_unet_trt/config.pbtxt
+          rm /app/models/monai_unet_trt/1/monai_unet.engine
           rm /app/videos/*
