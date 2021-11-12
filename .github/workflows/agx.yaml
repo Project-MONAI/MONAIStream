@@ -1,0 +1,19 @@
+name: build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-monaistream-cupy-pp-app:
+    runs-on: ["agx"]
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v2
+        with:
+          clean: true
+
+      - name: Run Test
+        run: |
+          export DISPLAY=:0.0
+          PYTHONPATH=src/ python3 sample/monaistream-us-cupy-app/main.py
