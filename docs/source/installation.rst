@@ -1,6 +1,6 @@
-=================
-Development Setup
-=================
+============
+Installation
+============
 
 MONAI Stream SDK is a wrapper for `DeepStream SDK <https://developer.nvidia.com/deepstream-sdk>`_,
 and as such it requires DeepStream to be able to run. Users may choose to install all the libraries
@@ -57,45 +57,45 @@ pipelines.
 
 The above steps should allow the user to develop inside the MONAI Stream container using VSCode.
 
-Run the Endoscopy Inference Sample App
---------------------------------------
+Run the Ultrasound Inference Sample App
+---------------------------------------
 
 MONAI Stream SDK comes with example inference pipelines. Here, we run a sample app
-to perform instrument segmentation in an endoscopy video.
+to perform instrument segmentation in an ultrasound video.
 
 Inside the development container perform the following steps.
 
-  1. Download the endoscopy data and models in the container.
+  1. Download the ultrasound data and models in the container.
 
   .. code-block:: bash
   
     mkdir -p /app/data
     cd /app/data
-    wget https://github.com/Project-MONAI/monai-stream-experimental/releases/download/data/CholecSeg8K.zip
-    unzip CholecSeg8K.zip -d .
+    wget https://github.com/Project-MONAI/monai-stream-experimental/releases/download/data/US.zip
+    unzip US.zip -d .
 
-  2. Copy the endoscopy video to ``/app/videos/endo.mp4`` as the example app expects.
+  2. Copy the ultrasound video to ``/app/videos/Q000_04_tu_segmented_ultrasound_256.avi`` as the example app expects.
 
   .. code-block:: bash
-
+  
     mkdir -p /app/videos
-    cp /app/data/CholecSeg8K/endo.mp4 /app/videos/.
+    cp /app/data/US/Q000_04_tu_segmented_ultrasound_256.avi /app/videos/.
 
   3. Convert ONNX model to TRT engine.
 
   .. code-block:: bash
 
-      cd /app/data/CholecSeg8K/
-      /usr/src/tensorrt/bin/trtexec --onnx=cholec_unet_864x480.onnx --saveEngine=model.engine --explicitBatch --verbose --workspace=1000
+      cd /app/data/US/
+      /usr/src/tensorrt/bin/trtexec --onnx=us_unet_256x256.onnx --saveEngine=model.engine --explicitBatch --verbose --workspace=5000
 
-  4. Copy the endoscopy instrument segmentation model under ``/app/models/cholec_unet_864x480/1`` as our sample app expects.
+  4. Copy the ultrasound segmentation model under ``/app/models/us_unet_256x256/1`` as our sample app expects.
 
   .. code-block:: bash
   
-    mkdir -p /app/models/cholec_unet_864x480/1
-    cp /app/data/CholecSeg8K/model.engine /app/models/cholec_unet_864x480/1/.
+    mkdir -p /app/models/us_unet_256x256/1
+    cp /app/data/US/model.engine /app/models/us_unet_256x256/1/.
 
-  5. Running the example streaming instrument segmentation pipeline on the endoscopy video.
+  5. Running the example streaming bone scoliosis segmentation pipeline on the ultrasound video.
   
   .. code-block:: bash
   
