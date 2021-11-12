@@ -37,10 +37,6 @@ class MockGst(Mock):
 
 class MyMock(Mock):
 
-    Element = "Gst.Element"
-    Pad = "Gst.Pad"
-    PadProbeInfo = "Gst.PadProbeInfo"
-
     def __getattr__(self, name: str) -> Any:
         if name == "require_version":
             return MockCallable
