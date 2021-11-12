@@ -31,8 +31,7 @@ class MockGst(Mock):
     Pad = "Gst.Pad"
     PadProbeInfo = "Gst.PadProbeInfo"
 
-    @staticmethod
-    def init(arg):
+    def init(self):
         pass
 
 
