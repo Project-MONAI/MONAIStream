@@ -10,11 +10,48 @@ import os
 import re
 import subprocess
 import sys
+from typing import Any
 
+from unittest.mock import Mock
 from docutils.nodes import Text, reference
 
 sys.path.insert(0, os.path.abspath("../../src"))
-autodoc_mock_imports = ["gi"]
+
+MOCK_MODULES = ["gi", "gi.repository", "gi.repository.Gst", "cupy", "pyds"]
+
+
+class MockCallable(Mock):
+    def __call__(self, *args: Any, **kwargs: Any) -> Any:
+        return super().__call__(*args, **kwargs)
+
+
+class MockGst(Mock):
+
+    Element = "Gst.Element"
+    Pad = "Gst.Pad"
+    PadProbeInfo = "Gst.PadProbeInfo"
+
+    @staticmethod
+    def init(arg):
+        pass
+
+
+class MyMock(Mock):
+
+    Element = "Gst.Element"
+    Pad = "Gst.Pad"
+    PadProbeInfo = "Gst.PadProbeInfo"
+
+    def __getattr__(self, name: str) -> Any:
+        if name == "require_version":
+            return MockCallable
+        elif name == "Gst":
+            return MockGst
+        return ""
+
+
+for mod_name in MOCK_MODULES:
+    sys.modules[mod_name] = MyMock()
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -24,7 +61,6 @@ from sphinx.application import Sphinx
 from sphinx.transforms import SphinxTransform
 
 import monaistream
-
 
 # -- Project information -----------------------------------------------------
 
@@ -64,7 +100,8 @@ extensions = [
     "sphinx.ext.autosectionlabel",
     "sphinxcontrib.exceltable",
     "sphinxcontrib.mermaid",
-    "sphinx_autodoc_typehints",
+    # typehints is not compatible with mocked classes for sphinx builds
+    # "sphinx_autodoc_typehints",
 ]
 
 autoclass_content = "both"
@@ -81,7 +118,7 @@ set_type_checking_flag = False
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ["tools", "utils"]
+exclude_patterns = ["tools", "utils", "util"]
 
 # -- Options for HTML output -------------------------------------------------
 
