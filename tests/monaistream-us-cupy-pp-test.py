@@ -21,7 +21,7 @@ import cupy.cudnn
 from monaistream.compose import StreamCompose
 from monaistream.filters import FilterProperties, NVInferServer, NVVideoConvert
 from monaistream.filters.transform_cupy import TransformChainComponentCupy
-from monaistream.sinks import NVEglGlesSink, FakeSink
+from monaistream.sinks import FakeSink
 from monaistream.sources import NVAggregatedSourcesBin, URISource
 
 logging.basicConfig(level=logging.ERROR)
