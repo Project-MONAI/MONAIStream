@@ -36,7 +36,6 @@ class MockGst(Mock):
 
 
 class MyMock(Mock):
-
     def __getattr__(self, name: str) -> Any:
         if name == "require_version":
             return MockCallable
