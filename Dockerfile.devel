@@ -53,7 +53,7 @@ RUN python setup.py install
 
 WORKDIR /monaistream-sdk
 COPY . .
-RUN pip install . && \
+RUN python setup.py install && \
     rm -rf /monaistream-sdk
 
 WORKDIR /sample
