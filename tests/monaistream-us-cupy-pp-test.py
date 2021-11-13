@@ -12,7 +12,7 @@
 ################################################################################
 
 import logging
-from typing import List
+from typing import Dict
 
 import cupy
 import cupy.cuda.cudnn
@@ -21,19 +21,25 @@ import cupy.cudnn
 from monaistream.compose import StreamCompose
 from monaistream.filters import FilterProperties, NVInferServer, NVVideoConvert
 from monaistream.filters.transform_cupy import TransformChainComponentCupy
-from monaistream.sinks import NVEglGlesSink
+from monaistream.sinks import FakeSink
 from monaistream.sources import NVAggregatedSourcesBin, URISource
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.ERROR)
 
 
-def color_blender(img: cupy.ndarray, mask: List[cupy.ndarray]):
-    if mask:
-        # mask is of range [0,1]
-        mask[0] = cupy.cudnn.activation_forward(mask[0], cupy.cuda.cudnn.CUDNN_ACTIVATION_SIGMOID)
-        # modify only the red channel in-place to apply mask
-        img[..., 0] = cupy.multiply(1.0 - mask[0][0, ...], img[..., 0])
-    return
+def color_blender(inputs: Dict[str, cupy.ndarray]):
+    img = inputs["ORIGINAL_IMAGE"]
+    mask = inputs["OUTPUT__0"]
+
+    mask = cupy.cudnn.activation_forward(mask, cupy.cuda.cudnn.CUDNN_ACTIVATION_SIGMOID)
+
+    # Ultrasound model outputs two channels, so modify only the red
+    # and green channel in-place to apply mask.
+    img[..., 1] = cupy.multiply(cupy.multiply(mask[0, ...], 1.0 - mask[1, ...]), img[..., 1])
+    img[..., 2] = cupy.multiply(mask[0, ...], img[..., 2])
+    img[..., 0] = cupy.multiply(1.0 - mask[1, ...], img[..., 0])
+
+    return {"BLENDED_IMAGE": img}
 
 
 if __name__ == "__main__":
@@ -48,23 +54,23 @@ if __name__ == "__main__":
         [
             NVAggregatedSourcesBin(
                 [
-                    URISource(uri="file:///app/videos/endo.mp4"),
+                    URISource(uri="file:///app/videos/Q000_04_tu_segmented_ultrasound_256.avi"),
                 ],
-                output_width=864,
-                output_height=480,
+                output_width=256,
+                output_height=256,
             ),
             NVVideoConvert(
                 FilterProperties(
                     format="RGBA",
-                    width=864,
-                    height=480,
+                    width=256,
+                    height=256,
                 )
             ),
             NVInferServer(
                 config=infer_server_config,
             ),
-            TransformChainComponentCupy(transform_chain=color_blender),
-            NVEglGlesSink(sync=True),
+            TransformChainComponentCupy(transform_chain=color_blender, output_label="BLENDED_IMAGE"),
+            FakeSink(),
         ]
     )
     chain()
