@@ -61,62 +61,142 @@ Run the Ultrasound Inference Sample App
 ---------------------------------------
 
 MONAI Stream SDK comes with example inference pipelines. Here, we run a sample app
-to perform instrument segmentation in an ultrasound video.
+to perform bone scoliosis segmentation in an ultrasound video.
 
 Inside the development container perform the following steps.
 
   1. Download the ultrasound data and models in the container.
 
-  .. code-block:: bash
-  
-    mkdir -p /app/data
-    cd /app/data
-    wget https://github.com/Project-MONAI/monai-stream-experimental/releases/download/data/US.zip
-    unzip US.zip -d .
+      .. code-block:: bash
+
+        mkdir -p /app/data
+        cd /app/data
+        wget https://github.com/Project-MONAI/monai-stream-experimental/releases/download/data/US.zip
+        unzip US.zip -d .
 
   2. Copy the ultrasound video to ``/app/videos/Q000_04_tu_segmented_ultrasound_256.avi`` as the example app expects.
 
-  .. code-block:: bash
-  
-    mkdir -p /app/videos
-    cp /app/data/US/Q000_04_tu_segmented_ultrasound_256.avi /app/videos/.
+      .. code-block:: bash
+
+        mkdir -p /app/videos
+        cp /app/data/US/Q000_04_tu_segmented_ultrasound_256.avi /app/videos/.
 
   3. Convert ONNX model to TRT engine.
 
-  .. code-block:: bash
+      .. code-block:: bash
 
-      cd /app/data/US/
-      /usr/src/tensorrt/bin/trtexec --onnx=us_unet_256x256.onnx --saveEngine=model.engine --explicitBatch --verbose --workspace=5000
+          cd /app/data/US/
+          /usr/src/tensorrt/bin/trtexec --onnx=us_unet_256x256.onnx --saveEngine=model.engine --explicitBatch --verbose --workspace=5000
 
   4. Copy the ultrasound segmentation model under ``/app/models/us_unet_256x256/1`` as our sample app expects.
 
-  .. code-block:: bash
-  
-    mkdir -p /app/models/us_unet_256x256/1
-    cp /app/data/US/model.engine /app/models/us_unet_256x256/1/.
+      .. code-block:: bash
+
+        mkdir -p /app/models/us_unet_256x256/1
+        cp /app/data/US/model.engine /app/models/us_unet_256x256/1/.
 
   5. Running the example streaming bone scoliosis segmentation pipeline on the ultrasound video.
-  
-  .. code-block:: bash
-  
-      cd /sample/monaistream-pytorch-pp-app
-      python main.py
+
+      .. code-block:: bash
+
+          cd /sample/monaistream-pytorch-pp-app
+          python main.py
 
 
-Steps for `Clara AGX` Development Setup
-=======================================
+Steps for `Clara AGX Developer Kit` Development Setup
+=====================================================
 
-Setting Up Clara AGX
---------------------
+Setting Up Clara AGX Developer Kit
+----------------------------------
 
-<docs here>
+To setup the Clara AGX developer kit, use `Clara Holoscan SDK v0.1 <https://developer.nvidia.com/clara-holoscan-sdk>`_ to install the required components. MONAI Stream is only supported on Clara AGX Developer Kit in dGPU configuration.
 
-Setting Up AJA Capture
-----------------------
+The SDK Manager will flash the system for iGPU configuration, to get dGPU configuration and related installations, please follow chapter `Switching Between iGPU and dGPU` in latest Clara Holoscan SDK docs.
 
-<docs here>
+Now, prepare DeepStream to use Triton:
+
+  1. Install required packages.
+
+      .. code-block:: bash
+
+        sudo apt update && sudo apt-get install ffmpeg libssl1.0.0 libgstreamer1.0-0 gstreamer1.0-tools gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-libav gstreamer1.0-alsa libgstreamer1.0-dev libgstrtspserver-1.0-dev libx11-dev libjson-glib-dev
+
+  2. Run :code:`prepare_ds_trtis_model_repo.sh`.
+
+      .. code-block:: bash
+
+        cd /opt/nvidia/deepstream/deepstream-6.0/samples
+        sudo ./prepare_ds_trtis_model_repo.sh
+
+      .. NOTE:: :code:`prepare_ds_trtis_model_repo.sh` can take few minutes to complete.
+
+  3. Currently, TensorFlow is not supported on Clara AGX Developer Kit in dGPU configuration. So, move the folders to avoid errors related to TensorFlow.
+
+      .. code-block:: bash
+
+        cd /opt/nvidia/deepstream/deepstream-6.0/lib/triton_backends
+        sudo mv tensorflow1/ tensorflow1_bkup/
+        sudo mv tensorflow2/ tensorflow2_bkup/
+
+Next, setup the environement to use MONAI Stream:
+
+  1. Install required apt packages.
+
+      .. code-block:: bash
+
+        sudo apt update
+        sudo apt install -y python3-pip python3-gi python3-dev python3-gst-1.0 python3-opencv python3-venv python3-numpy libgstrtspserver-1.0-0 libgstreamer-plugins-base1.0-dev gstreamer1.0-rtsp gstreamer1.0-tools gstreamer1.0-libav libgirepository1.0-dev gobject-introspection gir1.2-gst-rtsp-server-1.0 gstreamer1.0-plugins-base gstreamer1.0-python3-plugin-loader
+
+  2. Install Python packages using pip.
+
+      .. code-block:: bash
+
+        pip3 install --upgrade pip
+        pip3 install --upgrade opencv-python
+        pip3 install Cython
+        pip3 install numpy==1.19.4
+        pip3 install cupy
+        pip3 install torchvision jinja2 pydantic monai
+
+      .. NOTE:: Installing :code:`cupy` can take few minutes.
+
+  3. Clone MONAI Stream repo
+
+      .. code-block:: bash
+
+        git clone git@github.com:Project-MONAI/MONAIStream.git /app
+        cd /app
+
+  4. Set up DeepStream Python bindings.
+
+      .. code-block:: bash
+
+        sudo cp /app/lib/pyds-py3.6-cagx.so /opt/nvidia/deepstream/deepstream-6.0/lib/pyds.so
+        sudo chown -R $USER /usr/local/lib/python3.6/dist-packages/
+        cd /opt/nvidia/deepstream/deepstream-6.0/lib
+        sudo python3 setup.py install
+        cd -
+
+.. NOTE:: The steps to run the Ultrasound inference sample app is same as on x86 machine. Please follow `Run the Ultrasound Inference Sample App` in `Steps for `x86` Development Container Setup` section.
+
+Setting Up AJA Capture Card
+---------------------------
+
+Setting up AJA capture cards is an optional step for MONAI Stream. To setup AJA capture card on Clara AGX Developer Kit, follow chapter `AJA Video System` in latest Clara Holoscan SDK docs.
 
 Running the AJA Capture Sample App
 ----------------------------------
 
-<docs here>
+To run a sample app to do RDMA capture using AJA capture card, use the following steps.
+
+  1. Verify :code:`ajavideosrc` gst-plugin is setup properly.
+
+      .. code-block:: bash
+
+        gst-inspect-1.0 ajavideosrc
+
+  2. If step 1 outputs the details about :code:`ajavideosrc` gst-plugin, then run the sample app. This step will output live video on display.
+
+      .. code-block:: bash
+
+        PYTHONPATH=src/ python3 sample/monaistream-rdma-capture-app/main.py
