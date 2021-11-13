@@ -42,7 +42,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v3.5.0
         with:
-          images: aihsani/monaistream:${{ github.event.pull_request.number }}
+          images: aihsani/monaistream${{ github.event.pull_request.number }}
 
       - name: Check if Docker Image with Tag Exists
         id: docker_build_check
