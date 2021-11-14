@@ -41,7 +41,7 @@ jobs:
       - uses: jwalton/gh-find-current-pr@v1
         id: findPr
         with:
-          state: open
+          state: all
 
       - name: Extract metadata (tags, labels) for Docker
         id: meta
@@ -81,7 +81,7 @@ jobs:
     needs: docker_build
     runs-on: ubuntu-latest
     container:
-      image: "docker://aihsani/monaistream:${{ needs.docker_build.outputs.monaistream_docker_image }}"
+      image: "docker://aihsani/monaistream:${{ needs.docker_build.outputs.monaistream_docker_image_tag }}"
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v2
@@ -139,7 +139,7 @@ jobs:
     needs: docker_build
     runs-on: ubuntu-latest
     container:
-      image: "docker://aihsani/monaistream:${{ needs.docker_build.outputs.monaistream_docker_image }}"
+      image: "docker://aihsani/monaistream:${{ needs.docker_build.outputs.monaistream_docker_image_tag }}"
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v2
@@ -212,7 +212,7 @@ jobs:
     needs: docker_build
     runs-on: ubuntu-latest
     container:
-      image: "docker://aihsani/monaistream:${{ needs.docker_build.outputs.monaistream_docker_image }}"
+      image: "docker://aihsani/monaistream:${{ needs.docker_build.outputs.monaistream_docker_image_tag }}"
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v2
