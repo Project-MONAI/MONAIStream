@@ -82,13 +82,11 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: "docker://aihsani/monaistream:${{ needs.docker_build.outputs.monaistream_docker_image_tag }}"
-    steps:
-      - name: Log in to DockerHub
-        uses: docker/login-action@v1.10.0
-        with:
-          username: ${{ secrets.DOCKER_USER }}
-          password: ${{ secrets.DOCKER_TOKEN }}
+      credentials:
+        username: ${{ secrets.DOCKER_USER }}
+        password: ${{ secrets.DOCKER_TOKEN }}
 
+    steps:
       - name: Checkout Source Code
         uses: actions/checkout@v2
 
@@ -146,13 +144,11 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: "docker://aihsani/monaistream:${{ needs.docker_build.outputs.monaistream_docker_image_tag }}"
-    steps:
-      - name: Log in to DockerHub
-        uses: docker/login-action@v1.10.0
-        with:
-          username: ${{ secrets.DOCKER_USER }}
-          password: ${{ secrets.DOCKER_TOKEN }}
+      credentials:
+        username: ${{ secrets.DOCKER_USER }}
+        password: ${{ secrets.DOCKER_TOKEN }}
 
+    steps:
       - name: Checkout Source Code
         uses: actions/checkout@v2
 
@@ -225,13 +221,10 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: "docker://aihsani/monaistream:${{ needs.docker_build.outputs.monaistream_docker_image_tag }}"
+      credentials:
+        username: ${{ secrets.DOCKER_USER }}
+        password: ${{ secrets.DOCKER_TOKEN }}
     steps:
-      - name: Log in to DockerHub
-        uses: docker/login-action@v1.10.0
-        with:
-          username: ${{ secrets.DOCKER_USER }}
-          password: ${{ secrets.DOCKER_TOKEN }}
-
       - name: Checkout Source Code
         uses: actions/checkout@v2
 
