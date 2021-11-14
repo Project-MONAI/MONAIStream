@@ -20,7 +20,7 @@ jobs:
       packages: write
 
     outputs:
-      monaistream_docker_image: "aihsani/monaistream:${{ steps.findPr.outputs.pr }}"
+      monaistream_docker_image_tag: ${{ steps.findPr.outputs.pr }}
 
     steps:
       - name: Checkout Source Code
@@ -81,7 +81,7 @@ jobs:
     needs: docker_build
     runs-on: ubuntu-latest
     container:
-      image: "docker://${{ needs.docker_build.outputs.monaistream_docker_image }}"
+      image: "docker://aihsani/monaistream:${{ needs.docker_build.outputs.monaistream_docker_image }}"
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v2
@@ -139,7 +139,7 @@ jobs:
     needs: docker_build
     runs-on: ubuntu-latest
     container:
-      image: "${{ needs.docker_build.outputs.monaistream_docker_image }}"
+      image: "docker://aihsani/monaistream:${{ needs.docker_build.outputs.monaistream_docker_image }}"
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v2
@@ -212,7 +212,7 @@ jobs:
     needs: docker_build
     runs-on: ubuntu-latest
     container:
-      image: "${{ needs.docker_build.outputs.monaistream_docker_image }}"
+      image: "docker://aihsani/monaistream:${{ needs.docker_build.outputs.monaistream_docker_image }}"
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v2
