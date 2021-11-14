@@ -20,7 +20,7 @@ jobs:
       packages: write
 
     outputs:
-      monaistream_docker_image: aihsani/monaistream:${{ steps.findPr.outputs.pr }}
+      monaistream_docker_image: "aihsani/monaistream:${{ steps.findPr.outputs.pr }}"
 
     steps:
       - name: Checkout Source Code
