@@ -20,7 +20,7 @@ jobs:
       packages: write
 
     outputs:
-      monaistream_docker_image: ${{ steps.meta.outputs.tags }}
+      monaistream_docker_image: aihsani/monaistream:${{ steps.findPr.outputs.pr }}
 
     steps:
       - name: Checkout Source Code
@@ -53,7 +53,7 @@ jobs:
         id: docker_build_check
         run: |
 
-          if docker manifest inspect "${{ steps.meta.outputs.tags }}"; then
+          if docker manifest inspect "aihsani/monaistream:${{ steps.findPr.outputs.pr }}"; then
             echo "::set-output name=skip_docker_build::true"
           else
             echo "::set-output name=skip_docker_build::false"
@@ -73,7 +73,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: aihsani/monaistream:${{ steps.findPr.outputs.pr }}
           labels: ${{ steps.meta.outputs.labels }}
           file: Dockerfile.base
 
