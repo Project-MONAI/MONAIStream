@@ -35,6 +35,11 @@ a video stream (e.g. via ``http://``), or a live stream.
    
    ``AJAVideoSource`` is currently not compatible with ``NVAggregatedSourcesBin``.
 
+:py:class:`~monaistream.sources.fake.FakeSource`
+------------------------------------------------
+
+``FakeSource`` is a sink component that allows the developer to end the MONAI Stream pipeline without the need to visualize data.
+
 :py:class:`~monaistream.sources.sourcebin.NVAggregatedSourcesBin`
 -----------------------------------------------------------------
 
@@ -100,9 +105,12 @@ the model version (``-1`` referring to the latest), and the inference server log
 
    infer_server_config = NVInferServer.generate_default_config()
    infer_server_config.infer_config.backend.trt_is.model_repo.root = "/app/models"
-   infer_server_config.infer_config.backend.trt_is.model_name = "cholec_unet_864x480"
+   infer_server_config.infer_config.backend.trt_is.model_name = "us_unet_256x256"
    infer_server_config.infer_config.backend.trt_is.version = "-1"
    infer_server_config.infer_config.backend.trt_is.model_repo.log_level = 0
+   
+   ...
+
    NVInferServer(
       config=infer_server_config,
    )
@@ -132,36 +140,55 @@ in the ``TransformsChainComponent``.
 
 ``TransformChainComponent`` is a filter component which allows the developer to apply `MONAI transformations <https://docs.monai.io/en/latest/transforms.html#dictionary-transforms>`_ to streaming data coming from
 any other MONAI Stream `source` or `filter`. When placed after an ``NVInferServer`` component it takes all the inputs, original and user metadata,
-presents them to the MONAI transformations specified in the `transform_chain` parameter as dictated by the `input_labels` parameter, and outputs the result
-specified byt he `output_label` parameter.
+presents them to the MONAI transformations specified in the ```transform_chain``` parameter, and outputs the result
+specified by the ``output_label`` parameter. The inputs to the transform chain are labelled as follows:
+ 
+  - the original stream is always present in the inputs with key ``ORIGINAL_IMAGE``,
+  - additional inputs to the transform chain are only available when ``TransformChainComponent`` follows ``NVInferServer``
+    where the keys to each output from the model in the ``NVInferServer`` match the output names of the model (see code below).
 
 .. warning::
 
    Currently, ``TransformChainComponent`` has limitations on the size of the input and output. Specifically, the size of the output in the ``transform_chain``
    must be the same as the size of the input.
 
-In the example below, ``TransformChainComponent`` is initialized to assign the labels ``input_labels=["original_image", "seg_output"]`` to the inputs received in sequence,
-and will output the data with key ``output_label="seg_overlay"``. The ``transform_chain`` callables are therefore presented with a ``Dict[str, torch.Tensor]``.
+In the example below, ``TransformChainComponent`` will output the data with key ``output_label="CONCAT_IMAGE"``. Here, the input keys to the ``transform_chain``
+are ``"ORIGINAL_IMAGE"`` and ``"OUTPUT__0"``, where the latter is the output label of the model defined in the ``NVInferServer`` in the last section.
 
 .. code-block:: python
+   :emphasize-lines: 2, 27
+
+   # define a color-blending function to be used in the transform chain below
+   def color_blender(img: torch.Tensor):
+      # show background segmentation as red
+      img[..., 1] -= img[..., 1] * (1.0 - img[..., 4])
+      img[..., 2] -= img[..., 2] * (1.0 - img[..., 4])
+
+      # show foreground segmentation as blue
+      img[..., 0] -= img[..., 0] * img[..., 5]
+      img[..., 1] -= img[..., 1] * img[..., 5]
+
+      return img[..., :4]
+
+   ...
 
    TransformChainComponent(
-      # assign keys to the inputs to `transform_chain`
-      input_labels=["original_image", "seg_output"],
-      # choose the desired output of `transform_chain`
-      output_label="seg_overlay",
+      # choose the label in the transform chain which we want to output
+      output_label="CONCAT_IMAGE",
       # specify transformation to be applied to data
       transform_chain=Compose(
          [
-            # apply post-transforms to segmentation
-            Activationsd(keys=["seg_output"], sigmoid=True),
-            AsDiscreted(keys=["seg_output"]),
-            AddChanneld(keys=["seg_output"]),
-            AsChannelLastd(keys=["seg_output"]),
-            # merge segmentation and original image into one for viewing
-            ConcatItemsd(keys=["original_image", "seg_output"], name="seg_overlay", dim=2),
-            Lambdad(keys=["seg_overlay"], func=color_blender),
-            CastToTyped(keys="seg_overlay", dtype=np.uint8),
+            # apply post-transforms to segmentation model output `OUTPUT__0`
+            Activationsd(keys=["OUTPUT__0"], sigmoid=True),
+            AsDiscreted(keys=["OUTPUT__0"]),
+            AsChannelLastd(keys=["OUTPUT__0"]),
+            # concatenate segmentation and original image
+            CastToTyped(keys=["ORIGINAL_IMAGE"], dtype=np.float),
+            ConcatItemsd(keys=["ORIGINAL_IMAGE", "OUTPUT__0"], name="CONCAT_IMAGE", dim=2),
+            # blend the original image and segmentation
+            Lambdad(keys=["CONCAT_IMAGE"], func=color_blender),
+            ScaleIntensityd(keys=["CONCAT_IMAGE"], minv=0, maxv=256),
+            CastToTyped(keys=["CONCAT_IMAGE"], dtype=np.uint8),
          ]
       ),
    )
@@ -171,26 +198,29 @@ and will output the data with key ``output_label="seg_overlay"``. The ``transfor
    stateDiagram-v2
       state TransformChainComponent {
          [*] --> ImplicitInputMapping
+         state "CastToTyped" as CastToTypedFLOAT
+         state "CastToTyped" as CastToTypedINT
          state ImplicitInputMapping {
             state "[ Input[0], Input[1] ]" as IMInputs
-            state "{<br>'original_image': Input[0],<br> 'seg_output': Input[1]<br>}" as IMOutputs
+            state "{<br>'ORIGINAL_IMAGE': Input[0],<br> 'OUTPUT__0': Input[1]<br>}" as IMOutputs
             [*] --> IMInputs
-            IMInputs --> IMOutputs
+            IMInputs --> IMOutputs: Map List to Dict
             IMOutputs --> [*]
          }
          ImplicitInputMapping --> Activationsd
          Activationsd --> AsDiscreted
-         AsDiscreted --> AddChanneld
-         AddChanneld --> AsChannelLastd
-         AsChannelLastd --> ConcatItemsd
+         AsDiscreted --> AsChannelLastd
+         AsChannelLastd --> CastToTypedFLOAT
+         CastToTypedFLOAT --> ConcatItemsd
          ConcatItemsd --> Lambdad
-         Lambdad --> CastToTyped
-         CastToTyped --> ImplicitOutputMapping
+         Lambdad --> ScaleIntensityd
+         ScaleIntensityd --> CastToTypedINT
+         CastToTypedINT --> ImplicitOutputMapping
          state ImplicitOutputMapping {
-               state "{<br>'original_image': Output[0],<br> 'seg_output': Output[1],<br>'seg_overlay': Output[2]<br/>}" as OMInputs
-               state "Output[3]" as OMOutputs
+               state "{<br>'ORIGINAL_IMAGE': Output[0],<br> 'OUTPUT__0': Output[1],<br>'CONCAT_IMAGE': Output[2]<br/>}" as OMInputs
+               state "Output[2]" as OMOutputs
                [*] --> OMInputs
-               OMInputs --> OMOutputs
+               OMInputs --> OMOutputs: Select "CONCAT_IMAGE"
                OMOutputs --> [*]
          }
          ImplicitOutputMapping --> [*]
@@ -203,20 +233,30 @@ and will output the data with key ``output_label="seg_overlay"``. The ``transfor
 It is a temporary counterpart to ``TransformChainComponent`` for use mainly in applications expected to run in `Clara AGX` devices as
 PyTorch (and by extension `MONAI SDK <https://github.com/Project-MONAI/MONAI>`_) is currently not supported in `Clara AGX` devices.
 
-``TransformChainComponentCupy`` works in a very similar fashion to ``TransformChainComponent``, however, it does not utilize a ``Dict`` structure
-to pass inputs to the ``transform_chain`` and instead presents all inputs to the component as ``List[cupy.ndarray]``.
+``TransformChainComponentCupy`` works the same fashion as ``TransformChainComponent``, however, it passes ``Dict[str, cupy.ndarray]``
+to the ``transform_chain``.
 
 .. code-block:: python
 
-   def color_blender(img: cupy.ndarray, mask: List[cupy.ndarray]):
-      if mask:
-         # mask is of range [0,1]
-         mask[0] = cupy.cudnn.activation_forward(mask[0], cupy.cuda.cudnn.CUDNN_ACTIVATION_SIGMOID)
-         # modify only the red channel in-place to apply mask
-         img[..., 0] = cupy.multiply(1.0 - mask[0][0, ...], img[..., 0])
-      return
+   # color blender function used in `TransformChainComponentCupy`
+   def color_blender(inputs: Dict[str, cupy.ndarray]):
+      img = inputs["ORIGINAL_IMAGE"]
+      mask = inputs["OUTPUT__0"]
 
-   TransformChainComponentCupy(transform_chain=color_blender)
+      mask = cupy.cudnn.activation_forward(mask, cupy.cuda.cudnn.CUDNN_ACTIVATION_SIGMOID)
+
+      # Ultrasound model outputs two channels, so modify only the red
+      # and green channel in-place to apply mask.
+      img[..., 1] = cupy.multiply(cupy.multiply(mask[0, ...], 1.0 - mask[1, ...]), img[..., 1])
+      img[..., 2] = cupy.multiply(mask[0, ...], img[..., 2])
+      img[..., 0] = cupy.multiply(1.0 - mask[1, ...], img[..., 0])
+
+      return {"BLENDED_IMAGE": img}
+
+   ...
+
+   # we select the "BLENDED_IMAGE" output from `color_blender`
+   TransformChainComponentCupy(transform_chain=color_blender, output_label="BLENDED_IMAGE"),
 
 :py:class:`~monaistream.sinks.nveglglessink.NVEglGlesSink`
 ----------------------------------------------------------
@@ -224,7 +264,7 @@ to pass inputs to the ``transform_chain`` and instead presents all inputs to the
 ``NVEglGlesSink`` is a component that allows developers to visualize the outputs of their pipelines when data is streamed via NVIDIA GPU.
 
 :py:class:`~monaistream.sinks.fake.FakeSink`
-----------------------------------------------
+--------------------------------------------
 
 ``FakeSink`` is a sink component that allows the developer to end the MONAI Stream pipeline without the need to visualize data. ``FakeSink``
 is useful for unit testing and for cases where ``TransformChainComponent`` outputs data to disk, but provides no output other than the original
@@ -249,13 +289,14 @@ where the pipeline can be visualized as shown below.
   stateDiagram-v2
       NVAggregatedSourcesBin --> NVVideoConvert: BatchData Output
       NVVideoConvert --> NVInferServer: RGBA Output
-      NVInferServer --> TransformChainComponent: Original Image
-      NVInferServer --> TransformChainComponent: User Metadata
-      TransformChainComponent --> NVEglGlesSink: <center>Selected Output Key<br>in TransformChainComponent</center>
+      NVInferServer --> TransformChainComponent: ORIGINAL_IMAGE
+      NVInferServer --> TransformChainComponent: OUTPUT__0
+      TransformChainComponent --> NVEglGlesSink: CONCAT_IMAGE
 
-We can create the streaming inference app by combining the MONAI Stream components as shown below.
+We can create this streaming inference app using the following code.
 
 .. code-block:: python
+   :linenos:
 
    # generate a default configuration for `NVInferServer`
    infer_server_config = NVInferServer.generate_default_config()
@@ -266,129 +307,157 @@ We can create the streaming inference app by combining the MONAI Stream componen
    #   - model version
    #   - NVInferServer log verbosity
    infer_server_config.infer_config.backend.trt_is.model_repo.root = "/app/models"
-   infer_server_config.infer_config.backend.trt_is.model_name = "cholec_unet_864x480"
+   infer_server_config.infer_config.backend.trt_is.model_name = "us_unet_256x256"
    infer_server_config.infer_config.backend.trt_is.version = "-1"
    infer_server_config.infer_config.backend.trt_is.model_repo.log_level = 0
-   
+
    # simple color blender function to use in `Lambdad` MONAI transform
    def color_blender(img: torch.Tensor):
-      img[..., 1] = img[..., 4] + img[..., 1] * (1 - img[..., 4])
+      # show background segmentation as red
+      img[..., 1] -= img[..., 1] * (1.0 - img[..., 4])
+      img[..., 2] -= img[..., 2] * (1.0 - img[..., 4])
+
+      # show foreground segmentation as blue
+      img[..., 0] -= img[..., 0] * img[..., 5]
+      img[..., 1] -= img[..., 1] * img[..., 5]
+
       return img[..., :4]
 
-   # create a MONAI Stream pipeline
    pipeline = StreamCompose(
-       [
+      [
          # read from local video file using `URISource` and use
          # `NVAggregatedSourcesBin` to apply sizing transformations
          NVAggregatedSourcesBin(
-            [
-               URISource(uri="file:///app/videos/endo.mp4"),
-            ],
-            output_width=864,
-            output_height=480,
+               [
+                  URISource(uri="file:///app/videos/Q000_04_tu_segmented_ultrasound_256.avi"),
+               ],
+               output_width=256,
+               output_height=256,
          ),
          # convert video stream to RGBA
          NVVideoConvert(
-            FilterProperties(
-               format="RGBA",
-               width=864,
-               height=480,
-            )
+               FilterProperties(
+                  format="RGBA",
+                  width=256,
+                  height=256,
+               )
          ),
          # chain output to `NVInferServer`
          NVInferServer(
-            config=infer_server_config,
+               config=infer_server_config,
          ),
          # use `TransformChainComponent` to blend the original image with the segmentation
          # output from `NVInferServer`
          TransformChainComponent(
-            input_labels=["original_image", "seg_output"],
-            output_label="seg_overlay",
-            transform_chain=Compose(
-               [
-                  # apply post-transforms to segmentation
-                  Activationsd(keys=["seg_output"], sigmoid=True),
-                  AsDiscreted(keys=["seg_output"]),
-                  AddChanneld(keys=["seg_output"]),
-                  AsChannelLastd(keys=["seg_output"]),
-                  # merge segmentation and original image into one for viewing
-                  ConcatItemsd(keys=["original_image", "seg_output"], name="seg_overlay", dim=2),
-                  Lambdad(keys=["seg_overlay"], func=color_blender),
-                  CastToTyped(keys="seg_overlay", dtype=np.uint8),
-               ]
-            ),
+               output_label="CONCAT_IMAGE",
+               transform_chain=Compose(
+                  [
+                     # apply post-transforms to segmentation
+                     Activationsd(keys=["OUTPUT__0"], sigmoid=True),
+                     AsDiscreted(keys=["OUTPUT__0"]),
+                     AsChannelLastd(keys=["OUTPUT__0"]),
+                     # concatenate segmentation and original image
+                     CastToTyped(keys=["ORIGINAL_IMAGE"], dtype=np.float),
+                     ConcatItemsd(keys=["ORIGINAL_IMAGE", "OUTPUT__0"], name="CONCAT_IMAGE", dim=2),
+                     # blend the original image and segmentation
+                     Lambdad(keys=["CONCAT_IMAGE"], func=color_blender),
+                     ScaleIntensityd(keys=["CONCAT_IMAGE"], minv=0, maxv=256),
+                     CastToTyped(keys=["CONCAT_IMAGE"], dtype=np.uint8),
+                  ]
+               ),
          ),
          # display output for `TransformChainComponent`
          NVEglGlesSink(sync=True),
-       ]
+      ]
    )
 
    # execute pipeline
    pipeline()
 
+Looking more closely at lines `9` and `10`, the ``NVInferServer`` component expects a model named ``us_unet_256x256``
+under ``/app/models`` with the `directory structure <https://github.com/triton-inference-server/server/blob/main/docs/model_repository.md#repository-layout>`_ 
+and model `configuration <https://github.com/triton-inference-server/server/blob/main/docs/model_configuration.md>`_ file
+expected by the `Triton Inference Server <https://github.com/triton-inference-server/server>`_.
+
+In this case the directory structure of the model required the pipeline above is
+
+.. code-block::
+
+   /app/models
+   └── us_unet_256x256
+      ├── 1
+      │   └── monai_unet.engine
+      └── config.pbtxt
+
+and the model configuration file ``config.pbtxt`` describes the model metadata, as below.
+
+.. code-block::
+   :emphasize-lines: 14
+
+   name: "us_unet_256x256"
+   platform: "tensorrt_plan"
+   default_model_filename: "monai_unet.engine"
+   max_batch_size: 1
+   input [
+      {
+         name: "INPUT__0"
+         data_type: TYPE_FP32
+         dims: [ 3, 256, 256 ]
+      }
+   ]
+   output [
+      {
+         name: "OUTPUT__0"
+         data_type: TYPE_FP32
+         dims: [ 2, 256, 256]
+      }
+   ]
+
+   # Specify GPU instance.
+   instance_group {
+      kind: KIND_GPU
+      count: 1
+      gpus: 0
+   }
+
+The model configuration file specifies the model type as a TensorRT plan, and it's expected inputs and outputs. The
+highlighted line in the model configuration shows the (one and only in this case) model output ``OUTPUT__0`` that
+will be passed from ``NVInferServer`` to ``TransformChainComponent``. Following the pipeline code snippet above
+it is apparent that the label ``OUTPUT__0`` of the model configuration matches the key of the object being manipulated
+in the ``transform_chain`` in line `53`.
 
 AJA Video Capture app
 ---------------------
 
-Let us walk through a simple example such as `monaistream-rdma-capture-app <LINKREF_GITHUB_MONAISTREAM/sample/monaistream-rdma-capture-app/main.py>`_
+MONAI Stream provides native support for AJA capture cards with GPU direct memory access. A simple example is provided
+in `monaistream-rdma-capture-app <LINKREF_GITHUB_MONAISTREAM/sample/monaistream-rdma-capture-app/main.py>`_
 where the pipeline can be visualized as shown below.
 
 .. mermaid::
    
    stateDiagram-v2
-      AJAVideoSource --> NVInferServer: RGBA Output
-      NVInferServer --> TransformChainComponent: Original Image
-      NVInferServer --> TransformChainComponent: User Metadata
-      TransformChainComponent --> NVEglGlesSink: <center>Selected Output Key<br>in TransformChainComponent</center>
+      AJAVideoSource --> NVEglGlesSink: RGBA 1080p in GPU
 
-We can create the streaming inference app by combining the MONAI Stream components as shown below.
+The visualized pipeline is built using the code below.
 
 .. code-block:: python
 
-   # simple color blender function using Cupy in-place transformations
-   def color_blender(img: cupy.ndarray, mask: List[cupy.ndarray]):
-      if mask:
-         # mask is of range [0,1]
-         mask[0] = cupy.cudnn.activation_forward(mask[0], cupy.cuda.cudnn.CUDNN_ACTIVATION_SIGMOID)
-         # modify only the red channel in-place to apply mask
-         img[..., 0] = cupy.multiply(1.0 - mask[0][0, ...], img[..., 0])
-      return
-
-   # generate a default configuration for `NVInferServer`
-   infer_server_config = NVInferServer.generate_default_config()
-
-   # update default configuration with 
-   #   - model repo path
-   #   - model name
-   #   - model version
-   #   - NVInferServer log verbosity
-   infer_server_config.infer_config.backend.trt_is.model_repo.root = "/app/models"
-   infer_server_config.infer_config.backend.trt_is.model_name = "monai_unet_trt"
-   infer_server_config.infer_config.backend.trt_is.version = "-1"
-   infer_server_config.infer_config.backend.trt_is.model_repo.log_level = 0
-   
-   # create a MONAI Stream pipeline for AJA RDMA capture
+   # create a MONAI Stream pipeline for AJA capture with GPU RDMA
    pipeline = StreamCompose(
       [
-         # create an AJA video capture component with GPU RDMA capability
          AJAVideoSource(
             mode="UHDp30-rgba",
             input_mode="hdmi",
             is_nvmm=True,
-            output_width=864,
-            output_height=480,
+            output_width=1920,
+            output_height=1080,
          ),
-         # perform inference on incoming video stream data
-         # and output a segmentation image map
-         NVInferServer(
-             config=infer_server_config,
-         ),
-         # blend original input with segmentation output
-         TransformChainComponentCupy(transform_chain=color_blender),
-         # display image on screen
          NVEglGlesSink(sync=True),
       ]
    )
 
    # start pipeline
    pipeline()
+
+While the pipeline here is simple, developers can add ``NVInferServer`` and ``TransformChainComponent`` to perform
+live streaming inference using AJA video capture cards on `x86` or `Clara AGX`.
