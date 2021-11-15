@@ -1,0 +1,125 @@
+name: release
+# generating and testing package artifacts from the main branch
+
+on:
+  release:
+    types: [edited, published]
+    tags-ignore:
+      - data
+  workflow_dispatch:
+
+jobs:
+ build:
+    needs: docker_build
+    runs-on: ubuntu-latest
+    container:
+      image: "docker://aihsani/monaistream:latest"
+      credentials:
+        username: ${{ secrets.DOCKER_USER }}
+        password: ${{ secrets.DOCKER_TOKEN }}
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v2
+
+      - name: Install PyDS Library
+        run: |
+          cp ./lib/pyds-py3.8-x86.so /opt/nvidia/deepstream/deepstream-6.0/lib/pyds.so
+          pushd /opt/nvidia/deepstream/deepstream-6.0/lib
+          python setup.py install
+          popd
+
+      # - name: Clean
+      #   bash: ./runtests.sh --clean
+      # - name: ISort
+      #   bash: ./runtests.sh --isort
+      # - name: Black
+      #   bash: ./runtests.sh --black
+      # - name: Flake8
+      #   bash: ./runtests.sh --flake8
+      # - name: PyType
+      #   bash: ./runtests.sh --pytype
+      # - name: MyPy
+      #   bash: ./runtests.sh --mypy
+
+      - name: Install MONAIStream Requirements
+        run: |
+          python3 -m pip install -r requirements-dev.txt
+      - name: cache weekly timestamp
+        id: pip-cache
+        run: |
+          echo "::set-output name=datew::$(date '+%Y-%V')"
+      - name: cache for pip
+        uses: actions/cache@v2
+        id: cache
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.cache/torch
+          key: ${{ runner.os }}-pip-${{ steps.pip-cache.outputs.datew }}
+
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --user --upgrade pip setuptools wheel twine
+          python3 -m pip install torch>=1.8 torchvision
+
+      - name: Test source archive and wheel file
+        run: |
+          root_dir=$PWD
+          echo "$root_dir"
+          # build tar.gz and wheel
+          python3 setup.py check -m -s
+          python3 setup.py sdist bdist_wheel
+          python3 -m twine check dist/*
+ 
+        #   python -m pip install monaistream*.whl
+        #   python -c 'import monaistream; monaistream.print_config()' 2>&1 | grep -iv "unknown"
+        #   python -c 'import monaistream; print(monaistream.__file__)'
+        #   python -m pip uninstall -y monaistream
+        #   rm monaistream*.whl
+        # env:
+          shell: bash
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v1
+        with:
+          name: dist
+          path: dist/
+
+      - name: Check artifacts
+        run: |
+          ls -al dist/
+          rm dist/monai*.tar.gz
+          ls -al dist/
+
+      - name: Publish to Test PyPI
+        uses: pypa/gh-action-pypi-publish@master
+        with:
+          password: ${{ secrets.TEST_PYPI_TOKEN }}
+          repository_url: https://test.pypi.org/legacy/
+
+    versioning:
+      if: github.repository == 'Project-MONAI/MONAIStream'
+      needs: build
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v2
+          # full history so that we can git describe
+          with:
+            ref: main
+            fetch-depth: 0
+        - shell: bash
+          run: |
+            git describe
+            python setup.py build
+            cat build/lib/monailabel/_version.py
+        - name: Upload version
+          uses: actions/upload-artifact@v2
+          with:
+            name: _version.py
+            path: build/lib/monailabel/_version.py
+        - name: Clean up directory
+          shell: bash
+          run: |
+            ls -al
+            rm -rf {*,.[^.]*}
