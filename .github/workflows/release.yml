@@ -77,7 +77,7 @@ jobs:
         #   python -c 'import monaistream; print(monaistream.__file__)'
         #   python -m pip uninstall -y monaistream
         #   rm monaistream*.whl
-        # env:
+        env:
           shell: bash
 
       - name: Upload artifacts
