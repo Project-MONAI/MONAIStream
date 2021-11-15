@@ -10,7 +10,6 @@ on:
 
 jobs:
  release-build:
-    needs: docker_build
     runs-on: ubuntu-latest
     container:
       image: "docker://aihsani/monaistream:latest"
