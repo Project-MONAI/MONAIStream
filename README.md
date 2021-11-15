@@ -14,13 +14,12 @@ and utilities.
 > _The codebase is currently under active development._
 
 - Framework to allow MONAI-style inference pipelines for streaming data.
-- Compositional 
+- Allows for MONAI chained transformations to be used on streaming data.
+- Inference models can be used natively in MONAI or deployed via [Triton Inference Server](https://github.com/triton-inference-server/server).
 
-## Installation
+## Getting Started: `x86` Development Container Setup
 
-### `x86` Development Container Setup
-
-#### Creating a Local Development Container
+### Creating a Local Development Container
 
 To build a developer container for your workstation simply clone the repo and run the setup script as follows.
 
@@ -38,7 +37,7 @@ for the developer to start designing MONAI Stream SDK inference pipelines. The d
 the container and the mounted volumes. The developer may modify ``Dockerfile.devel`` and ``start_devel.sh`` to suit their
 needs.
 
-#### Connecting VSCode to the Development Container
+### Connecting VSCode to the Development Container
 
 To start developing within the newly created MONAI Stream SDK development container users may choose to use their favorite
 editor or IDE. Here, we show how one could setup VSCode on their local machine to start developing MONAI Stream inference
@@ -53,7 +52,7 @@ pipelines.
 
 The above steps should allow the user to develop inside the MONAI Stream container using VSCode.
 
-#### Run the Ultrasound Inference Sample App
+### Run the Ultrasound Inference Sample App
 
 MONAI Stream SDK comes with example inference pipelines. Here, we run a sample app
 to perform instrument segmentation in an ultrasound video.
