@@ -62,40 +62,30 @@ Inside the development container perform the following steps.
 
   1. Download the ultrasound data and models in the container.
 
-    ```bash
     mkdir -p /app/data
     cd /app/data
     wget https://github.com/Project-MONAI/monai-stream-experimental/releases/download/data/US.zip
     unzip US.zip -d .
-    ```
 
   2. Copy the ultrasound video to ``/app/videos/Q000_04_tu_segmented_ultrasound_256.avi`` as the example app expects.
 
-    ```bash
     mkdir -p /app/videos
     cp /app/data/US/Q000_04_tu_segmented_ultrasound_256.avi /app/videos/.
-    ```
 
   3. Convert ONNX model to TRT engine.
 
-    ```bash
     cd /app/data/US/
     /usr/src/tensorrt/bin/trtexec --onnx=us_unet_256x256.onnx --saveEngine=model.engine --explicitBatch --verbose --workspace=5000
-    ```
 
   4. Copy the ultrasound segmentation model under ``/app/models/us_unet_256x256/1`` as our sample app expects.
 
-    ```bash
     mkdir -p /app/models/us_unet_256x256/1
     cp /app/data/US/model.engine /app/models/us_unet_256x256/1/.
-    ```
 
   5. Running the example streaming bone scoliosis segmentation pipeline on the ultrasound video.
   
-    ```bash
     cd /sample/monaistream-pytorch-pp-app
     python main.py
-    ```
 
 # Links
 
