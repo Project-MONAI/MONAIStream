@@ -27,6 +27,10 @@ MONAI Stream SDK natively supports:
   - a number of filter types, including format conversion, video frame resizing and/or scaling, and most importantly a MONAI transform components
     that allows developers to plug-in MONAI transformations into the MONAI Stream pipeline.
 
+The diagram below shows a visualization of a MONAI Stream pipeline where a ``URISource`` is chained to video conversion,
+inference service, and importantly to ``TransformChainComponent`` which allows MONAI transformations
+(or any compatible callables that accept ``Dict[str, torch.Tensor]``) to be plugged into the MONAI Stream pipeline. The results are then
+vizualized on the screen via ``NVEglGlesSink``.
 
 .. mermaid::
 
@@ -45,14 +49,12 @@ MONAI Stream SDK natively supports:
          ConcatItemsd --> Lambdad
       }
 
-In the conceptual example pipeline above, since ``NVInferServer`` passed both the original image
-as well as all the inference model outputs to the transform chain component, the developer may 
+In the conceptual example pipeline above, ``NVInferServer`` passes both the original image
+as well as all the inference model outputs to the transform chain component. The developer may 
 choose to manipulate the two pieces of data separately or together to create the desired output
-for display. 
+for display.
 
-One important filter is ``TransformChainComponent`` which allows MONAI transformations
-(or any compatible callables that accept ``Dict[str, torch.Tensor]``)
-to be plugged into the MONAI Stream pipeline. ``TransformChainComponent`` presents MONAI transforms 
+``TransformChainComponent`` presents MONAI transforms 
 with ``torch.Tensor`` data containing a single frame of the video stream. 
 Implementationally, ``TransformChainComponent`` provides a compatibility layer between MONAI
 and the underlying `DeepStream SDK <https://developer.nvidia.com/deepstream-sdk>`_ backbone,

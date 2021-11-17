@@ -21,16 +21,19 @@ AJA Capture cards with direct memory access to GPU, and a Fake Source for testin
 - a number of filter types, including format conversion, video frame resizing and/or scaling, and most importantly a MONAI transform components
   that allows developers to plug-in MONAI transformations into the MONAI Stream pipeline.
 
+The diagram below shows a visualization of a MONAI Stream pipeline where a `URISource` is chained to video conversion,
+inference service, and importantly to `TransformChainComponent` which allows MONAI transformations
+(or any compatible callables that accept `Dict[str, torch.Tensor]`) to be plugged into the MONAI Stream pipeline. The results are then
+vizualized on the screen via `NVEglGlesSink`.
+
 [![](https://mermaid.ink/img/eyJjb2RlIjoic3RhdGVEaWFncmFtLXYyXG4gICBVUklTb3VyY2U8YnI-KFNvdXJjZSkgLS0-IE5WVmlkZW9Db252ZXJ0PGJyPihGaWx0ZXIpXG4gICBOVlZpZGVvQ29udmVydDxicj4oRmlsdGVyKSAtLT4gTlZJbmZlclNlcnZlcjxicj4oRmlsdGVyKVxuICAgTlZJbmZlclNlcnZlcjxicj4oRmlsdGVyKSAtLT4gQ29uY2F0SXRlbXNkOiBPUklHSU5BTF9JTUFHRVxuICAgTlZJbmZlclNlcnZlcjxicj4oRmlsdGVyKSAtLT4gQWN0aXZhdGlvbnNkOiBNT0RFTF9PVVRQVVRfT1xuICAgTGFtYmRhZCAtLT4gTlZFZ2xHbGVzU2luazxicj4oU2luaylcblxuICAgc3RhdGUgVHJhbnNmb3JtQ2hhaW5Db21wb25lbnQoRmlsdGVyKSB7XG4gICAgICBBY3RpdmF0aW9uc2QgLS0-IEFzRGlzY3JldGVkXG4gICAgICBBc0Rpc2NyZXRlZCAtLT4gQXNDaGFubmVsTGFzdGRcbiAgICAgIEFzQ2hhbm5lbExhc3RkIC0tPiBTY2FsZUludGVuc2l0eWRcbiAgICAgIFNjYWxlSW50ZW5zaXR5ZCAtLT4gQ29uY2F0SXRlbXNkXG4gICAgICBDb25jYXRJdGVtc2QgLS0-IExhbWJkYWRcbiAgIH1cbiIsIm1lcm1haWQiOnsidGhlbWUiOiJkZWZhdWx0In0sInVwZGF0ZUVkaXRvciI6ZmFsc2UsImF1dG9TeW5jIjp0cnVlLCJ1cGRhdGVEaWFncmFtIjpmYWxzZX0)](https://mermaid.live/edit/#eyJjb2RlIjoic3RhdGVEaWFncmFtLXYyXG4gICBVUklTb3VyY2U8YnI-KFNvdXJjZSkgLS0-IE5WVmlkZW9Db252ZXJ0PGJyPihGaWx0ZXIpXG4gICBOVlZpZGVvQ29udmVydDxicj4oRmlsdGVyKSAtLT4gTlZJbmZlclNlcnZlcjxicj4oRmlsdGVyKVxuICAgTlZJbmZlclNlcnZlcjxicj4oRmlsdGVyKSAtLT4gQ29uY2F0SXRlbXNkOiBPUklHSU5BTF9JTUFHRVxuICAgTlZJbmZlclNlcnZlcjxicj4oRmlsdGVyKSAtLT4gQWN0aXZhdGlvbnNkOiBNT0RFTF9PVVRQVVRfT1xuICAgTGFtYmRhZCAtLT4gTlZFZ2xHbGVzU2luazxicj4oU2luaylcblxuICAgc3RhdGUgVHJhbnNmb3JtQ2hhaW5Db21wb25lbnQoRmlsdGVyKSB7XG4gICAgICBBY3RpdmF0aW9uc2QgLS0-IEFzRGlzY3JldGVkXG4gICAgICBBc0Rpc2NyZXRlZCAtLT4gQXNDaGFubmVsTGFzdGRcbiAgICAgIEFzQ2hhbm5lbExhc3RkIC0tPiBTY2FsZUludGVuc2l0eWRcbiAgICAgIFNjYWxlSW50ZW5zaXR5ZCAtLT4gQ29uY2F0SXRlbXNkXG4gICAgICBDb25jYXRJdGVtc2QgLS0-IExhbWJkYWRcbiAgIH1cbiIsIm1lcm1haWQiOiJ7XG4gIFwidGhlbWVcIjogXCJkZWZhdWx0XCJcbn0iLCJ1cGRhdGVFZGl0b3IiOmZhbHNlLCJhdXRvU3luYyI6dHJ1ZSwidXBkYXRlRGlhZ3JhbSI6ZmFsc2V9)
 
-In the conceptual example pipeline above, since `NVInferServer` passed both the original image
-as well as all the inference model outputs to the transform chain component, the developer may 
+In the conceptual example pipeline above, `NVInferServer` passes both the original image
+as well as all the inference model outputs to the transform chain component. The developer may 
 choose to manipulate the two pieces of data separately or together to create the desired output
 for display.
 
-One important filter is `TransformChainComponent` which allows MONAI transformations
-(or any compatible callables that accept `Dict[str, torch.Tensor]`)
-to be plugged into the MONAI Stream pipeline. `TransformChainComponent` presents MONAI transforms 
+`TransformChainComponent` presents MONAI transforms 
 with `torch.Tensor` data containing a single frame of the video stream. 
 Implementationally, `TransformChainComponent` provides a compatibility layer between MONAI
 and the underlying [DeepStream SDK](https://developer.nvidia.com/deepstream-sdk) backbone,
