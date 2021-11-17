@@ -18,9 +18,13 @@ AJA Capture cards with direct memory access to GPU, and a Fake Source for testin
 
 ![MONAIStreamArchitecture](https://raw.githubusercontent.com/Project-MONAI/MONAIStream/main/docs/images/MONAIStream_High-level_Architecture.svg)
 
-MONAI Stream pipelines being with a source component, and end with a sink component, and the two are connect by a series of filter components.
+MONAI Stream pipelines being with a source component, and end with a sink component, and the two are connected by a series of filter components as shown below. One important filter is `TransformChainComponent` which allows MONAI transformations (or any compatible callables that accept `Dict[str, torch.Tensor]`)
+to be pluggen into the MONAI Stream pipeline.
 
 [![](https://mermaid.ink/img/eyJjb2RlIjoic3RhdGVEaWFncmFtLXYyXG4gICBVUklTb3VyY2UgLS0-IE5WVmlkZW9Db252ZXJ0XG4gICBOVlZpZGVvQ29udmVydCAtLT4gTlZJbmZlclNlcnZlclxuICAgTlZJbmZlclNlcnZlciAtLT4gQ29uY2F0SXRlbXNkOiBPUklHSU5BTF9JTUFHRVxuICAgTlZJbmZlclNlcnZlciAtLT4gQWN0aXZhdGlvbnNkOiBNT0RFTF9PVVRQVVRfT1xuICAgQ29uY2F0SXRlbXNkIC0tPiBOVkVnbEdsZXNTaW5rXG5cbiAgIHN0YXRlIFRyYW5zZm9ybUNoYWluQ29tcG9uZW50IHtcbiAgICAgIEFjdGl2YXRpb25zZCAtLT4gQXNEaXNjcmV0ZWRcbiAgICAgIEFzRGlzY3JldGVkIC0tPiBBc0NoYW5uZWxMYXN0ZFxuICAgICAgQXNDaGFubmVsTGFzdGQgLS0-IFNjYWxlSW50ZW5zaXR5ZFxuICAgICAgU2NhbGVJbnRlbnNpdHlkIC0tPiBDb25jYXRJdGVtc2RcbiAgIH1cbiIsIm1lcm1haWQiOnsidGhlbWUiOiJkZWZhdWx0In0sInVwZGF0ZUVkaXRvciI6ZmFsc2UsImF1dG9TeW5jIjp0cnVlLCJ1cGRhdGVEaWFncmFtIjpmYWxzZX0)](https://mermaid.live/edit#eyJjb2RlIjoic3RhdGVEaWFncmFtLXYyXG4gICBVUklTb3VyY2UgLS0-IE5WVmlkZW9Db252ZXJ0XG4gICBOVlZpZGVvQ29udmVydCAtLT4gTlZJbmZlclNlcnZlclxuICAgTlZJbmZlclNlcnZlciAtLT4gQ29uY2F0SXRlbXNkOiBPUklHSU5BTF9JTUFHRVxuICAgTlZJbmZlclNlcnZlciAtLT4gQWN0aXZhdGlvbnNkOiBNT0RFTF9PVVRQVVRfT1xuICAgQ29uY2F0SXRlbXNkIC0tPiBOVkVnbEdsZXNTaW5rXG5cbiAgIHN0YXRlIFRyYW5zZm9ybUNoYWluQ29tcG9uZW50IHtcbiAgICAgIEFjdGl2YXRpb25zZCAtLT4gQXNEaXNjcmV0ZWRcbiAgICAgIEFzRGlzY3JldGVkIC0tPiBBc0NoYW5uZWxMYXN0ZFxuICAgICAgQXNDaGFubmVsTGFzdGQgLS0-IFNjYWxlSW50ZW5zaXR5ZFxuICAgICAgU2NhbGVJbnRlbnNpdHlkIC0tPiBDb25jYXRJdGVtc2RcbiAgIH1cbiIsIm1lcm1haWQiOiJ7XG4gIFwidGhlbWVcIjogXCJkZWZhdWx0XCJcbn0iLCJ1cGRhdGVFZGl0b3IiOmZhbHNlLCJhdXRvU3luYyI6dHJ1ZSwidXBkYXRlRGlhZ3JhbSI6ZmFsc2V9)
+
+In the example pipeline above, since `NVInferServer` passed both the original image
+as well as all the inference model outputs to the transform chain component, the developer may choose to manipulate the two pieces of data separately or together to create the desired output for display.
 
 Currently, MONAI Stream SDK provides a compatibility layer to [Deepstream SDK](https://developer.nvidia.com/deepstream-sdk) so
 MONAI developers may be able to plug-in existing MONAI inference code into a MONAI Stream pipeline.
