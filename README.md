@@ -44,8 +44,11 @@ DeepStream.
 - Framework to allow MONAI-style inference pipelines for streaming data.
 - Allows for MONAI chained transformations to be used on streaming data.
 - Inference models can be used natively in MONAI or deployed via [Triton Inference Server](https://github.com/triton-inference-server/server).
+<<<<<<< HEAD
 - Natively provides support for _x86_ and [Clara AGX](https://developer.nvidia.com/clara-holoscan-sdk) architectures
   - with the future aim to allow developers to deploy the same code in both architectures with no changes.
+=======
+>>>>>>> 1d963855874166f3ccee8871a80ed1aa2783e03e
 
 ## Getting Started: `x86` Development Container Setup
 
