@@ -9,6 +9,8 @@ MONAI Stream SDK aims to equip experienced MONAI Researchers an Developers with 
 build streaming inference pipelines while enjoying the familiar MONAI development experience
 and utilities.
 
+![MONAIStreamArchitecture](https://raw.githubusercontent.com/Project-MONAI/MONAIStream/main/docs/images/MONAIStream_High-level_Architecture.svg)
+
 ## Features
 
 > _The codebase is currently under active development._
