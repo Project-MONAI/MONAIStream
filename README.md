@@ -7,9 +7,26 @@
 
 MONAI Stream SDK aims to equip experienced MONAI Researchers an Developers with the ability to
 build streaming inference pipelines while enjoying the familiar MONAI development experience
-and utilities.
+and utilities. 
+
+MONAI Stream SDK natively supports:
+- a number of input component types including real-time streams (RTSP), streaming URL, local video files,  
+AJA Capture cards with direct memory access to GPU, and a Fake Source for testing purposes
+- outputs components to allow the developer to view the result of their pipelines or just to test via Fake Sink,
+- a number of filter types, including format conversion, video frame resizing and/or scaling, and most importantly a MONAI transform components
+  that allows developers to plug-in MONAI transformations into the MONAI Stream pipeline.
 
 ![MONAIStreamArchitecture](https://raw.githubusercontent.com/Project-MONAI/MONAIStream/main/docs/images/MONAIStream_High-level_Architecture.svg)
+
+MONAI Stream pipelines being with a source component, and end with a sink component, and the two are connect by a series of filter components.
+
+```mermaid
+  stateDiagram-v2
+    NVAggregatedSourcesBin --> NVVideoConvert: BatchData Output
+```
+
+Currently, MONAI Stream SDK provides a compatibility layer to [Deepstream SDK](https://developer.nvidia.com/deepstream-sdk) so
+MONAI developers may be able to plug-in existing MONAI inference code into a MONAI Stream pipeline.
 
 ## Features
 
@@ -18,6 +35,8 @@ and utilities.
 - Framework to allow MONAI-style inference pipelines for streaming data.
 - Allows for MONAI chained transformations to be used on streaming data.
 - Inference models can be used natively in MONAI or deployed via [Triton Inference Server](https://github.com/triton-inference-server/server).
+- Natively provides support for _x86_ and [Clara AGX](https://developer.nvidia.com/clara-holoscan-sdk) architectures
+  - with the future aim to allow developers to deploy the same code in both architectures with no changes.
 
 ## Getting Started: `x86` Development Container Setup
 
