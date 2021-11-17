@@ -12,6 +12,52 @@ Using MONAI Stream SDK developers are able to design and run streaming AI infere
 benefit from the performance of GPUs. Users can run streaming inference pipelines both on their workstations
 and `Clara AGX <https://developer.nvidia.com/clara-agx-devkit>`_ seamlessly.
 
+MONAI Stream pipelines being with a source component, and end with a sink component,
+and the two are connected by a series of filter components as shown below.
+
+.. image:: ../images/MONAIStream_High-level_Architecture.svg
+    :alt: High-level Architecture
+
+
+MONAI Stream SDK natively supports:
+
+  - a number of input component types including real-time streams (RTSP), streaming URL, local video files,  
+    AJA Capture cards with direct memory access to GPU, and a Fake Source for testing purposes
+  - outputs components to allow the developer to view the result of their pipelines or just to test via Fake Sink,
+  - a number of filter types, including format conversion, video frame resizing and/or scaling, and most importantly a MONAI transform components
+    that allows developers to plug-in MONAI transformations into the MONAI Stream pipeline.
+
+
+.. mermaid::
+
+   stateDiagram-v2
+      URISource<br>(Source) --> NVVideoConvert<br>(Filter)
+      NVVideoConvert<br>(Filter) --> NVInferServer<br>(Filter)
+      NVInferServer<br>(Filter) --> ConcatItemsd: ORIGINAL_IMAGE
+      NVInferServer<br>(Filter) --> Activationsd: MODEL_OUTPUT_O
+      Lambdad --> NVEglGlesSink<br>(Sink)
+
+      state TransformChainComponent(Filter) {
+         Activationsd --> AsDiscreted
+         AsDiscreted --> AsChannelLastd
+         AsChannelLastd --> ScaleIntensityd
+         ScaleIntensityd --> ConcatItemsd
+         ConcatItemsd --> Lambdad
+      }
+
+In the conceptual example pipeline above, since ``NVInferServer`` passed both the original image
+as well as all the inference model outputs to the transform chain component, the developer may 
+choose to manipulate the two pieces of data separately or together to create the desired output
+for display. 
+
+One important filter is ``TransformChainComponent`` which allows MONAI transformations
+(or any compatible callables that accept ``Dict[str, torch.Tensor]``)
+to be plugged into the MONAI Stream pipeline. ``TransformChainComponent`` presents MONAI transforms 
+with ``torch.Tensor`` data containing a single frame of the video stream. 
+Implementationally, ``TransformChainComponent`` provides a compatibility layer between MONAI
+and the underlying `DeepStream SDK <https://developer.nvidia.com/deepstream-sdk>`_ backbone,
+so MONAI developers may be able to plug-in existing MONAI inference code into
+DeepStream.
 
 -----------------
 Table of Contents
