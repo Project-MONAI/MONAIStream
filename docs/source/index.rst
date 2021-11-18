@@ -12,7 +12,7 @@ Using MONAI Stream SDK developers are able to design and run streaming AI infere
 benefit from the performance of GPUs. Users can run streaming inference pipelines both on their workstations
 and `Clara AGX <https://developer.nvidia.com/clara-agx-devkit>`_ seamlessly.
 
-MONAI Stream pipelines being with a source component, and end with a sink component,
+MONAI Stream pipelines begin with a source component, and end with a sink component,
 and the two are connected by a series of filter components as shown below.
 
 .. image:: ../images/MONAIStream_High-level_Architecture.svg
@@ -22,7 +22,7 @@ and the two are connected by a series of filter components as shown below.
 MONAI Stream SDK natively supports:
 
   - a number of input component types including real-time streams (RTSP), streaming URL, local video files,  
-    AJA Capture cards with direct memory access to GPU, and a Fake Source for testing purposes
+    AJA Capture cards with direct memory access to GPU, and a Fake Source for testing purposes,
   - outputs components to allow the developer to view the result of their pipelines or just to test via Fake Sink,
   - a number of filter types, including format conversion, video frame resizing and/or scaling, and most importantly a MONAI transform components
     that allows developers to plug-in MONAI transformations into the MONAI Stream pipeline.

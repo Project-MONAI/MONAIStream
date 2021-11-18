@@ -9,14 +9,14 @@ MONAI Stream SDK aims to equip experienced MONAI Researchers an Developers with 
 build streaming inference pipelines while enjoying the familiar MONAI development experience
 and utilities. 
 
-MONAI Stream pipelines being with a source component, and end with a sink component,
+MONAI Stream pipelines begin with a source component, and end with a sink component,
 and the two are connected by a series of filter components as shown below.
 
 ![MONAIStreamArchitecture](https://raw.githubusercontent.com/Project-MONAI/MONAIStream/main/docs/images/MONAIStream_High-level_Architecture.svg)
 
 MONAI Stream SDK natively supports:
 - a number of input component types including real-time streams (RTSP), streaming URL, local video files,  
-AJA Capture cards with direct memory access to GPU, and a Fake Source for testing purposes
+AJA Capture cards with direct memory access to GPU, and a Fake Source for testing purposes,
 - outputs components to allow the developer to view the result of their pipelines or just to test via Fake Sink,
 - a number of filter types, including format conversion, video frame resizing and/or scaling, and most importantly a MONAI transform components
   that allows developers to plug-in MONAI transformations into the MONAI Stream pipeline.
