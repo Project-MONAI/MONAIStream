@@ -199,7 +199,6 @@ jobs:
       - uses: actions/checkout@v2
         # full history so that we can git describe
         with:
-          ref: main
           fetch-depth: 0
       - shell: bash
         run: |
