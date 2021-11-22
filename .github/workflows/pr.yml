@@ -145,7 +145,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python3 -m pip install -r requirements-dev.txt
+          python3 -m pip install -r requirements-dev.txt --user
 
       - name: Unit Tests
         run: |
