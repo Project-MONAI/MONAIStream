@@ -156,8 +156,8 @@ jobs:
           # move packages to a temp dir
           tmp_dir=$(mktemp -d)
           cp dist/monaistream* "$tmp_dir"
-          rm -r build dist src/monaistream.egg-info
-          cd "$tmp_dir"
+          rm -r build src/monaistream.egg-info
+          pushd "$tmp_dir"
           ls -al
 
           # install from wheel
@@ -173,7 +173,7 @@ jobs:
           python -m pip install $name
           python -c 'import monaistream; monaistream.print_config()' 2>&1 | grep -iv "unknown"
           python -c 'import monaistream; print(monaistream.__file__)'
-
+          popd
         env:
           shell: bash
 
