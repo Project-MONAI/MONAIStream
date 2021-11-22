@@ -138,8 +138,6 @@ jobs:
 
   build_agx:
     runs-on: agx
-    # env:
-    #   CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN_SECRET }}
 
     steps:
       - name: Checkout Source Code
