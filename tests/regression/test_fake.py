@@ -104,7 +104,7 @@ class TestRBGAWithFake(unittest.TestCase):
                         framerate=(32, 1),
                     )
                 ),
-                TransformChainComponent(
+                TransformChainComponentCupy(
                     transform_chain=my_identity,
                     output_label="OUTPUT_IMAGE",
                 ),
