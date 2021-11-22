@@ -28,6 +28,7 @@ coverage:
 comment: false
 
 ignore:
+  - "setup.py"
   - "versioneer.py"
   - "src/monaistream/_version.py"
   - "src/monaistream/util"
