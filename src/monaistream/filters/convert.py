@@ -12,7 +12,7 @@
 ################################################################################
 
 import logging
-from typing import Optional
+from typing import Optional, Tuple
 from uuid import uuid4
 
 from gi.repository import Gst
@@ -43,11 +43,11 @@ class ConstrainedFramerate(ConstrainedInt):
 
 class FilterProperties(BaseModel):
     memory: Literal["(memory:NVMM)", "-yuv", "(ANY)"] = "(memory:NVMM)"
-    format: Optional[Literal["RGBA", "ARGB", "RGB", "BGR"]] = "RGBA"
+    format: Literal["RGBA", "ARGB", "RGB", "BGR"] = "RGBA"
     width: Optional[SizeConstraint]
     height: Optional[SizeConstraint]
     channels: Optional[ChannelConstraint]
-    framerate: Optional[ConstrainedFramerate]
+    framerate: Optional[Tuple[ConstrainedFramerate, ConstrainedFramerate]]
 
     def to_str(self) -> str:
         format_str = f"video/x-raw{self.memory}"
@@ -65,7 +65,7 @@ class FilterProperties(BaseModel):
             format_str = f"{format_str},channels={self.channels}"
 
         if self.framerate:
-            format_str = f"{format_str},framerate={self.framerate}"
+            format_str = f"{format_str},framerate=(fraction){self.framerate[0]}/{self.framerate[1]}"
 
         return format_str
 
@@ -121,4 +121,4 @@ class NVVideoConvert(StreamFilterComponent):
 
         :return: get a tuple of GStreamer elements of types `(nvvideoconvert, capsfilter)`
         """
-        return (self._nvvidconv, self._filter)
+        return (self._filter, self._nvvidconv)

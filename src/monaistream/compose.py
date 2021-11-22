@@ -14,7 +14,7 @@
 import logging
 from typing import Any, Sequence, Tuple, Union
 
-from gi.repository import GObject, Gst
+from gi.repository import Gst, GLib
 
 from monaistream.errors import StreamComposeCreationError
 from monaistream.interface import (
@@ -23,6 +23,7 @@ from monaistream.interface import (
     StreamComponent,
     StreamSourceComponent,
 )
+from monaistream.errors import StreamTransformChainError
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +41,7 @@ class StreamCompose(object):
         :param components: is a sequence of `StreamComponent` from which all components in MONAI Stream SDK are inherited
         """
         self._pipeline = Gst.Pipeline()
+        self._exception = None
 
         # initialize and configure components
         # link the sources and sinks between the aggregator and multiplexer
@@ -126,34 +128,42 @@ class StreamCompose(object):
         if message.type == Gst.MessageType.EOS:
             logger.info("[INFO] End of stream")
             loop.quit()
+
         elif message.type == Gst.MessageType.INFO:
             info, debug = message.parse_info()
             logger.info("[INFO] {}: {}".format(info, debug))
+
         elif message.type == Gst.MessageType.WARNING:
             err, debug = message.parse_warning()
             logger.warn("[WARN] {}: {}".format(err, debug))
+
         elif message.type == Gst.MessageType.ERROR:
             err, debug = message.parse_error()
             logger.error("[EROR] {}: {}".format(err, debug))
             loop.quit()
+            self._exception = StreamTransformChainError(f"Pipeline failed - {err}: {debug}")
+
         elif message.type == Gst.MessageType.STATE_CHANGED:
             old, new, pending = message.parse_state_changed()
             logger.debug("State changed from %s to %s (pending=%s)", old.value_name, new.value_name, pending.value_name)
             Gst.debug_bin_to_dot_file(
                 self._pipeline, Gst.DebugGraphDetails.ALL, f"{self._pipeline.name}-{old.value_name}-{new.value_name}"
             )
+
         elif message.type == Gst.MessageType.STREAM_STATUS:
             type_, owner = message.parse_stream_status()
             logger.debug("Stream status changed to %s (owner=%s)", type_.value_name, owner.name)
             Gst.debug_bin_to_dot_file(
                 self._pipeline, Gst.DebugGraphDetails.ALL, f"{self._pipeline.name}-{type_.value_name}"
             )
+
         elif message.type == Gst.MessageType.DURATION_CHANGED:
             logger.debug("Duration changed")
+
         return True
 
     def __call__(self) -> None:
-        loop = GObject.MainLoop()
+        loop = GLib.MainLoop()
         bus = self._pipeline.get_bus()
         bus.add_signal_watch()
 
@@ -163,7 +173,7 @@ class StreamCompose(object):
 
         try:
             loop.run()
-        except Exception:
-            pass
-
-        self._pipeline.set_state(Gst.State.NULL)
+        finally:
+            if self._exception:
+                raise self._exception
+            self._pipeline.set_state(Gst.State.NULL)
