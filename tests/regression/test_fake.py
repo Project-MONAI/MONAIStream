@@ -10,11 +10,13 @@
 # limitations under the License.
 
 import unittest
+from typing import Dict
 
+import cupy
 from monai.transforms import Compose, Identityd
 
 from monaistream.compose import StreamCompose
-from monaistream.filters import FilterProperties, NVVideoConvert, TransformChainComponent
+from monaistream.filters import FilterProperties, NVVideoConvert, TransformChainComponent, TransformChainComponentCupy
 from monaistream.sinks import FakeSink
 from monaistream.sources import FakeSource
 
@@ -56,6 +58,55 @@ class TestRBGAWithFake(unittest.TestCase):
                         channels=4,
                         framerate=(32, 1),
                     )
+                ),
+                FakeSink(),
+            ]
+        )
+        pipeline()
+
+    def test_nvvideoconvert_transformchain(self):
+        pipeline = StreamCompose(
+            [
+                FakeSource(),
+                NVVideoConvert(
+                    FilterProperties(
+                        format="RGBA",
+                        width=1920,
+                        height=1080,
+                        channels=4,
+                        framerate=(32, 1),
+                    )
+                ),
+                TransformChainComponent(
+                    transform_chain=Compose(
+                        Identityd(keys="ORIGINAL_IMAGE"),
+                    ),
+                    output_label="ORIGINAL_IMAGE",
+                ),
+                FakeSink(),
+            ]
+        )
+        pipeline()
+
+    def test_nvvideoconvert_transformchaincupy(self):
+        def my_identity(inputs: Dict[str, cupy.ndarray]):
+            return {"OUTPUT_IMAGE": inputs["ORIGINAL_IMAGE"]}
+
+        pipeline = StreamCompose(
+            [
+                FakeSource(),
+                NVVideoConvert(
+                    FilterProperties(
+                        format="RGBA",
+                        width=1920,
+                        height=1080,
+                        channels=4,
+                        framerate=(32, 1),
+                    )
+                ),
+                TransformChainComponent(
+                    transform_chain=my_identity,
+                    output_label="OUTPUT_IMAGE",
                 ),
                 FakeSink(),
             ]
