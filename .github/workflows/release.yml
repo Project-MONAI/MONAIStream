@@ -202,7 +202,7 @@ jobs:
           fetch-depth: 0
       - shell: bash
         run: |
-          git describe
+          git describe --always
           python setup.py build
           cat build/lib/monaistream/_version.py
       - name: Upload version
