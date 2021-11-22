@@ -145,7 +145,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python3 -m pip install --upgrade pip
+          python3 -m pip install -r requirements-dev.txt
 
       - name: Unit Tests
         run: |
