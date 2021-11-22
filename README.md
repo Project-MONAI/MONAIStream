@@ -104,17 +104,29 @@ Inside the development container perform the following steps.
     mkdir -p /app/videos
     cp /app/data/US/Q000_04_tu_segmented_ultrasound_256.avi /app/videos/.
 
-  3. Convert ONNX model to TRT engine.
+  3. Convert PyTorch or ONNX model to TRT engine.
 
-    cd /app/data/US/
-    /usr/src/tensorrt/bin/trtexec --onnx=us_unet_256x256.onnx --saveEngine=model.engine --explicitBatch --verbose --workspace=5000
+      a. To Convert the provided ONNX model to a TRT engine use:
 
-  4. Copy the ultrasound segmentation model under ``/app/models/us_unet_256x256/1`` as our sample app expects.
+        ```
+        cd /app/data/US/
+        /usr/src/tensorrt/bin/trtexec --onnx=us_unet_256x256.onnx --saveEngine=model.engine --explicitBatch --verbose --workspace=1000
+        ```
 
-    mkdir -p /app/models/us_unet_256x256/1
-    cp /app/data/US/model.engine /app/models/us_unet_256x256/1/.
+      b. To convert the PyTorch model to a TRT engine use:
 
-  5. Running the example streaming bone scoliosis segmentation pipeline on the ultrasound video.
+        ```
+        cd /app/data/US/
+        monaistream convert -i us_unet_jit.pt -o monai_unet.engine -I INPUT__0 -O OUTPUT__0 -S 1 3 256 256
+        ```
+
+  4. Copy the ultrasound segmentation model under ``/app/models/monai_unet_trt/1`` as our sample app expects.
+
+    mkdir -p /app/models/monai_unet_trt/1
+    cp /app/data/US/monai_unet.engine /app/models/monai_unet_trt/1/.
+    cp /app/data/US/config_us_trt.pbtxt /app/models/monai_unet_trt/config.pbtxt
+
+  5. Now we are ready to run the example streaming ultrasound bone scoliosis segmentation pipeline.
   
     cd /sample/monaistream-pytorch-pp-app
     python main.py
