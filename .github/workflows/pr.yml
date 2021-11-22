@@ -136,31 +136,12 @@ jobs:
         run: |
           ./runtests.sh --mypy
 
-      # - name: Unit Tests
-      #   run: |
-      #     $(pwd)/runtests.sh --unittests --coverage
-
-      # - name: Coverage
-      #   run: |
-      #     coverage xml
-
-      # - name: Upload coverage
-      #   uses: codecov/codecov-action@v1
-      #   with:
-      #     fail_ci_if_error: false
-      #     file: ./coverage.xml
-
   build_agx:
     runs-on: agx
 
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v2
-
-      - name: Set up Python 3.6
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.6
 
       - name: Install dependencies
         run: |
