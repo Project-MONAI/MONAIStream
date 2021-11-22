@@ -157,6 +157,10 @@ jobs:
       - name: Checkout Source Code
         uses: actions/checkout@v2
 
+      - name: Install Dev Requirements
+        run: |
+          pip install -r requirements-dev.txt
+
       - name: Unit Tests
         run: |
           ./runtests.sh --unittests --coverage
