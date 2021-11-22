@@ -71,7 +71,7 @@ Inside the development container perform the following steps.
   
     mkdir -p /app/data
     cd /app/data
-    wget https://github.com/Project-MONAI/monai-stream-experimental/releases/download/data/US.zip
+    wget https://github.com/Project-MONAI/MONAIStream/releases/download/data/US.zip
     unzip US.zip -d .
 
   2. Copy the ultrasound video to ``/app/videos/Q000_04_tu_segmented_ultrasound_256.avi`` as the example app expects.

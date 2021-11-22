@@ -1,7 +1,7 @@
 # MONAI Stream
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](https://opensource.org/licenses/Apache-2.0)
-[![CI Build](https://github.com/Project-MONAI/monai-stream-experimental/actions/workflows/pr.yml/badge.svg)](https://github.com/Project-MONAI/monai-stream-experimental/actions/workflows/pr.yml)
+[![CI Build](https://github.com/Project-MONAI/MONAIStream/actions/workflows/pr.yml/badge.svg)](https://github.com/Project-MONAI/MONAIStream/actions/workflows/pr.yml)
 [![Documentation Status](https://readthedocs.org/projects/monaistream/badge/?version=latest)](https://monaistream.readthedocs.io/en/latest/?badge=latest)
 
 
@@ -96,7 +96,7 @@ Inside the development container perform the following steps.
 
     mkdir -p /app/data
     cd /app/data
-    wget https://github.com/Project-MONAI/monai-stream-experimental/releases/download/data/US.zip
+    wget https://github.com/Project-MONAI/MONAIStream/releases/download/data/US.zip
     unzip US.zip -d .
 
   2. Copy the ultrasound video to ``/app/videos/Q000_04_tu_segmented_ultrasound_256.avi`` as the example app expects.
