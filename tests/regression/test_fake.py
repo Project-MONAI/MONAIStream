@@ -11,16 +11,15 @@
 
 import unittest
 
-from monai.transforms import Identityd, Compose
+from monai.transforms import Compose, Identityd
 
-from monaistream.sources import FakeSource
-from monaistream.sinks import FakeSink
 from monaistream.compose import StreamCompose
-from monaistream.filters import NVVideoConvert, FilterProperties, TransformChainComponent
+from monaistream.filters import FilterProperties, NVVideoConvert, TransformChainComponent
+from monaistream.sinks import FakeSink
+from monaistream.sources import FakeSource
 
 
 class TestRBGAWithFake(unittest.TestCase):
-
     def test_shortcircuit(self):
         pipeline = StreamCompose(
             [

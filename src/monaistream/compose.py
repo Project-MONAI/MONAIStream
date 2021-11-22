@@ -14,16 +14,15 @@
 import logging
 from typing import Any, Sequence, Tuple, Union
 
-from gi.repository import Gst, GLib
+from gi.repository import GLib, Gst
 
-from monaistream.errors import StreamComposeCreationError
+from monaistream.errors import StreamComposeCreationError, StreamTransformChainError
 from monaistream.interface import (
     AggregatedSourcesComponent,
     InferenceFilterComponent,
     StreamComponent,
     StreamSourceComponent,
 )
-from monaistream.errors import StreamTransformChainError
 
 logger = logging.getLogger(__name__)
 
