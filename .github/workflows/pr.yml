@@ -153,7 +153,7 @@ jobs:
 
       - name: Coverage
         run: |
-          coverage xml
+          python3 -m coverage xml
 
       - name: Upload coverage
         uses: codecov/codecov-action@v1
