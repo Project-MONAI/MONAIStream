@@ -2,7 +2,7 @@ coverage:
   status:
     project:
       default:
-        target: 30%
+        target: 80%
         threshold: 10
         base: parent
         if_no_uploads: error
@@ -29,4 +29,5 @@ comment: false
 
 ignore:
   - "versioneer.py"
-  - "monailabel/_version.py"
+  - "src/monaistream/_version.py"
+  - "src/monaistream/util"
