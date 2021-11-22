@@ -21,7 +21,7 @@ To build a developer container for your workstation simply clone the repo and ru
 .. code-block:: bash
 
     # clone the latest release from the repo
-    git clone -b main https://github.com/Project-MONAI/MONAIStream
+    git clone -b <release_tag> https://github.com/Project-MONAI/MONAIStream
 
     # start development setup script
     cd MONAIStream
