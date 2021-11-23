@@ -20,7 +20,7 @@ import torch
 from monaistream.compose import StreamCompose
 from monaistream.filters import FilterProperties, NVVideoConvert, TransformChainComponent, TransformChainComponentCupy
 from monaistream.filters.infer import NVInferServer
-from monaistream.sinks.nveglglessink import NVEglGlesSink
+from monaistream.sinks.fake import FakeSink
 from monaistream.sources.sourcebin import NVAggregatedSourcesBin
 from monaistream.sources.uri import URISource
 
@@ -63,7 +63,7 @@ class TestWithData(unittest.TestCase):
                     output_label="ORIGINAL_IMAGE",
                     transform_chain=assert_copy_equal,
                 ),
-                NVEglGlesSink(sync=False),
+                FakeSink(),
             ]
         )
         pipeline()
@@ -103,7 +103,7 @@ class TestWithData(unittest.TestCase):
                     output_label="ORIGINAL_IMAGE",
                     transform_chain=assert_copy_equal,
                 ),
-                NVEglGlesSink(sync=False),
+                FakeSink(),
             ]
         )
         pipeline()
