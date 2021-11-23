@@ -136,7 +136,7 @@ jobs:
         run: |
           ./runtests.sh --mypy
 
-  build_agx:
+  unittest_agx:
     runs-on: agx
 
     steps:
