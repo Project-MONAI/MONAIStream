@@ -432,8 +432,7 @@ if [ $doUnitTests = true ]; then
   echo "${separator}${blue}unittests${noColor}"
   torch_validate
 
-  ${cmdPrefix}${PY_EXE} tests/setup.py
-  ${cmdPrefix}${cmd} -m pytest -v tests/unit --no-summary -x
+  PYTHONPATH=$(pwd)/src ${cmdPrefix}${cmd} -m pytest -v tests/regression --no-summary -x
 fi
 
 # report on coverage

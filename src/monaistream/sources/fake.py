@@ -24,13 +24,14 @@ class FakeSource(StreamSourceComponent):
     Fake sink component used to terminate a MONAI Stream pipeline.
     """
 
-    def __init__(self, name: str = "") -> None:
+    def __init__(self, name: str = "", num_buffers: int = 1) -> None:
         """
         :param name: the name to assign to this component
         """
         if not name:
             name = str(uuid4().hex)
         self._name = name
+        self._num_buffers = num_buffers
 
     def initialize(self):
         """
@@ -41,6 +42,7 @@ class FakeSource(StreamSourceComponent):
             raise BinCreationError(f"Unable to create {self.__class__._name} {self.get_name()}")
 
         self._fakesource = fakesink
+        self._fakesource.set_property("num-buffers", self._num_buffers)
 
     def get_gst_element(self):
         """
