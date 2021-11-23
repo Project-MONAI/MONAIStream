@@ -149,6 +149,11 @@ jobs:
 
       - name: Unit Tests
         run: |
+          export tmp_data_dir=$(mktemp -d)
+          pushd $tmp_data_dir
+          wget https://github.com/Project-MONAI/MONAIStream/releases/download/data/US.zip
+          unzip US.zip -d .
+          popd
           ./runtests.sh --unittests --coverage
 
       - name: Coverage
