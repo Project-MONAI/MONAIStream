@@ -1,10 +1,11 @@
 [build-system]
+build-backend = "setuptools.build_meta"
 requires = [
   "wheel",
   "setuptools",
   "versioneer-518",
+  "packaging>=20.0"
 ]
-build-backend = "setuptools.build_meta"
 
 [tool.black]
 line-length = 120

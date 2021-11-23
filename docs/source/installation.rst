@@ -21,7 +21,7 @@ To build a developer container for your workstation simply clone the repo and ru
 .. code-block:: bash
 
     # clone the latest release from the repo
-    git clone -b main https://github.com/Project-MONAI/MONAIStream
+    git clone -b <release_tag> https://github.com/Project-MONAI/MONAIStream
 
     # start development setup script
     cd MONAIStream
@@ -67,35 +67,50 @@ Inside the development container perform the following steps.
 
   1. Download the ultrasound data and models in the container.
 
-      .. code-block:: bash
-
-        mkdir -p /app/data
-        cd /app/data
-        wget https://github.com/Project-MONAI/monai-stream-experimental/releases/download/data/US.zip
-        unzip US.zip -d .
+  .. code-block:: bash
+  
+    mkdir -p /app/data
+    cd /app/data
+    wget https://github.com/Project-MONAI/MONAIStream/releases/download/data/US.zip
+    unzip US.zip -d .
 
   2. Copy the ultrasound video to ``/app/videos/Q000_04_tu_segmented_ultrasound_256.avi`` as the example app expects.
 
-      .. code-block:: bash
+    .. code-block:: bash
+    
+      mkdir -p /app/videos
+      cp /app/data/US/Q000_04_tu_segmented_ultrasound_256.avi /app/videos/.
 
-        mkdir -p /app/videos
-        cp /app/data/US/Q000_04_tu_segmented_ultrasound_256.avi /app/videos/.
+  3. Convert PyTorch or ONNX model to TRT engine.
 
-  3. Convert ONNX model to TRT engine.
+      a. To Convert the provided ONNX model to a TRT engine use:
 
       .. code-block:: bash
 
           cd /app/data/US/
           /usr/src/tensorrt/bin/trtexec --onnx=us_unet_256x256.onnx --saveEngine=model.engine --explicitBatch --verbose --workspace=5000
-
-  4. Copy the ultrasound segmentation model under ``/app/models/us_unet_256x256/1`` as our sample app expects.
+      
+      b. To convert the PyTorch model to a TRT engine use:
 
       .. code-block:: bash
 
-        mkdir -p /app/models/us_unet_256x256/1
-        cp /app/data/US/model.engine /app/models/us_unet_256x256/1/.
+          cd /app/data/US/
+          monaistream convert -i us_unet_jit.pt -o monai_unet.engine -I INPUT__0 -O OUTPUT__0 -S 1 3 256 256
 
-  5. Running the example streaming bone scoliosis segmentation pipeline on the ultrasound video.
+  4. Copy the ultrasound segmentation model under ``/app/models/monai_unet_trt/1`` as our sample app expects.
+
+    .. code-block:: bash
+    
+      mkdir -p /app/models/monai_unet_trt/1
+      cp /app/data/US/monai_unet.engine /app/models/monai_unet_trt/1/.
+      cp /app/data/US/config_us_trt.pbtxt /app/models/monai_unet_trt/config.pbtxt
+
+  5. Now we are ready to run the example streaming ultrasound bone scoliosis segmentation pipeline.
+  
+    .. code-block:: bash
+    
+        cd /sample/monaistream-pytorch-pp-app
+        python main.py
 
       .. code-block:: bash
 
@@ -111,7 +126,9 @@ Setting Up Clara AGX Developer Kit
 
 To setup the Clara AGX developer kit, use `Clara Holoscan SDK v0.1 <https://developer.nvidia.com/clara-holoscan-sdk>`_ to install the required components. MONAI Stream is only supported on Clara AGX Developer Kit in dGPU configuration.
 
-The SDK Manager will flash the system for iGPU configuration, to get dGPU configuration and related installations, please follow chapter `Switching Between iGPU and dGPU` in latest Clara Holoscan SDK docs.
+The SDK Manager will flash the system for iGPU configuration, to get dGPU configuration and related installations, please follow chapter `Switching Between iGPU and dGPU <https://docs.nvidia.com/clara-holoscan/sdk-user-guide/dgpu_setup.html>`_ in latest Clara Holoscan SDK docs.
+
+Once dGPU mode is enabled, set up the m2 SSD as described in `Storage Setup <https://docs.nvidia.com/clara-holoscan/sdk-user-guide/storage_setup.html>`_ to ensure that the AGX disk is correctly partitioned and mounted. 
 
 Now, prepare DeepStream to use Triton:
 
@@ -182,7 +199,7 @@ Next, setup the environement to use MONAI Stream:
 Setting Up AJA Capture Card
 ---------------------------
 
-Setting up AJA capture cards is an optional step for MONAI Stream. To setup AJA capture card on Clara AGX Developer Kit, follow chapter `AJA Video System` in latest Clara Holoscan SDK docs.
+Setting up AJA capture cards is an optional step for MONAI Stream. To setup AJA capture card on Clara AGX Developer Kit, follow chapter `AJA Video System <https://docs.nvidia.com/clara-holoscan/sdk-user-guide/aja_setup.html>`_ in latest Clara Holoscan SDK docs.
 
 Running the AJA Capture Sample App
 ----------------------------------
