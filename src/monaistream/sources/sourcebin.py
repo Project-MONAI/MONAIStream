@@ -19,7 +19,6 @@ from gi.repository import Gst
 
 from monaistream.errors import BinCreationError
 from monaistream.interface import AggregatedSourcesComponent, StreamSourceComponent
-from monaistream.sources.fake import FakeSource
 
 logger = logging.getLogger(__name__)
 
