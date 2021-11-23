@@ -22,7 +22,7 @@ data_files = [("logconfig", ["src/monaistream/logging.json"])]
 setup(
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
-    packages=(find_packages() + find_packages(where="./src", exclude=("utils",))),
+    packages=(find_packages(exclude=("tests",)) + find_packages(where="./src", exclude=("tests",))),
     zip_safe=False,
     package_data={"monaistream": ["py.typed"]},
     include_package_data=True,
