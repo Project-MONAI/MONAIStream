@@ -27,12 +27,9 @@ class TritonPythonModel:
         responses = []
 
         for request in requests:
-
-            # get the input by name (as configured in config.pbtxt)
             input_0 = pb_utils.get_input_tensor_by_name(request, "INPUT0").as_numpy()
 
             output_0 = np.copy(input_0)
-
             output0_tensor = pb_utils.Tensor("OUTPUT0", output_0.astype(self.output0_dtype))
             inference_response = pb_utils.InferenceResponse(
                 output_tensors=[output0_tensor],
