@@ -19,7 +19,7 @@ import torch
 
 from monaistream.compose import StreamCompose
 from monaistream.filters import FilterProperties, NVVideoConvert, TransformChainComponent, TransformChainComponentCupy
-from monaistream.filters.infer import NVInferServer
+from monaistream.filters.infer import InputLayer, NVInferServer, OutputLayer
 from monaistream.sinks.fake import FakeSink
 from monaistream.sources.sourcebin import NVAggregatedSourcesBin
 from monaistream.sources.uri import URISource
@@ -39,6 +39,16 @@ class TestWithData(unittest.TestCase):
         infer_server_config.infer_config.backend.trt_is.model_name = "monai_unet_trt"
         infer_server_config.infer_config.backend.trt_is.version = "1"
         infer_server_config.infer_config.backend.trt_is.model_repo.log_level = 3
+        infer_server_config.infer_config.backend.inputs = [
+            InputLayer(
+                dims=[3, 256, 256],
+                data_type="TENSOR_DT_FP32",
+                name="INPUT__0",
+            ),
+        ]
+        infer_server_config.infer_config.backend.outputs = [
+            OutputLayer(name="OUTPUT__0"),
+        ]
 
         pipeline = StreamCompose(
             [
