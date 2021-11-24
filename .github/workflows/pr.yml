@@ -165,6 +165,7 @@ jobs:
           /usr/src/tensorrt/bin/trtexec --onnx=${MODEL_FILE_ONNX} --saveEngine=${MODEL_FILE_CONVERTED} --explicitBatch --verbose --workspace=5000
 
           # run tests
+          export DISPLAY=:0.0
           ./runtests.sh --unittests --coverage
 
       - name: Coverage

@@ -14,13 +14,12 @@ import unittest
 from typing import Dict
 
 import cupy
-import numpy as np
 import torch
 
 from monaistream.compose import StreamCompose
 from monaistream.filters import FilterProperties, NVVideoConvert, TransformChainComponent, TransformChainComponentCupy
-from monaistream.filters.infer import InputLayer, NVInferServer, OutputLayer
-from monaistream.sinks.fake import FakeSink
+from monaistream.filters.infer import NVInferServer
+from monaistream.sinks.nveglglessink import NVEglGlesSink
 from monaistream.sources.sourcebin import NVAggregatedSourcesBin
 from monaistream.sources.uri import URISource
 
@@ -63,7 +62,7 @@ class TestWithData(unittest.TestCase):
                     output_label="ORIGINAL_IMAGE",
                     transform_chain=assert_copy_equal,
                 ),
-                FakeSink(),
+                NVEglGlesSink(sync=True),
             ]
         )
         pipeline()
@@ -105,7 +104,7 @@ class TestWithData(unittest.TestCase):
                     output_label="ORIGINAL_IMAGE",
                     transform_chain=assert_copy_equal,
                 ),
-                FakeSink(),
+                NVEglGlesSink(sync=True),
             ]
         )
         pipeline()
