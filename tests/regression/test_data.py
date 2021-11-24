@@ -29,14 +29,14 @@ class TestWithData(unittest.TestCase):
     def test_customuserdata(self):
         def assert_copy_equal(inputs: Dict[str, torch.Tensor]):
             self.assertTrue("ORIGINAL_IMAGE" in inputs.keys())
-            self.assertTrue("OUTPUT0" in inputs.keys())
-            # output = torch.permute(inputs['OUTPUT0'], (1, 2, 0)).cpu().detach().numpy()
-            # np.testing.assert_array_almost_equal(inputs["ORIGINAL_IMAGE"][..., :3].cpu().detach().numpy(), output)
+            self.assertTrue("OUTPUT__0" in inputs.keys())
             return inputs
 
         infer_server_config = NVInferServer.generate_default_config()
-        infer_server_config.infer_config.backend.trt_is.model_repo.root = os.path.join(os.getcwd(), "tests", "models")
-        infer_server_config.infer_config.backend.trt_is.model_name = "identity"
+        infer_server_config.infer_config.backend.trt_is.model_repo.root = os.path.join(
+            os.getenv("tmp_data_dir"), "models"
+        )
+        infer_server_config.infer_config.backend.trt_is.model_name = "monai_unet_trt"
         infer_server_config.infer_config.backend.trt_is.version = "1"
         infer_server_config.infer_config.backend.trt_is.model_repo.log_level = 0
 
@@ -71,12 +71,14 @@ class TestWithData(unittest.TestCase):
     def test_customuserdatacupy(self):
         def assert_copy_equal(inputs: Dict[str, cupy.ndarray]):
             self.assertTrue("ORIGINAL_IMAGE" in inputs.keys())
-            self.assertTrue("OUTPUT0" in inputs.keys())
+            self.assertTrue("OUTPUT__0" in inputs.keys())
             return inputs
 
         infer_server_config = NVInferServer.generate_default_config()
-        infer_server_config.infer_config.backend.trt_is.model_repo.root = os.path.join(os.getcwd(), "tests", "models")
-        infer_server_config.infer_config.backend.trt_is.model_name = "identity"
+        infer_server_config.infer_config.backend.trt_is.model_repo.root = os.path.join(
+            os.getenv("tmp_data_dir"), "models"
+        )
+        infer_server_config.infer_config.backend.trt_is.model_name = "monai_unet_trt"
         infer_server_config.infer_config.backend.trt_is.version = "1"
         infer_server_config.infer_config.backend.trt_is.model_repo.log_level = 0
 

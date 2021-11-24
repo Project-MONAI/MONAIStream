@@ -138,7 +138,7 @@ jobs:
 
   unittest_agx:
     runs-on: agx
-
+    
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v2
@@ -149,11 +149,19 @@ jobs:
 
       - name: Unit Tests
         run: |
+          # setup data
           export tmp_data_dir=$(mktemp -d)
           pushd $tmp_data_dir
           wget https://github.com/Project-MONAI/MONAIStream/releases/download/data/US.zip
           unzip US.zip -d .
           popd
+
+          # setup model
+          mkdir -p $tmp_data_dir/models/monai_unet_trt/1
+          cp $tmp_data_dir/US/us_unet_256x256_cagx.engine $tmp_data_dir/models/monai_unet_trt/1/monai_unet.engine
+          cp $tmp_data_dir/US/config_us_trt.pbtxt $tmp_data_dir/models/monai_unet_trt/config.pbtxt
+
+          # run tests
           ./runtests.sh --unittests --coverage
 
       - name: Coverage
