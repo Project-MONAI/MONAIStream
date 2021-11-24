@@ -121,4 +121,4 @@ class NVVideoConvert(StreamFilterComponent):
 
         :return: get a tuple of GStreamer elements of types `(nvvideoconvert, capsfilter)`
         """
-        return (self._filter, self._nvvidconv)
+        return (self._nvvidconv, self._filter)
