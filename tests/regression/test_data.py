@@ -39,7 +39,6 @@ class TestWithData(unittest.TestCase):
         infer_server_config.infer_config.backend.trt_is.model_name = "monai_unet_trt"
         infer_server_config.infer_config.backend.trt_is.version = "1"
         infer_server_config.infer_config.backend.trt_is.model_repo.log_level = 3
-        infer_server_config.infer_config.preprocess.tensor_order = "TENSOR_ORDER_NHWC"
 
         pipeline = StreamCompose(
             [
@@ -82,7 +81,6 @@ class TestWithData(unittest.TestCase):
         infer_server_config.infer_config.backend.trt_is.model_name = "monai_unet_trt"
         infer_server_config.infer_config.backend.trt_is.version = "1"
         infer_server_config.infer_config.backend.trt_is.model_repo.log_level = 3
-        infer_server_config.infer_config.preprocess.tensor_order = "TENSOR_ORDER_NHWC"
 
         pipeline = StreamCompose(
             [
