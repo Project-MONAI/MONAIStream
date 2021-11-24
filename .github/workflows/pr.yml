@@ -156,10 +156,13 @@ jobs:
           unzip US.zip -d .
           popd
 
-          # setup model
+          # convert ONNX model to TRT and setup model repo
           mkdir -p $tmp_data_dir/models/monai_unet_trt/1
-          cp $tmp_data_dir/US/us_unet_256x256_cagx.engine $tmp_data_dir/models/monai_unet_trt/1/monai_unet.engine
           cp $tmp_data_dir/US/config_us_trt.pbtxt $tmp_data_dir/models/monai_unet_trt/config.pbtxt
+
+          MODEL_FILE_ONNX=$tmp_data_dir/US/us_unet_256x256.onnx
+          MODEL_FILE_CONVERTED=$tmp_data_dir/models/monai_unet_trt/1/monai_unet.engine
+          /usr/src/tensorrt/bin/trtexec --onnx=${MODEL_FILE_ONNX} --saveEngine=${MODEL_FILE_CONVERTED} --explicitBatch --verbose --workspace=5000
 
           # run tests
           ./runtests.sh --unittests --coverage
