@@ -82,7 +82,7 @@ class PreprocessParams(BaseModel):
         "FRAME_SCALING_HW_DEFAULT", "FRAME_SCALING_HW_GPU", "FRAME_SCALING_HW_VIC"
     ] = "FRAME_SCALING_HW_DEFAULT"
     frame_scaling_filter: int = 1
-    normalize: NormalizeModel = NormalizeModel(scale_factor=0.00392156)
+    normalize: Optional[NormalizeModel]
 
 
 class PostprocessParams(BaseModel):
@@ -223,14 +223,13 @@ class NVInferServer(InferenceFilterComponent):
         {%- if infer_config.preprocess.normalize is defined and infer_config.preprocess.normalize is not none %}
         normalize {
             scale_factor: {{ infer_config.preprocess.normalize.scale_factor|default(0.00392156) }}
-            {% if infer_config.preprocess.normalize.channel_offsets is defined and infer_config.preprocess.normalize.channel_offsets -%}
+            {% if infer_config.preprocess.normalize.channel_offsets is defined and infer_config.preprocess.normalize.channel_offsets is not none -%}
             channel_offsets: [{%- for offset in infer_config.preprocess.normalize.channel_offsets -%} {{offset}}{{ "," if not loop.last else "" }} {% endfor -%}]
             {%- endif %}
         }
         {% else %}
         normalize {
             scale_factor: 0.00392156,
-            channel_offsets: [0, 0, 0]
         }
         {%- endif %}
     }
@@ -379,8 +378,7 @@ async_mode: {{ async_mode|string|lower }}
                 "frame_scaling_hw": "FRAME_SCALING_HW_DEFAULT",
                 "frame_scaling_filter": 1,
                 "normalize": {
-                    "scale_factor": 0.00392156,
-                    "channel_offsets": [0, 0, 0]
+                    "scale_factor": 0.00392156
                 }
             },
 
