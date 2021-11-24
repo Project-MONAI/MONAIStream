@@ -157,9 +157,12 @@ jobs:
           popd
 
           # setup model
-          mkdir -p $tmp_data_dir/models/monai_unet_trt/1
-          cp $tmp_data_dir/US/us_unet_256x256_cagx.engine $tmp_data_dir/models/monai_unet_trt/1/monai_unet.engine
-          cp $tmp_data_dir/US/config_us_trt.pbtxt $tmp_data_dir/models/monai_unet_trt/config.pbtxt
+          mkdir -p $tmp_data_dir/models/monai_unet/1
+          cp $tmp_data_dir/US/us_unet_256x256.onnx $tmp_data_dir/models/monai_unet/1/monai_unet.onnx
+          cp $tmp_data_dir/US/config_us_trt.pbtxt $tmp_data_dir/models/monai_unet/config.pbtxt
+          sed -i 's/tensorrt_plan/onnxruntime_onnx/' $tmp_data_dir/models/monai_unet/config.pbtxt
+          sed -i 's/monai_unet_trt/monai_unet/' $tmp_data_dir/models/monai_unet/config.pbtxt
+          sed -i 's/monai_unet.engine/monai_unet.onnx/' $tmp_data_dir/models/monai_unet/config.pbtxt
 
           # run tests
           ./runtests.sh --unittests --coverage
