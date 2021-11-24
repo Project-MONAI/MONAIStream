@@ -101,7 +101,7 @@ class CustomLib(BaseModel):
 class InferenceConfig(BaseModel):
     unique_id: int
     gpu_ids: List[int] = [0]
-    max_batch_size: int = 4
+    max_batch_size: int = 1
     backend: BackendParams
     preprocess: PreprocessParams
     postprocess: PostprocessParams
@@ -359,7 +359,7 @@ async_mode: {{ async_mode|string|lower }}
         "infer_config": {
             "unique_id": 1,
             "gpu_ids": [0],
-            "max_batch_size": 4,
+            "max_batch_size": 1,
             "backend": {
                 "trt_is": {
                     "model_name": "",
