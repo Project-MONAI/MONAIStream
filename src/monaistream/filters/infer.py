@@ -61,14 +61,14 @@ class InputLayer(IOLayer):
 
 
 class BackendParams(BaseModel):
-    inputs: Optional[InputLayer]
-    outputs: Optional[OutputLayer]
+    inputs: Optional[List[InputLayer]]
+    outputs: Optional[List[OutputLayer]]
     trt_is: TrtISParams
 
 
 class NormalizeModel(BaseModel):
     scale_factor: float
-    channel_offsets: List[int]
+    channel_offsets: Optional[List[int]]
 
 
 class PreprocessParams(BaseModel):
@@ -82,7 +82,7 @@ class PreprocessParams(BaseModel):
         "FRAME_SCALING_HW_DEFAULT", "FRAME_SCALING_HW_GPU", "FRAME_SCALING_HW_VIC"
     ] = "FRAME_SCALING_HW_DEFAULT"
     frame_scaling_filter: int = 1
-    normalize: NormalizeModel = NormalizeModel(scale_factor=0.00392156, channel_offsets=[0, 0, 0])
+    normalize: NormalizeModel = NormalizeModel(scale_factor=0.00392156)
 
 
 class PostprocessParams(BaseModel):
@@ -190,16 +190,24 @@ class NVInferServer(InferenceFilterComponent):
             }
         }
         {%- if infer_config.backend.inputs is defined and infer_config.backend.inputs is not none %}
-        inputs {
-            name: {{ infer_config.backend.inputs.name }}
-            dims: [ {%- for dim in infer_config.backend.inputs.dims -%} {{ dim }}{{ "," if not loop.last else "" }} {%- endfor -%}]
-            data_type: {{ infer_config.backend.inputs.data_type|default("TENSOR_DT_NONE") }}
-        }
+        inputs [
+            {%- for input in infer_config.backend.inputs %}
+            {
+                name: "{{ input.name }}"
+                dims: [ {%- for dim in input.dims -%} {{ dim }}{{ "," if not loop.last else "" }} {%- endfor -%}]
+                data_type: {{ input.data_type|default("TENSOR_DT_NONE") }}
+            }
+            {%- endfor %}
+        ]
         {%- endif %}
         {%- if infer_config.backend.outputs is defined and infer_config.backend.outputs is not none %}
-        outputs {
-            name: {{ infer_config.backend.outputs.name }}
-        }
+        outputs [
+            {%- for output in infer_config.backend.outputs %}
+            {
+                name: "{{ output.name }}"
+            }
+            {%- endfor %}
+        ]
         {%- endif %}
     }
 
