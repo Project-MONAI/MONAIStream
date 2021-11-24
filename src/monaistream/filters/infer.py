@@ -73,7 +73,7 @@ class NormalizeModel(BaseModel):
 
 class PreprocessParams(BaseModel):
     network_format: Literal[
-        "MEDIA_FORMAT_NONE", "IMAGE_FORMAT_RGB", "IMAGE_FORMAT_BGR", "IMAGE_FORMAT_GRAY", "IMAGE_FORMAT_RGB"
+        "MEDIA_FORMAT_NONE", "IMAGE_FORMAT_RGB", "IMAGE_FORMAT_BGR", "IMAGE_FORMAT_GRAY",
     ] = "IMAGE_FORMAT_RGB"
     tensor_order: Literal["TENSOR_ORDER_NONE", "TENSOR_ORDER_LINEAR", "TENSOR_ORDER_NHWC"] = "TENSOR_ORDER_LINEAR"
     tensor_name: Optional[str]
