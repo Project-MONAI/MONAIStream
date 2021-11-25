@@ -64,30 +64,6 @@ class TestWithFake(unittest.TestCase):
         )
         pipeline()
 
-    def test_nvvideoconvert_transformchain(self):
-        pipeline = StreamCompose(
-            [
-                FakeSource(),
-                NVVideoConvert(
-                    FilterProperties(
-                        format="RGBA",
-                        width=1920,
-                        height=1080,
-                        channels=4,
-                        framerate=(32, 1),
-                    )
-                ),
-                TransformChainComponent(
-                    transform_chain=Compose(
-                        Identityd(keys="ORIGINAL_IMAGE"),
-                    ),
-                    output_label="ORIGINAL_IMAGE",
-                ),
-                FakeSink(),
-            ]
-        )
-        pipeline()
-
     def test_nvvideoconvert_transformchaincupy(self):
         def my_identity(inputs: Dict[str, cupy.ndarray]):
             return {"OUTPUT_IMAGE": inputs["ORIGINAL_IMAGE"]}
