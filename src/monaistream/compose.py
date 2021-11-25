@@ -82,12 +82,9 @@ class StreamCompose(object):
             # link subelements of element (e.g. converters and capsfilters in NVVideoConvert components)
             for subidx in range(len(elems) - 1):
 
-                if isinstance(components[idx], StreamSourceComponent):
+                if isinstance(components[idx], AggregatedSourcesComponent):
                     source, muxer = elems
-
-                    num_sources = 1
-                    if isinstance(components[idx], AggregatedSourcesComponent):
-                        num_sources = components[idx].get_num_sources()
+                    num_sources = components[idx].get_num_sources()
 
                     for src_idx in range(num_sources):
 

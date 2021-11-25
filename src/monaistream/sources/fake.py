@@ -11,11 +11,13 @@
 # limitations under the License.
 ################################################################################
 
+from typing import Optional
 from uuid import uuid4
 
 from gi.repository import Gst
 
 from monaistream.errors import BinCreationError
+from monaistream.filters.convert import FilterProperties
 from monaistream.interface import StreamSourceComponent
 
 
@@ -24,7 +26,8 @@ class FakeSource(StreamSourceComponent):
     Fake sink component used to terminate a MONAI Stream pipeline.
     """
 
-    def __init__(self, name: str = "", num_buffers: int = 1) -> None:
+    def __init__(
+            self, name: str = "", num_buffers: int = 1, format_description: Optional[FilterProperties] = None) -> None:
         """
         :param name: the name to assign to this component
         """
@@ -32,6 +35,8 @@ class FakeSource(StreamSourceComponent):
             name = str(uuid4().hex)
         self._name = name
         self._num_buffers = num_buffers
+        self._format_description = format_description
+        self._filter = None
 
     def initialize(self):
         """
@@ -44,12 +49,24 @@ class FakeSource(StreamSourceComponent):
         self._fakesource = fakesink
         self._fakesource.set_property("num-buffers", self._num_buffers)
 
+        if self._format_description:
+            caps = Gst.Caps.from_string(self._format_description.to_str())
+            filter = Gst.ElementFactory.make("capsfilter", f"{self._name}-filter")
+            if not filter:
+                raise BinCreationError(f"Unable to get the caps for {self.__class__._name} {self.get_name()}")
+
+            filter.set_property("caps", caps)
+
+            self._filter = filter
+
     def get_gst_element(self):
         """
         Return the raw GStreamer `fakesource` element
 
         :return: `fakesource` `Gst.Element`
         """
+        if self._filter:
+            return (self._fakesource, self._filter)
         return self._fakesource
 
     def get_name(self):

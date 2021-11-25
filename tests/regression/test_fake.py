@@ -13,6 +13,7 @@ import unittest
 from typing import Dict
 
 import cupy
+import torch
 from monai.transforms import Compose, Identityd
 
 from monaistream.compose import StreamCompose
@@ -49,15 +50,38 @@ class TestWithFake(unittest.TestCase):
     def test_nvvideoconvert(self):
         pipeline = StreamCompose(
             [
-                FakeSource(),
-                NVVideoConvert(
-                    FilterProperties(
+                FakeSource(
+                    format_description=FilterProperties(
                         format="RGBA",
-                        width=1920,
-                        height=1080,
-                        channels=4,
+                        width=256,
+                        height=256,
                         framerate=(32, 1),
                     )
+                ),
+                NVVideoConvert(),
+                FakeSink(),
+            ]
+        )
+        pipeline()
+
+    def test_nvvideoconvert_transformchain(self):
+        def my_identity(inputs: Dict[str, torch.Tensor]):
+            return {"OUTPUT_IMAGE": inputs["ORIGINAL_IMAGE"]}
+
+        pipeline = StreamCompose(
+            [
+                FakeSource(
+                    format_description=FilterProperties(
+                        format="RGBA",
+                        width=256,
+                        height=256,
+                        framerate=(32, 1),
+                    )
+                ),
+                NVVideoConvert(),
+                TransformChainComponent(
+                    transform_chain=my_identity,
+                    output_label="OUTPUT_IMAGE",
                 ),
                 FakeSink(),
             ]
@@ -70,16 +94,15 @@ class TestWithFake(unittest.TestCase):
 
         pipeline = StreamCompose(
             [
-                FakeSource(),
-                NVVideoConvert(
-                    FilterProperties(
+                FakeSource(
+                    format_description=FilterProperties(
                         format="RGBA",
-                        width=1920,
-                        height=1080,
-                        channels=4,
+                        width=256,
+                        height=256,
                         framerate=(32, 1),
                     )
                 ),
+                NVVideoConvert(),
                 TransformChainComponentCupy(
                     transform_chain=my_identity,
                     output_label="OUTPUT_IMAGE",
@@ -88,3 +111,8 @@ class TestWithFake(unittest.TestCase):
             ]
         )
         pipeline()
+
+
+if __name__ == "__main__":
+    t = TestWithFake()
+    t.test_nvvideoconvert()

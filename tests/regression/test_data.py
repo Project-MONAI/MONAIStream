@@ -61,7 +61,7 @@ class TestWithData(unittest.TestCase):
                     output_label="ORIGINAL_IMAGE",
                     transform_chain=assert_copy_equal,
                 ),
-                NVEglGlesSink(sync=True),
+                NVEglGlesSink(sync=False),
             ]
         )
         pipeline()

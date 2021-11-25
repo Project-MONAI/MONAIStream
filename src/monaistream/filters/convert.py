@@ -42,7 +42,7 @@ class ConstrainedFramerate(ConstrainedInt):
 
 
 class FilterProperties(BaseModel):
-    memory: Literal["(memory:NVMM)", "-yuv", "(ANY)"] = "(memory:NVMM)"
+    memory: Literal["(memory:NVMM)", "-yuv", "(ANY)", ""] = "(memory:NVMM)"
     format: Literal["RGBA", "ARGB", "RGB", "BGR"] = "RGBA"
     width: Optional[SizeConstraint]
     height: Optional[SizeConstraint]
@@ -75,7 +75,7 @@ class NVVideoConvert(StreamFilterComponent):
     Video converter component for NVIDIA GPU-based video stream
     """
 
-    def __init__(self, filter: FilterProperties, name: str = "") -> None:
+    def __init__(self, format_description: Optional[FilterProperties] = None, name: str = "") -> None:
         """
         Create an :class:`.NVVIdeoConvert` object based on the :class:`.FilterProperties`
 
@@ -86,7 +86,8 @@ class NVVideoConvert(StreamFilterComponent):
             name = str(uuid4().hex)
 
         self._name = name
-        self._filter = filter
+        self._format_description = format_description
+        self._filter = None
 
     def initialize(self):
         """
@@ -98,14 +99,15 @@ class NVVideoConvert(StreamFilterComponent):
 
         self._nvvidconv = nvvidconv
 
-        caps = Gst.Caps.from_string(self._filter.to_str())
-        filter = Gst.ElementFactory.make("capsfilter", f"{self._name}-filter")
-        if not filter:
-            raise BinCreationError(f"Unable to get the caps for {self.__class__._name} {self.get_name()}")
+        if self._format_description:
+            caps = Gst.Caps.from_string(self._format_description.to_str())
+            filter = Gst.ElementFactory.make("capsfilter", f"{self._name}-filter")
+            if not filter:
+                raise BinCreationError(f"Unable to get the caps for {self.__class__._name} {self.get_name()}")
 
-        filter.set_property("caps", caps)
+            filter.set_property("caps", caps)
 
-        self._filter = filter
+            self._filter = filter
 
     def get_name(self):
         """
@@ -121,4 +123,6 @@ class NVVideoConvert(StreamFilterComponent):
 
         :return: get a tuple of GStreamer elements of types `(nvvideoconvert, capsfilter)`
         """
-        return (self._nvvidconv, self._filter)
+        if self._filter:
+            return (self._nvvidconv, self._filter)
+        return self._nvvidconv
