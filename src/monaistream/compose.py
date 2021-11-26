@@ -17,12 +17,7 @@ from typing import Any, Sequence, Tuple, Union
 from gi.repository import GLib, Gst
 
 from monaistream.errors import StreamComposeCreationError, StreamTransformChainError
-from monaistream.interface import (
-    AggregatedSourcesComponent,
-    InferenceFilterComponent,
-    StreamComponent,
-    StreamSourceComponent,
-)
+from monaistream.interface import AggregatedSourcesComponent, InferenceFilterComponent, StreamComponent
 
 logger = logging.getLogger(__name__)
 

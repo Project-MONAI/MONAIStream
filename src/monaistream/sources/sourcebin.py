@@ -100,8 +100,11 @@ class NVAggregatedSourcesBin(AggregatedSourcesComponent):
 
         for source in self._sources:
             source.initialize()
-            source.get_gst_element().connect("pad-added", _new_pad_handler, gst_bin)
-            source.get_gst_element().connect("child-added", _child_added_handler, gst_bin)
+            if source.get_gst_element().find_property("pad-added"):
+                source.get_gst_element().connect("pad-added", _new_pad_handler, gst_bin)
+
+            if source.get_gst_element().find_property("child-added"):
+                source.get_gst_element().connect("child-added", _child_added_handler, gst_bin)
 
             Gst.Bin.add(gst_bin, source.get_gst_element())
             bin_pad = gst_bin.add_pad(Gst.GhostPad.new_no_target("src", Gst.PadDirection.SRC))

@@ -27,7 +27,8 @@ class FakeSource(StreamSourceComponent):
     """
 
     def __init__(
-            self, name: str = "", num_buffers: int = 1, format_description: Optional[FilterProperties] = None) -> None:
+        self, name: str = "", num_buffers: int = 1, format_description: Optional[FilterProperties] = None
+    ) -> None:
         """
         :param name: the name to assign to this component
         """
