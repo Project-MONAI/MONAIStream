@@ -88,7 +88,7 @@ Inside the development container perform the following steps.
       .. code-block:: bash
 
           cd /app/data/US/
-          /usr/src/tensorrt/bin/trtexec --onnx=us_unet_256x256.onnx --saveEngine=model.engine --explicitBatch --verbose --workspace=5000
+          /usr/src/tensorrt/bin/trtexec --onnx=us_unet_256x256.onnx --saveEngine=model.engine --explicitBatch --verbose --workspace=1000
       
       b. To convert the PyTorch model to a TRT engine use:
 
