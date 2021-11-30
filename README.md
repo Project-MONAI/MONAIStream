@@ -21,6 +21,7 @@ AJA Capture cards with direct memory access to GPU, and a Fake Source for testin
 - outputs components to allow the developer to view the result of their pipelines or just to test via Fake Sink,
 - a number of filter types, including format conversion, video frame resizing and/or scaling, and most importantly a MONAI transform components
   that allows developers to plug-in MONAI transformations into the MONAI Stream pipeline.
+- Clara AGX Developer Kit in dGPU configuration.
 
 The diagram below shows a visualization of a MONAI Stream pipeline where a `URISource` is chained to video conversion,
 inference service, and importantly to `TransformChainComponent` which allows MONAI transformations
