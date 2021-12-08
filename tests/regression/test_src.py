@@ -14,7 +14,7 @@ import unittest
 from monai.transforms import Compose, Identityd
 
 from monaistream.compose import StreamCompose
-from monaistream.filters import FilterProperties, NVVideoConvert, TransformChainComponent, TransformChainComponentCupy
+from monaistream.filters import FilterProperties, NVVideoConvert, TransformChainComponent
 from monaistream.sinks import FakeSink
 from monaistream.sources import TestVideoSource
 
