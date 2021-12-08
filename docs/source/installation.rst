@@ -112,11 +112,6 @@ Inside the development container perform the following steps.
         cd /sample/monaistream-pytorch-pp-app
         python main.py
 
-      .. code-block:: bash
-
-          cd /sample/monaistream-pytorch-pp-app
-          python main.py
-
 
 Steps for `Clara AGX Developer Kit` Development Setup
 =====================================================

@@ -14,17 +14,24 @@
 from uuid import uuid4
 
 from gi.repository import Gst
+from typing_extensions import Literal
 
 from monaistream.errors import BinCreationError
 from monaistream.interface import StreamSourceComponent
 
 
-class FakeSource(StreamSourceComponent):
+class TestVideoSource(StreamSourceComponent):
     """
-    Fake sink component used to terminate a MONAI Stream pipeline.
+    Test source component used to generate data in a MONAI Stream pipeline.
     """
 
-    def __init__(self, name: str = "", num_buffers: int = 1) -> None:
+    def __init__(
+        self,
+        name: str = "",
+        num_buffers: int = 1,
+        is_live: bool = False,
+        pattern: Literal["black", "white", "smpte75"] = "black",
+    ) -> None:
         """
         :param name: the name to assign to this component
         """
@@ -32,25 +39,29 @@ class FakeSource(StreamSourceComponent):
             name = str(uuid4().hex)
         self._name = name
         self._num_buffers = num_buffers
+        self._is_live = is_live
+        self._pattern = pattern
 
     def initialize(self):
         """
-        Initialize the `fakesink` GStreamer element wrapped by this component
+        Initialize the `videotestsrc` GStreamer element wrapped by this component
         """
-        fakesink = Gst.ElementFactory.make("fakesrc", self.get_name())
-        if not fakesink:
+        testvideosrc = Gst.ElementFactory.make("videotestsrc", self.get_name())
+        if not testvideosrc:
             raise BinCreationError(f"Unable to create {self.__class__._name} {self.get_name()}")
 
-        self._fakesource = fakesink
-        self._fakesource.set_property("num-buffers", self._num_buffers)
+        self._testvideosrc = testvideosrc
+        self._testvideosrc.set_property("num-buffers", self._num_buffers)
+        self._testvideosrc.set_property("pattern", self._pattern)
+        self._testvideosrc.set_property("is-live", self._is_live)
 
     def get_gst_element(self):
         """
-        Return the raw GStreamer `fakesource` element
+        Return the raw GStreamer `testvideosrc` element
 
-        :return: `fakesource` `Gst.Element`
+        :return: `tesvideosrc` `Gst.Element`
         """
-        return self._fakesource
+        return (self._testvideosrc,)
 
     def get_name(self):
         """
@@ -58,7 +69,7 @@ class FakeSource(StreamSourceComponent):
 
         :return: the name of the component as `str`
         """
-        return f"{self._name}-fakevideosource"
+        return f"{self._name}-testvideosource"
 
     def is_live(self) -> bool:
         return False

@@ -61,19 +61,22 @@ class InputLayer(IOLayer):
 
 
 class BackendParams(BaseModel):
-    inputs: Optional[InputLayer]
-    outputs: Optional[OutputLayer]
+    inputs: Optional[List[InputLayer]]
+    outputs: Optional[List[OutputLayer]]
     trt_is: TrtISParams
 
 
 class NormalizeModel(BaseModel):
     scale_factor: float
-    channel_offsets: List[int]
+    channel_offsets: Optional[List[int]]
 
 
 class PreprocessParams(BaseModel):
     network_format: Literal[
-        "MEDIA_FORMAT_NONE", "IMAGE_FORMAT_RGB", "IMAGE_FORMAT_BGR", "IMAGE_FORMAT_GRAY", "IMAGE_FORMAT_RGB"
+        "MEDIA_FORMAT_NONE",
+        "IMAGE_FORMAT_RGB",
+        "IMAGE_FORMAT_BGR",
+        "IMAGE_FORMAT_GRAY",
     ] = "IMAGE_FORMAT_RGB"
     tensor_order: Literal["TENSOR_ORDER_NONE", "TENSOR_ORDER_LINEAR", "TENSOR_ORDER_NHWC"] = "TENSOR_ORDER_LINEAR"
     tensor_name: Optional[str]
@@ -82,7 +85,7 @@ class PreprocessParams(BaseModel):
         "FRAME_SCALING_HW_DEFAULT", "FRAME_SCALING_HW_GPU", "FRAME_SCALING_HW_VIC"
     ] = "FRAME_SCALING_HW_DEFAULT"
     frame_scaling_filter: int = 1
-    normalize: NormalizeModel = NormalizeModel(scale_factor=0.00392156, channel_offsets=[0, 0, 0])
+    normalize: Optional[NormalizeModel]
 
 
 class PostprocessParams(BaseModel):
@@ -101,7 +104,7 @@ class CustomLib(BaseModel):
 class InferenceConfig(BaseModel):
     unique_id: int
     gpu_ids: List[int] = [0]
-    max_batch_size: int = 4
+    max_batch_size: int = 1
     backend: BackendParams
     preprocess: PreprocessParams
     postprocess: PostprocessParams
@@ -190,16 +193,24 @@ class NVInferServer(InferenceFilterComponent):
             }
         }
         {%- if infer_config.backend.inputs is defined and infer_config.backend.inputs is not none %}
-        inputs {
-            name: {{ infer_config.backend.inputs.name }}
-            dims: [ {%- for dim in infer_config.backend.inputs.dims -%} {{ dim }}{{ "," if not loop.last else "" }} {%- endfor -%}]
-            data_type: {{ infer_config.backend.inputs.data_type|default("TENSOR_DT_NONE") }}
-        }
+        inputs [
+            {%- for input in infer_config.backend.inputs %}
+            {
+                name: "{{ input.name }}"
+                dims: [ {%- for dim in input.dims -%} {{ dim }}{{ "," if not loop.last else "" }} {%- endfor -%}]
+                data_type: {{ input.data_type|default("TENSOR_DT_NONE") }}
+            }
+            {%- endfor %}
+        ]
         {%- endif %}
         {%- if infer_config.backend.outputs is defined and infer_config.backend.outputs is not none %}
-        outputs {
-            name: {{ infer_config.backend.outputs.name }}
-        }
+        outputs [
+            {%- for output in infer_config.backend.outputs %}
+            {
+                name: "{{ output.name }}"
+            }
+            {%- endfor %}
+        ]
         {%- endif %}
     }
 
@@ -215,14 +226,13 @@ class NVInferServer(InferenceFilterComponent):
         {%- if infer_config.preprocess.normalize is defined and infer_config.preprocess.normalize is not none %}
         normalize {
             scale_factor: {{ infer_config.preprocess.normalize.scale_factor|default(0.00392156) }}
-            {% if infer_config.preprocess.normalize.channel_offsets is defined and infer_config.preprocess.normalize.channel_offsets -%}
+            {% if infer_config.preprocess.normalize.channel_offsets is defined and infer_config.preprocess.normalize.channel_offsets is not none -%}
             channel_offsets: [{%- for offset in infer_config.preprocess.normalize.channel_offsets -%} {{offset}}{{ "," if not loop.last else "" }} {% endfor -%}]
             {%- endif %}
         }
         {% else %}
         normalize {
             scale_factor: 0.00392156,
-            channel_offsets: [0, 0, 0]
         }
         {%- endif %}
     }
@@ -352,7 +362,7 @@ async_mode: {{ async_mode|string|lower }}
         "infer_config": {
             "unique_id": 1,
             "gpu_ids": [0],
-            "max_batch_size": 4,
+            "max_batch_size": 1,
             "backend": {
                 "trt_is": {
                     "model_name": "",
@@ -371,8 +381,7 @@ async_mode: {{ async_mode|string|lower }}
                 "frame_scaling_hw": "FRAME_SCALING_HW_DEFAULT",
                 "frame_scaling_filter": 1,
                 "normalize": {
-                    "scale_factor": 0.00392156,
-                    "channel_offsets": [0, 0, 0]
+                    "scale_factor": 0.00392156
                 }
             },
 
@@ -478,4 +487,4 @@ async_mode: {{ async_mode|string|lower }}
 
         :return: the `nvinferserver` GStreamer element
         """
-        return self._pgie
+        return (self._pgie,)

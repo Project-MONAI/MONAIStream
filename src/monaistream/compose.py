@@ -12,17 +12,20 @@
 ################################################################################
 
 import logging
-from typing import Any, Sequence, Tuple, Union
+from typing import Sequence
 
 from gi.repository import GLib, Gst
 
-from monaistream.errors import StreamComposeCreationError, StreamTransformChainError
+from monaistream.errors import BinCreationError, StreamComposeCreationError, StreamTransformChainError
+from monaistream.filters.convert import NVVideoConvert
+from monaistream.filters.infer import NVInferServer
 from monaistream.interface import (
     AggregatedSourcesComponent,
     InferenceFilterComponent,
     StreamComponent,
     StreamSourceComponent,
 )
+from monaistream.sources.ajavideosrc import AJAVideoSource
 
 logger = logging.getLogger(__name__)
 
@@ -46,18 +49,23 @@ class StreamCompose(object):
         # link the sources and sinks between the aggregator and multiplexer
         # configure batch size in nvinfer server
         batch_size = 1
+        src_is_live = False
+        insert_muxer = any([isinstance(c, NVInferServer) for c in components])
         for component in components:
             component.initialize()
 
-            # add elements from stream components to pipeline
-            if isinstance(component.get_gst_element(), tuple):
-                for elem in component.get_gst_element():
-                    self._pipeline.add(elem)
-            else:
-                self._pipeline.add(component.get_gst_element())
+            for elem in component.get_gst_element():
+                self._pipeline.add(elem)
+
+            if isinstance(component, StreamSourceComponent):
+                src_is_live = component.is_live()
+
+            insert_muxer = insert_muxer and (
+                not isinstance(component, AggregatedSourcesComponent) and not isinstance(component, AJAVideoSource)
+            )
 
             # set the batch size of nvinferserver if it exists in the pipeline
-            # from the number of sources
+            # from the number of sources otherwise assume there's only one source
             if isinstance(component, AggregatedSourcesComponent):
                 batch_size = component.get_num_sources()
             elif isinstance(component, InferenceFilterComponent):
@@ -66,28 +74,19 @@ class StreamCompose(object):
         # link the components in the chain
         for idx in range(len(components) - 1):
 
-            elems: Union[Any, Tuple[Any]] = ()
-
-            if isinstance(components[idx].get_gst_element(), tuple):
-                elems = components[idx].get_gst_element()
-                connect_component_prev = elems[-1]
-            else:
-                connect_component_prev = components[idx].get_gst_element()
-
-            if isinstance(components[idx + 1].get_gst_element(), tuple):
-                connect_component_next = components[idx + 1].get_gst_element()[0]
-            else:
-                connect_component_next = components[idx + 1].get_gst_element()
+            curr_component = components[idx]
+            curr_component_elems = curr_component.get_gst_element()
+            curr_component_elem = curr_component_elems[-1]
+            next_component_elem = components[idx + 1].get_gst_element()[0]
 
             # link subelements of element (e.g. converters and capsfilters in NVVideoConvert components)
-            for subidx in range(len(elems) - 1):
+            for subidx in range(len(curr_component_elems) - 1):
 
-                if isinstance(components[idx], StreamSourceComponent):
-                    source, muxer = elems
-
-                    num_sources = 1
-                    if isinstance(components[idx], AggregatedSourcesComponent):
-                        num_sources = components[idx].get_num_sources()
+                # an aggregated source is a special component that contains a muxer which
+                # is necessary to batch data from all the sources listed in the aggregator
+                if isinstance(components[idx], AggregatedSourcesComponent):
+                    source, muxer = curr_component_elems
+                    num_sources = components[idx].get_num_sources()
 
                     for src_idx in range(num_sources):
 
@@ -111,17 +110,84 @@ class StreamCompose(object):
                             )
                             exit(1)
 
+                # other components are assumed to not need pad information to be able to link the Gst elements
+                # container within the component, unless there is a need to insert a muxer
                 else:
-                    link_code = elems[subidx].link(elems[subidx + 1])
+
+                    link_code = curr_component_elems[subidx].link(curr_component_elems[subidx + 1])
                     if not link_code:
                         logger.error(f"Creation of {components[idx].get_name()} failed")
                         exit(1)
 
-            link_code = connect_component_prev.link(connect_component_next)
+            if isinstance(curr_component, NVVideoConvert) and insert_muxer:
+                # a multiplexer is necessary when `nvinferserver`` is present as it provides batch
+                # metadata to the pipeline which nvinferserver can consume
+                muxer = Gst.ElementFactory.make("nvstreammux", f"{curr_component.get_name()}-nvstreammux")
+                if not muxer:
+                    raise BinCreationError(
+                        f"Unable to create multiplexer for {curr_component.__class__._name}"
+                        f" with name {curr_component.get_name()}"
+                    )
 
-            if not link_code:
-                logger.error(f"Linking of {components[idx].get_name()} and " f"{components[idx + 1].get_name()} failed")
-                exit(1)
+                muxer.set_property("batch-size", batch_size)
+
+                src_prop_names = [c.name for c in curr_component_elem.list_properties()]
+                if (
+                    "caps" in src_prop_names
+                    and curr_component_elem.get_property("caps").get_structure(0).get_int("width")[0]
+                ):
+                    muxer.set_property(
+                        "width", curr_component_elem.get_property("caps").get_structure(0).get_int("width").value
+                    )
+
+                if (
+                    "caps" in src_prop_names
+                    and curr_component_elem.get_property("caps").get_structure(0).get_int("height")[0]
+                ):
+                    muxer.set_property(
+                        "height", curr_component_elem.get_property("caps").get_structure(0).get_int("height").value
+                    )
+
+                muxer.set_property("live-source", src_is_live)
+
+                # get a sinkpad from the multiplexer
+                sinkpad = muxer.get_request_pad("sink_0")
+                if not sinkpad:
+                    raise StreamComposeCreationError(
+                        f"Unable to create multiplexer sink pad bin for {component.get_name()}"
+                    )
+
+                # get the source pad from the current source
+                srcpad = curr_component_elem.get_static_pad("src")
+                if not srcpad:
+                    raise StreamComposeCreationError(f"Unable to create bin src pad for {component.get_name()}")
+
+                link_code = srcpad.link(sinkpad)
+                if link_code != Gst.PadLinkReturn.OK:
+                    logger.error(
+                        f"Linking of source and multiplexer for component {component.get_name()}"
+                        f" failed: {link_code.value_nick}"
+                    )
+                    exit(1)
+
+                link_code = muxer.link(next_component_elem)
+
+                if not link_code:
+                    logger.error(
+                        f"Linking of {components[idx].get_name()}-multiplexer and "
+                        f"{components[idx + 1].get_name()} failed"
+                    )
+                    exit(1)
+
+            else:
+
+                link_code = curr_component_elem.link(next_component_elem)
+
+                if not link_code:
+                    logger.error(
+                        f"Linking of {components[idx].get_name()} and " f"{components[idx + 1].get_name()} failed"
+                    )
+                    exit(1)
 
     def bus_call(self, bus, message, loop):
         if message.type == Gst.MessageType.EOS:

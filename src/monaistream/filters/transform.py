@@ -78,7 +78,7 @@ class TransformChainComponent(StreamFilterComponent):
 
         :return: the raw `queue` `Gst.Element`
         """
-        return self._ucbt
+        return (self._ucbt,)
 
     def probe_callback(self, pad: Gst.Pad, info: Gst.PadProbeInfo, user_data: object):
         """

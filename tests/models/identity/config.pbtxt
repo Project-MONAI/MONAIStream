@@ -1,4 +1,3 @@
-################################################################################
 # Copyright 2021 MONAI Consortium
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -9,9 +8,31 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-################################################################################
 
-from .ajavideosrc import AJAVideoSource
-from .sourcebin import NVAggregatedSourcesBin
-from .testvideosrc import TestVideoSource
-from .uri import URISource
+name: "identity"
+backend: "python"
+max_batch_size: 1
+
+input [
+  {
+    name: "INPUT0"
+    data_type: TYPE_FP32
+    dims: [ 3, 256, 256 ]
+  }
+]
+
+output [
+  {
+    name: "OUTPUT0"
+    data_type: TYPE_FP32
+    dims: [ 3, 256, 256 ]
+  }
+]
+
+instance_group [
+  {
+    kind: KIND_GPU
+    count: 1
+    gpus: [0]
+  }
+]
