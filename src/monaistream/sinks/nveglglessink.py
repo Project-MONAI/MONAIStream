@@ -59,4 +59,4 @@ class NVEglGlesSink(StreamSinkComponent):
 
         :return: `nveglglessink` `Gst.Element`
         """
-        return self._elgsink
+        return (self._elgsink,)

@@ -12,7 +12,7 @@
 ################################################################################
 
 from abc import ABCMeta, abstractmethod
-from typing import Any, Tuple, Union
+from typing import Any, Tuple
 
 from gi.repository import Gst
 
@@ -39,7 +39,7 @@ class StreamComponent(metaclass=ABCMeta):
         raise NotImplementedError(f"Subclass {self.__class__.__name__} must implement `initialize`")
 
     @abstractmethod
-    def get_gst_element(self) -> Union[Gst.Element, Tuple[Gst.Element]]:
+    def get_gst_element(self) -> Tuple[Gst.Element]:
         """
         Get GStreamer element or elements initialized in the `initalize` method
 

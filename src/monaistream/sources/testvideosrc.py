@@ -15,19 +15,24 @@ from typing import Optional
 from uuid import uuid4
 
 from gi.repository import Gst
+from typing_extensions import Literal
 
 from monaistream.errors import BinCreationError
 from monaistream.filters.convert import FilterProperties
 from monaistream.interface import StreamSourceComponent
 
 
-class FakeSource(StreamSourceComponent):
+class TestVideoSource(StreamSourceComponent):
     """
-    Fake sink component used to terminate a MONAI Stream pipeline.
+    Test source component used to generate data in a MONAI Stream pipeline.
     """
 
     def __init__(
-        self, name: str = "", num_buffers: int = 1, format_description: Optional[FilterProperties] = None
+        self,
+        name: str = "",
+        num_buffers: int = 1,
+        is_live: bool = False,
+        pattern: Literal["black", "white", "smpte75"] = "black",
     ) -> None:
         """
         :param name: the name to assign to this component
@@ -36,39 +41,29 @@ class FakeSource(StreamSourceComponent):
             name = str(uuid4().hex)
         self._name = name
         self._num_buffers = num_buffers
-        self._format_description = format_description
-        self._filter = None
+        self._is_live = is_live
+        self._pattern = pattern
 
     def initialize(self):
         """
-        Initialize the `fakesink` GStreamer element wrapped by this component
+        Initialize the `testvideosrc` GStreamer element wrapped by this component
         """
-        fakesink = Gst.ElementFactory.make("fakesrc", self.get_name())
-        if not fakesink:
+        testvideosrc = Gst.ElementFactory.make("testvideosource", self.get_name())
+        if not testvideosrc:
             raise BinCreationError(f"Unable to create {self.__class__._name} {self.get_name()}")
 
-        self._fakesource = fakesink
-        self._fakesource.set_property("num-buffers", self._num_buffers)
-
-        if self._format_description:
-            caps = Gst.Caps.from_string(self._format_description.to_str())
-            filter = Gst.ElementFactory.make("capsfilter", f"{self._name}-filter")
-            if not filter:
-                raise BinCreationError(f"Unable to get the caps for {self.__class__._name} {self.get_name()}")
-
-            filter.set_property("caps", caps)
-
-            self._filter = filter
+        self._testvideosrc = testvideosrc
+        self._testvideosrc.set_property("num-buffers", self._num_buffers)
+        self._testvideosrc.set_property("pattern", self._pattern)
+        self._testvideosrc.set_property("is-live", self._is_live)
 
     def get_gst_element(self):
         """
-        Return the raw GStreamer `fakesource` element
+        Return the raw GStreamer `testvideosrc` element
 
-        :return: `fakesource` `Gst.Element`
+        :return: `tesvideosrc` `Gst.Element`
         """
-        if self._filter:
-            return (self._fakesource, self._filter)
-        return self._fakesource
+        return (self._testvideosrc,)
 
     def get_name(self):
         """
@@ -76,7 +71,7 @@ class FakeSource(StreamSourceComponent):
 
         :return: the name of the component as `str`
         """
-        return f"{self._name}-fakevideosource"
+        return f"{self._name}-testvideosource"
 
     def is_live(self) -> bool:
         return False

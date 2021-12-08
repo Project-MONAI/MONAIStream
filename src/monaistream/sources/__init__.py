@@ -12,6 +12,6 @@
 ################################################################################
 
 from .ajavideosrc import AJAVideoSource
-from .fake import FakeSource
 from .sourcebin import NVAggregatedSourcesBin
+from .testvideosrc import TestVideoSource
 from .uri import URISource

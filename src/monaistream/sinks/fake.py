@@ -48,7 +48,7 @@ class FakeSink(StreamSinkComponent):
 
         :return: `fakesink` `Gst.Element`
         """
-        return self._fakesink
+        return (self._fakesink,)
 
     def get_name(self):
         """

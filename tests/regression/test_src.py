@@ -9,6 +9,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import unittest
 from typing import Dict
 
@@ -18,15 +19,16 @@ from monai.transforms import Compose, Identityd
 
 from monaistream.compose import StreamCompose
 from monaistream.filters import FilterProperties, NVVideoConvert, TransformChainComponent, TransformChainComponentCupy
+from monaistream.filters.infer import NVInferServer
 from monaistream.sinks import FakeSink
-from monaistream.sources import FakeSource
+from monaistream.sources import TestVideoSource
 
 
 class TestWithFake(unittest.TestCase):
     def test_shortcircuit(self):
         pipeline = StreamCompose(
             [
-                FakeSource(),
+                TestVideoSource(),
                 FakeSink(),
             ]
         )
@@ -35,7 +37,7 @@ class TestWithFake(unittest.TestCase):
     def test_identitytransformchain(self):
         pipeline = StreamCompose(
             [
-                FakeSource(),
+                TestVideoSource(),
                 TransformChainComponent(
                     transform_chain=Compose(
                         Identityd(keys="ORIGINAL_IMAGE"),
@@ -50,7 +52,7 @@ class TestWithFake(unittest.TestCase):
     def test_nvvideoconvert(self):
         pipeline = StreamCompose(
             [
-                FakeSource(
+                TestVideoSource(
                     format_description=FilterProperties(
                         format="RGBA",
                         width=256,
@@ -70,7 +72,7 @@ class TestWithFake(unittest.TestCase):
 
         pipeline = StreamCompose(
             [
-                FakeSource(
+                TestVideoSource(
                     format_description=FilterProperties(
                         format="RGBA",
                         width=256,
@@ -112,7 +114,44 @@ class TestWithFake(unittest.TestCase):
         )
         pipeline()
 
+    def test_nvvideoconvert_nvinferserver_transformchain(self):
+        def assert_copy_equal(inputs: Dict[str, torch.Tensor]):
+            self.assertTrue("ORIGINAL_IMAGE" in inputs.keys())
+            self.assertTrue("OUTPUT__0" in inputs.keys())
+            return inputs
+
+        infer_server_config = NVInferServer.generate_default_config()
+        infer_server_config.infer_config.backend.trt_is.model_repo.root = os.path.join(
+            os.getenv("tmp_data_dir"), "models"
+        )
+        infer_server_config.infer_config.backend.trt_is.model_name = "monai_unet_trt"
+        infer_server_config.infer_config.backend.trt_is.version = "1"
+        infer_server_config.infer_config.backend.trt_is.model_repo.log_level = 0
+
+        pipeline = StreamCompose(
+            [
+                TestVideoSource(),
+                NVVideoConvert(
+                    format_description=FilterProperties(
+                        format="RGBA",
+                        width=256,
+                        height=256,
+                        framerate=(32, 1),
+                    )
+                ),
+                NVInferServer(
+                    config=infer_server_config,
+                ),
+                TransformChainComponent(
+                    output_label="ORIGINAL_IMAGE",
+                    transform_chain=assert_copy_equal,
+                ),
+                FakeSink(),
+            ]
+        )
+        pipeline()
+
 
 if __name__ == "__main__":
     t = TestWithFake()
-    t.test_nvvideoconvert()
+    t.test_nvvideoconvert_transformchaincupy()

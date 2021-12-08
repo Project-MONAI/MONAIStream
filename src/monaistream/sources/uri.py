@@ -78,4 +78,4 @@ class URISource(StreamSourceComponent):
 
         :return: the `uridecodebin` `Gst.Element`
         """
-        return self._uri_decode_bin
+        return (self._uri_decode_bin,)

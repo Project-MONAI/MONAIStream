@@ -487,4 +487,4 @@ async_mode: {{ async_mode|string|lower }}
 
         :return: the `nvinferserver` GStreamer element
         """
-        return self._pgie
+        return (self._pgie,)
