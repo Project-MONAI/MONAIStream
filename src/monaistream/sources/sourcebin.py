@@ -101,16 +101,16 @@ class NVAggregatedSourcesBin(AggregatedSourcesComponent):
         for source in self._sources:
             source.initialize()
             try:
-                source.get_gst_element().connect("pad-added", _new_pad_handler, gst_bin)
+                source.get_gst_element()[-1].connect("pad-added", _new_pad_handler, gst_bin)
             except Exception as e:
                 logger.warning(str(e))
 
             try:
-                source.get_gst_element().connect("child-added", _child_added_handler, gst_bin)
+                source.get_gst_element()[-1].connect("child-added", _child_added_handler, gst_bin)
             except Exception as e:
                 logger.warning(str(e))
 
-            Gst.Bin.add(gst_bin, source.get_gst_element())
+            Gst.Bin.add(gst_bin, source.get_gst_element()[-1])
             bin_pad = gst_bin.add_pad(Gst.GhostPad.new_no_target("src", Gst.PadDirection.SRC))
             if not bin_pad:
                 raise BinCreationError(

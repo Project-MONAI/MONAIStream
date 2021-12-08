@@ -125,4 +125,4 @@ class NVVideoConvert(StreamFilterComponent):
         """
         if self._filter:
             return (self._nvvidconv, self._filter)
-        return self._nvvidconv
+        return (self._nvvidconv,)

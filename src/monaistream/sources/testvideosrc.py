@@ -11,14 +11,12 @@
 # limitations under the License.
 ################################################################################
 
-from typing import Optional
 from uuid import uuid4
 
 from gi.repository import Gst
 from typing_extensions import Literal
 
 from monaistream.errors import BinCreationError
-from monaistream.filters.convert import FilterProperties
 from monaistream.interface import StreamSourceComponent
 
 
@@ -46,9 +44,9 @@ class TestVideoSource(StreamSourceComponent):
 
     def initialize(self):
         """
-        Initialize the `testvideosrc` GStreamer element wrapped by this component
+        Initialize the `videotestsrc` GStreamer element wrapped by this component
         """
-        testvideosrc = Gst.ElementFactory.make("testvideosource", self.get_name())
+        testvideosrc = Gst.ElementFactory.make("videotestsrc", self.get_name())
         if not testvideosrc:
             raise BinCreationError(f"Unable to create {self.__class__._name} {self.get_name()}")
 
