@@ -1,0 +1,16 @@
+name: "Build & Test on x86w/GPU"
+
+on:
+  workflow_dispatch:
+
+jobs:
+    build:
+        name: Call Azure GPU Build+Test Pipeline
+        runs-on: monai-vmss
+        steps:
+        - name: Azure Pipelines Action
+          uses: Azure/pipelines@v1
+          with:
+            azure-devops-project-url: https://dev.azure.com/projectmonai/monai-label
+            azure-pipeline-name: 'Manual x86 GPU Test'
+            azure-devops-token: ${{ secrets.MONAI_LABEL_AZURE_TOKEN }}
