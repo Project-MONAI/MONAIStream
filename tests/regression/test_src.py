@@ -9,17 +9,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
 import unittest
-from typing import Dict
 
-import cupy
-import torch
 from monai.transforms import Compose, Identityd
 
 from monaistream.compose import StreamCompose
 from monaistream.filters import FilterProperties, NVVideoConvert, TransformChainComponent, TransformChainComponentCupy
-from monaistream.filters.infer import NVInferServer
 from monaistream.sinks import FakeSink
 from monaistream.sources import TestVideoSource
 

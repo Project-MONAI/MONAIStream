@@ -111,22 +111,3 @@ Inside the development container perform the following steps.
     
         cd /sample/monaistream-pytorch-pp-app
         python main.py
-
-
-Steps for `Clara AGX` Development Setup
-=======================================
-
-Setting Up Clara AGX
---------------------
-
--- to appear --
-
-Setting Up AJA Capture
-----------------------
-
--- to appear --
-
-Running the AJA Capture Sample App
-----------------------------------
-
--- to appear --
