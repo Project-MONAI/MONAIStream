@@ -135,11 +135,10 @@ jobs:
         run: |
           python3 -m pip install -r requirements-dev.txt --user
 
-      - name: Setup Data for End-to-end Tests
+      - name: Unit Tests
         run: |
           # setup data
           export tmp_data_dir=$(mktemp -d)
-          echo "::set-env name=tmp_data_dir::$tmp_data_dir"
 
           pushd $tmp_data_dir
           wget https://github.com/Project-MONAI/MONAIStream/releases/download/data/US.zip
@@ -154,8 +153,6 @@ jobs:
           MODEL_FILE_CONVERTED=$tmp_data_dir/models/monai_unet_trt/1/monai_unet.engine
           /usr/src/tensorrt/bin/trtexec --onnx=${MODEL_FILE_ONNX} --saveEngine=${MODEL_FILE_CONVERTED} --explicitBatch --verbose --workspace=5000
 
-      - name: Unit Tests
-        run: |
           # run tests
           export DISPLAY=:0.0
           ./runtests.sh --unittests --coverage
