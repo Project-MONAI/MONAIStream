@@ -139,6 +139,8 @@ jobs:
         run: |
           # setup data
           export tmp_data_dir=$(mktemp -d)
+          echo "::set-env name=tmp_data_dir::$tmp_data_dir"
+
           pushd $tmp_data_dir
           wget https://github.com/Project-MONAI/MONAIStream/releases/download/data/US.zip
           unzip US.zip -d .
