@@ -43,11 +43,12 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
 
-      - name: Log in to DockerHub
+      - name: Log in to NGC
         uses: docker/login-action@v1.10.0
         with:
-          username: ${{ secrets.DOCKER_USER }}
-          password: ${{ secrets.DOCKER_TOKEN }}
+          registry: ${{ env.NVCR_REGISTRY }}
+          username: ${{ secrets.NGC_USER }}
+          password: ${{ secrets.NGC_TOKEN }}
 
       - uses: jwalton/gh-find-current-pr@v1
         id: findPr
@@ -58,13 +59,13 @@ jobs:
         id: meta
         uses: docker/metadata-action@v3.5.0
         with:
-          images: aihsani/monaistream:${{ steps.findPr.outputs.pr }}
+          images: ${{ env.NVCR_REGISTRY }}/nv-monai/monai-internal/monaistream:${{ steps.findPr.outputs.pr }}
 
       - name: Check if Docker Image with Tag Exists
         id: docker_build_check
         run: |
 
-          if docker manifest inspect "aihsani/monaistream:${{ steps.findPr.outputs.pr }}"; then
+          if docker manifest inspect "${{ env.NVCR_REGISTRY }}/nv-monai/monai-internal/monaistream:${{ steps.findPr.outputs.pr }}"; then
             echo "::set-output name=skip_docker_build::true"
           else
             echo "::set-output name=skip_docker_build::false"
@@ -84,7 +85,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: aihsani/monaistream:${{ steps.findPr.outputs.pr }}
+          tags: ${{ env.NVCR_REGISTRY }}/nv-monai/monai-internal/monaistream:${{ steps.findPr.outputs.pr }}
           labels: ${{ steps.meta.outputs.labels }}
           file: Dockerfile.base
 
@@ -92,10 +93,10 @@ jobs:
     needs: docker_build
     runs-on: ubuntu-latest
     container:
-      image: "docker://aihsani/monaistream:${{ needs.docker_build.outputs.monaistream_docker_image_tag }}"
+      image: "docker://${{ env.NVCR_REGISTRY }}/nv-monai/monai-internal/monaistream:${{ needs.docker_build.outputs.monaistream_docker_image_tag }}"
       credentials:
-        username: ${{ secrets.DOCKER_USER }}
-        password: ${{ secrets.DOCKER_TOKEN }}
+        username: ${{ secrets.NGC_USER }}
+        password: ${{ secrets.NGC_TOKEN }}
 
     steps:
       - name: Checkout Source Code
@@ -147,7 +148,7 @@ jobs:
         run: |
           python3 -m pip install -r requirements-dev.txt --user
 
-      - name: Unit Tests
+      - name: Setup Data for End-to-end Tests
         run: |
           # setup data
           export tmp_data_dir=$(mktemp -d)
@@ -164,6 +165,8 @@ jobs:
           MODEL_FILE_CONVERTED=$tmp_data_dir/models/monai_unet_trt/1/monai_unet.engine
           /usr/src/tensorrt/bin/trtexec --onnx=${MODEL_FILE_ONNX} --saveEngine=${MODEL_FILE_CONVERTED} --explicitBatch --verbose --workspace=5000
 
+      - name: Unit Tests
+        run: |
           # run tests
           export DISPLAY=:0.0
           ./runtests.sh --unittests --coverage
@@ -182,10 +185,10 @@ jobs:
     needs: docker_build
     runs-on: ubuntu-latest
     container:
-      image: "docker://aihsani/monaistream:${{ needs.docker_build.outputs.monaistream_docker_image_tag }}"
+      image: "docker://${{ env.NVCR_REGISTRY }}/nv-monai/monai-internal/monaistream:${{ needs.docker_build.outputs.monaistream_docker_image_tag }}"
       credentials:
-        username: ${{ secrets.DOCKER_USER }}
-        password: ${{ secrets.DOCKER_TOKEN }}
+        username: ${{ secrets.NGC_USER }}
+        password: ${{ secrets.NGC_TOKEN }}
 
     steps:
       - name: Checkout Source Code
@@ -259,10 +262,10 @@ jobs:
     needs: docker_build
     runs-on: ubuntu-latest
     container:
-      image: "docker://aihsani/monaistream:${{ needs.docker_build.outputs.monaistream_docker_image_tag }}"
+      image: "docker://${{ env.NVCR_REGISTRY }}/nv-monai/monai-internal/monaistream:${{ needs.docker_build.outputs.monaistream_docker_image_tag }}"
       credentials:
-        username: ${{ secrets.DOCKER_USER }}
-        password: ${{ secrets.DOCKER_TOKEN }}
+        username: ${{ secrets.NGC_USER }}
+        password: ${{ secrets.NGC_TOKEN }}
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v2
