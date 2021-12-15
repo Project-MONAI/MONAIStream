@@ -15,13 +15,8 @@
 name: build
 
 on:
-  push:
-    branches: [main]
   pull_request:
     branches: [main]
-
-env:
-  NVCR_REGISTRY: nvcr.io
 
 jobs:
   docker_build:
@@ -46,7 +41,7 @@ jobs:
       - name: Log in to NGC
         uses: docker/login-action@v1.10.0
         with:
-          registry: ${{ env.NVCR_REGISTRY }}
+          registry: nvcr.io
           username: ${{ secrets.NGC_USER }}
           password: ${{ secrets.NGC_TOKEN }}
 
@@ -59,13 +54,13 @@ jobs:
         id: meta
         uses: docker/metadata-action@v3.5.0
         with:
-          images: ${{ env.NVCR_REGISTRY }}/nv-monai/monai-internal/monaistream:${{ steps.findPr.outputs.pr }}
+          images: nvcr.io/nv-monai/monai-internal/monaistream:${{ steps.findPr.outputs.pr }}
 
       - name: Check if Docker Image with Tag Exists
         id: docker_build_check
         run: |
 
-          if docker manifest inspect "${{ env.NVCR_REGISTRY }}/nv-monai/monai-internal/monaistream:${{ steps.findPr.outputs.pr }}"; then
+          if docker manifest inspect "nvcr.io/nv-monai/monai-internal/monaistream:${{ steps.findPr.outputs.pr }}"; then
             echo "::set-output name=skip_docker_build::true"
           else
             echo "::set-output name=skip_docker_build::false"
@@ -75,7 +70,7 @@ jobs:
         if: steps.docker_build_check.outputs.skip_docker_build == 'false'
         uses: docker/login-action@v1.10.0
         with:
-          registry: ${{ env.NVCR_REGISTRY }}
+          registry: nvcr.io
           username: ${{ secrets.NGC_USER }}
           password: ${{ secrets.NGC_TOKEN }}
 
@@ -85,7 +80,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ env.NVCR_REGISTRY }}/nv-monai/monai-internal/monaistream:${{ steps.findPr.outputs.pr }}
+          tags: nvcr.io/nv-monai/monai-internal/monaistream:${{ steps.findPr.outputs.pr }}
           labels: ${{ steps.meta.outputs.labels }}
           file: Dockerfile.base
 
@@ -93,7 +88,7 @@ jobs:
     needs: docker_build
     runs-on: ubuntu-latest
     container:
-      image: "docker://${{ env.NVCR_REGISTRY }}/nv-monai/monai-internal/monaistream:${{ needs.docker_build.outputs.monaistream_docker_image_tag }}"
+      image: "docker://nvcr.io/nv-monai/monai-internal/monaistream:${{ needs.docker_build.outputs.monaistream_docker_image_tag }}"
       credentials:
         username: ${{ secrets.NGC_USER }}
         password: ${{ secrets.NGC_TOKEN }}
@@ -185,7 +180,7 @@ jobs:
     needs: docker_build
     runs-on: ubuntu-latest
     container:
-      image: "docker://${{ env.NVCR_REGISTRY }}/nv-monai/monai-internal/monaistream:${{ needs.docker_build.outputs.monaistream_docker_image_tag }}"
+      image: "docker://nvcr.io/nv-monai/monai-internal/monaistream:${{ needs.docker_build.outputs.monaistream_docker_image_tag }}"
       credentials:
         username: ${{ secrets.NGC_USER }}
         password: ${{ secrets.NGC_TOKEN }}
@@ -262,7 +257,7 @@ jobs:
     needs: docker_build
     runs-on: ubuntu-latest
     container:
-      image: "docker://${{ env.NVCR_REGISTRY }}/nv-monai/monai-internal/monaistream:${{ needs.docker_build.outputs.monaistream_docker_image_tag }}"
+      image: "docker://nvcr.io/nv-monai/monai-internal/monaistream:${{ needs.docker_build.outputs.monaistream_docker_image_tag }}"
       credentials:
         username: ${{ secrets.NGC_USER }}
         password: ${{ secrets.NGC_TOKEN }}
