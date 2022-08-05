@@ -44,7 +44,7 @@ DeepStream.
 
 ## Features
 
-> _The codebase is currently under active development._
+> _The codebase is currently NOT under active development._
 
 - Framework to allow MONAI-style inference pipelines for streaming data.
 - Allows for MONAI chained transformations to be used on streaming data.
